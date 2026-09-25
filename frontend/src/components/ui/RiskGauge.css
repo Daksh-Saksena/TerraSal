@@ -1,0 +1,27 @@
+.gauge-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-score {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  dominant-baseline: middle;
+}
+
+.gauge-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  dominant-baseline: middle;
+}
+
+.gauge-minmax {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  fill: rgba(148, 163, 184, 0.5);
+  dominant-baseline: middle;
+}

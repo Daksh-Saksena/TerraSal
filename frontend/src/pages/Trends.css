@@ -1,0 +1,69 @@
+.trends-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.trends-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trends-stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trends-stat-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.trends-stat-label {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.trends-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chart-card {
+  min-height: 0;
+}
+
+.chart-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.chart-insight svg { flex-shrink: 0; margin-top: 1px; }
+
+@media (max-width: 1100px) {
+  .trends-stats-strip { grid-template-columns: repeat(3, 1fr); }
+  .trends-grid { grid-template-columns: 1fr; }
+  .trends-grid > .chart-card[style*="grid-column"] { grid-column: 1 !important; }
+}
+
+@media (max-width: 600px) {
+  .trends-stats-strip { grid-template-columns: repeat(2, 1fr); }
+}

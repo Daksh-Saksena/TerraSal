@@ -16,13 +16,23 @@ export function initializeDB() {
         CREATE TABLE IF NOT EXISTS fields (
           id TEXT PRIMARY KEY,
           name TEXT,
+          farmerName TEXT,
           location TEXT,
+          lat NUMERIC,
+          lng NUMERIC,
           area NUMERIC,
           cropType TEXT,
           soilType TEXT,
+          drainageQuality TEXT,
+          irrigationMethod TEXT,
           sensorConnected INTEGER,
           riskLevel TEXT,
-          riskScore NUMERIC
+          riskScore NUMERIC,
+          stressProbability NUMERIC,
+          soilStrain NUMERIC,
+          soilRecovery NUMERIC,
+          notes TEXT,
+          lastUpdated TEXT
         )
       `);
 

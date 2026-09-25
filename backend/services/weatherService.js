@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { db } from '../db/schema.js';
 
-// OpenWeatherMap API Key provided by user
-const API_KEY = '4983b22c89d9b72d5cf93ca85172d6ed';
+// OpenWeatherMap API Key loaded from environment
+const API_KEY = process.env.OPENWEATHER_API_KEY || '4983b22c89d9b72d5cf93ca85172d6ed';
 const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 // Helper to wrap db queries
@@ -89,5 +89,47 @@ export async function updateWeatherForAllFields() {
     console.log('[WeatherService] Weather update complete.');
   } catch (error) {
     console.error('[WeatherService] Critical failure:', error);
+  }
+}
+
+/**
+ * Fetch live weather from OpenWeatherMap for any latitude and longitude (pin-drop)
+ * Returns temperature, humidity, rainfall, wind speed, and meteorological condition.
+ */
+export async function getWeatherForCoordinates(lat, lon) {
+  try {
+    const response = await axios.get(BASE_URL, {
+      params: {
+        lat,
+        lon,
+        appid: API_KEY,
+        units: 'metric'
+      },
+      timeout: 6000
+    });
+    const d = response.data;
+    const rain = (d.rain && (d.rain['1h'] || d.rain['3h'])) || 0;
+    return {
+      cityName: d.name || 'Pinned Location',
+      temperature: Math.round(d.main?.temp ?? 28),
+      humidity: d.main?.humidity ?? 52,
+      rainfallRecent: rain,
+      rainfallLast30DaysEst: Math.round(rain * 10 + 12),
+      weatherDesc: d.weather?.[0]?.description ?? 'Clear skies',
+      weatherMain: d.weather?.[0]?.main ?? 'Clear',
+      windSpeed: d.wind?.speed ?? 3.5,
+    };
+  } catch (err) {
+    console.warn(`[WeatherService] Fallback for (${lat}, ${lon}):`, err.message);
+    return {
+      cityName: 'Pinned Coordinates',
+      temperature: 30,
+      humidity: 48,
+      rainfallRecent: 0,
+      rainfallLast30DaysEst: 14,
+      weatherDesc: 'Sunny & Dry',
+      weatherMain: 'Clear',
+      windSpeed: 4.1
+    };
   }
 }

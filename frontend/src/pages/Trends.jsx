@@ -37,6 +37,12 @@ export default function Trends() {
   const riskScoreTrend = state.trends?.riskScoreTrend || [];
   
   const trendStats = {
+    ecChangeYoY: '+14.2%',
+    avgEC2026: '4.6 dS/m',
+    peakECMonth: 'May',
+    lowestECMonth: 'August',
+    rainfallDeficit: '-22%',
+    waterTableDropRate: '0.07 m/mo',
     avgECChange: '+1.2%',
     criticalAlertsUp: '+4',
     waterTableDrop: '-0.3m',

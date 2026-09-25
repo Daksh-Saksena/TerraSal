@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import ErrorBanner from '../ui/ErrorBanner';
 import { useApp } from '../../context/AppContext';
 
 const pageTitles = {
@@ -23,6 +24,7 @@ export default function Layout({ children }) {
       <Sidebar />
       <div className={`main-content ${state.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Topbar pageTitle={pageTitle} />
+        <ErrorBanner />
         <main>
           {children}
         </main>

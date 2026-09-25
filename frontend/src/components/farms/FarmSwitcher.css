@@ -1,0 +1,208 @@
+.farm-switcher-container {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+  max-height: 280px;
+}
+
+.farm-switcher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.farm-switcher-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.farm-switcher-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 201, 177, 0.15);
+  border: 1px solid rgba(0, 201, 177, 0.3);
+  color: var(--color-teal);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.farm-switcher-add-btn:hover {
+  background: rgba(0, 201, 177, 0.28);
+  border-color: var(--color-teal);
+  transform: translateY(-1px);
+}
+
+.farm-switcher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* Scrollbar */
+.farm-switcher-list::-webkit-scrollbar {
+  width: 4px;
+}
+.farm-switcher-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* Farm Item */
+.farm-session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.farm-session-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(2px);
+}
+
+.farm-session-item.active {
+  background: linear-gradient(135deg, rgba(0, 201, 177, 0.14) 0%, rgba(15, 28, 50, 0.8) 100%);
+  border-color: rgba(0, 201, 177, 0.4);
+  box-shadow: 0 0 12px rgba(0, 201, 177, 0.15);
+}
+
+.farm-session-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.farm-mini-ring {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.farm-mini-recovery {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.farm-session-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.farm-session-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.farm-name-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.farm-active-check {
+  color: var(--color-teal);
+  flex-shrink: 0;
+}
+
+.farm-session-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.farmer-sub-name {
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70px;
+}
+
+.crop-sub-name {
+  text-transform: capitalize;
+}
+
+.strain-sub-val {
+  font-weight: 600;
+}
+
+.dot-sep {
+  opacity: 0.4;
+}
+
+.farm-session-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.farm-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.farm-session-item:hover .farm-delete-btn {
+  display: flex;
+}
+
+.farm-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.farm-arrow {
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.farm-session-item.active .farm-arrow {
+  color: var(--color-teal);
+  transform: translateX(2px);
+}

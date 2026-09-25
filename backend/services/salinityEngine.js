@@ -319,10 +319,82 @@ export const analyzeSalinity = (inputs) => {
   // Generate recommendations
   const recommendations = generateRecommendations(riskLevel, inputs, factorScores);
 
+  // ─── WHOOP-Style Soil Health Calculation ──────────────────────────────────
+  // 1. Soil Strain (0.0 to 21.0): Allostatic osmotic stress load
+  const ecStrain = Math.min(10, (groundwaterEC / 7.0) * 10);
+  const wtStrain = Math.min(10, Math.max(0, (4.5 - waterTableDepth) * 2.5));
+  const rawStrain = (riskScore / 100) * 16.5 + (ecStrain / 10) * 3.5 + (wtStrain / 10) * 1.0;
+  const soilStrain = Math.min(21.0, Math.max(0.5, parseFloat(rawStrain.toFixed(1))));
+
+  const strainCategory =
+    soilStrain >= 18.0 ? 'All-Out Strain' :
+    soilStrain >= 14.0 ? 'High Strain' :
+    soilStrain >= 10.0 ? 'Moderate Strain' : 'Light Strain';
+
+  // 2. Soil Recovery (0% to 100%): Resilience & restorative capacity
+  let baseRecovery = 100 - riskScore;
+  if (drainageQuality === 'excellent') baseRecovery += 12;
+  else if (drainageQuality === 'good') baseRecovery += 6;
+  else if (drainageQuality === 'very-poor') baseRecovery -= 15;
+
+  if (irrigationMethod === 'drip') baseRecovery += 10;
+  else if (irrigationMethod === 'sprinkler') baseRecovery += 4;
+  else if (irrigationMethod === 'flood') baseRecovery -= 10;
+
+  if (waterTableDepth >= 4.0) baseRecovery += 8;
+  else if (waterTableDepth <= 1.5) baseRecovery -= 16;
+
+  const soilRecovery = Math.min(99, Math.max(12, Math.round(baseRecovery)));
+  const recoveryZone = soilRecovery >= 67 ? 'GREEN' : soilRecovery >= 34 ? 'YELLOW' : 'RED';
+
+  // 3. Soil Vitals (WHOOP Health Monitor equivalent)
+  const osmoticPressure = parseFloat((groundwaterEC * 0.36).toFixed(2));
+  const capillaryFlux = waterTableDepth < 2.0 ? parseFloat(((2.5 - waterTableDepth) * 3.2).toFixed(1)) : 0.4;
+  const cropEcThreshold = inputs.cropType === 'barley' ? 8.0 : inputs.cropType === 'cotton' ? 7.7 : inputs.cropType === 'wheat' ? 6.0 : 3.0;
+  const leachingCalc = Math.round((groundwaterEC / Math.max(1, 5 * cropEcThreshold - groundwaterEC)) * 100);
+  const leachingRequirement = Math.min(65, Math.max(5, isNaN(leachingCalc) ? 15 : leachingCalc));
+
+  // 4. Target Strain Capacity based on Recovery
+  const targetStrainMax = parseFloat(((soilRecovery / 100) * 14.5 + 4.0).toFixed(1));
+
+  // 5. Optimal Irrigation Recovery Window
+  const irrigationWindow = {
+    optimalTime: '05:30 AM – 08:30 AM',
+    reason: 'Minimum atmospheric vapor pressure deficit reduces salt crusting on surface',
+    actionToday: recoveryZone === 'RED'
+      ? 'Avoid flood irrigation today. Apply pre-dawn gypsum and flush via drip.'
+      : recoveryZone === 'YELLOW'
+      ? 'Targeted irrigation permitted. Maintain soil moisture above 65% field capacity.'
+      : 'Soil is in prime recovery zone. Standard irrigation cycle recommended.'
+  };
+
+  const whoopMetrics = {
+    soilStrain,
+    strainCategory,
+    targetStrainMax,
+    soilRecovery,
+    recoveryZone,
+    vitals: {
+      osmoticPressure,
+      osmoticUnit: 'atm',
+      osmoticStatus: osmoticPressure > 2.0 ? 'High Root Suction Lock' : osmoticPressure > 1.0 ? 'Moderate Root Resistance' : 'Normal Water Absorption',
+      capillaryFlux,
+      capillaryUnit: 'mm/day',
+      capillaryStatus: capillaryFlux > 2.0 ? 'Critical Salt Influx' : 'Mild Influx',
+      leachingRequirement,
+      leachingUnit: '% extra water',
+      soilResilienceIndex: Math.round(soilRecovery * 0.92)
+    },
+    irrigationWindow
+  };
+
   return {
     riskScore,
     riskLevel,
     stressProbability,
+    soilStrain,
+    soilRecovery,
+    whoopMetrics,
     factors,
     explanation,
     recommendations,

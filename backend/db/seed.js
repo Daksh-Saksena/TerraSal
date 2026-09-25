@@ -22,12 +22,32 @@ async function seed() {
     });
 
     // Seed Fields
-    const insertField = db.prepare('INSERT INTO fields (id, name, location, area, cropType, soilType, sensorConnected, riskLevel, riskScore) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const insertField = db.prepare('INSERT INTO fields (id, name, farmerName, location, lat, lng, area, cropType, soilType, drainageQuality, irrigationMethod, sensorConnected, riskLevel, riskScore, stressProbability, soilStrain, soilRecovery, notes, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     const insertAlert = db.prepare('INSERT INTO alerts (fieldId, message) VALUES (?, ?)');
     const insertMetric = db.prepare('INSERT INTO metrics (fieldId, ec, waterTable, rainfall) VALUES (?, ?, ?, ?)');
 
     mockFields.forEach(field => {
-      insertField.run(field.id, field.name, field.location, field.area, field.cropType, field.soilType, field.sensorConnected ? 1 : 0, field.riskLevel, field.riskScore);
+      insertField.run(
+        field.id,
+        field.name,
+        field.farmerName || 'Village Farmer',
+        field.location,
+        field.lat || 30.9,
+        field.lng || 75.8,
+        field.area,
+        field.cropType,
+        field.soilType,
+        field.drainageQuality || 'moderate',
+        field.irrigationMethod || 'flood',
+        field.sensorConnected ? 1 : 0,
+        field.riskLevel,
+        field.riskScore,
+        field.stressProbability || 0,
+        field.soilStrain || 12.0,
+        field.soilRecovery || 50,
+        field.notes || '',
+        field.lastUpdated || 'Recently'
+      );
       
       field.alerts.forEach(alert => {
         insertAlert.run(field.id, alert);
@@ -68,7 +88,7 @@ async function seed() {
     insertRisk.finalize();
 
     const insertEc = db.prepare('INSERT INTO ecTrends (month, safeThreshold, ludhiana, hisar, ganganagar) VALUES (?, ?, ?, ?, ?)');
-    ecTrendData.forEach(d => insertEc.run(d.month, d.__safe, d.ludhiana, d.hisar, d.ganganagar));
+    ecTrendData.forEach(d => insertEc.run(d.month, d.safeThreshold, d.ludhiana, d.hisar, d.ganganagar));
     insertEc.finalize();
 
     console.log('Seeding complete!');

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
+import VillageOverview from './pages/VillageOverview';
 import Analyzer from './pages/Analyzer';
 import MapView from './pages/MapView';
 import Trends from './pages/Trends';
@@ -16,6 +17,7 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/village" element={<VillageOverview />} />
             <Route path="/analyze" element={<Analyzer />} />
             <Route path="/map" element={<MapView />} />
             <Route path="/trends" element={<Trends />} />

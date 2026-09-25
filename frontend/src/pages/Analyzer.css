@@ -456,3 +456,105 @@
 @media (max-width: 600px) {
   .input-grid { grid-template-columns: 1fr; }
 }
+
+/* Active Farm & Pin Drop Quick Load Buttons */
+.active-farm-load-btn {
+  background: rgba(0, 201, 177, 0.15) !important;
+  border-color: rgba(0, 201, 177, 0.4) !important;
+  color: var(--color-teal) !important;
+  font-weight: 700 !important;
+}
+
+.active-farm-load-btn:hover {
+  background: rgba(0, 201, 177, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.pin-drop-quick-btn {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #f59e0b !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.pin-drop-quick-btn:hover {
+  background: rgba(245, 158, 11, 0.25) !important;
+}
+
+/* WHOOP Tab in Analyzer */
+.whoop-tab-card {
+  padding: 20px;
+}
+
+.whoop-tab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+
+@media (max-width: 700px) {
+  .whoop-tab-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.whoop-tab-item {
+  background: rgba(10, 18, 35, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.whoop-tab-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.whoop-tab-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.whoop-tab-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.whoop-tab-window {
+  margin-top: 16px;
+  background: rgba(0, 201, 177, 0.08);
+  border: 1px solid rgba(0, 201, 177, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.whoop-tab-window-title {
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.whoop-tab-window p {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.whoop-tab-window-action {
+  font-size: 12px;
+  color: var(--color-teal);
+  border-top: 1px solid rgba(0, 201, 177, 0.2);
+  padding-top: 8px;
+}

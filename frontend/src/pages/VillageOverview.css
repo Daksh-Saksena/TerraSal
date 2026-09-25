@@ -1,0 +1,363 @@
+.village-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.village-add-farm-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #00c9b1 0%, #009e8b 100%);
+  border: none;
+  color: #070d18;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.village-add-farm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 201, 177, 0.4);
+}
+
+.village-kpi-row {
+  margin-bottom: 24px;
+}
+
+.village-stat-card {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vstat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vstat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.vstat-icon.green { color: #22c55e; }
+.vstat-icon.orange { color: #f97316; }
+.vstat-icon.teal { color: #00c9b1; }
+.vstat-icon.red { color: #ef4444; }
+
+.vstat-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.vstat-unit {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.vstat-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Main Grid */
+.village-main-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 950px) {
+  .village-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.village-map-card {
+  overflow: hidden;
+}
+
+.village-leaflet-wrap {
+  margin-top: 14px;
+}
+
+/* Custom Pin */
+.village-map-pin {
+  background: transparent;
+  border: none;
+}
+
+.village-pin-outer {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: rgba(8, 15, 30, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.village-pin-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.village-popup {
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #0f172a;
+}
+
+.vpop-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.vpop-farmer {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.vpop-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.vpop-switch-btn {
+  background: #00c9b1;
+  color: #070d18;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* Advisories */
+.village-advisories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.vadvisory-item {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vadvisory-item.drip-highlight {
+  background: rgba(0, 201, 177, 0.08);
+  border: 1px solid rgba(0, 201, 177, 0.25);
+}
+
+.vadvisory-item.warning-highlight {
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+.vadvisory-item.info-highlight {
+  background: rgba(96, 165, 250, 0.08);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+}
+
+.vadvisory-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.text-teal { color: #00c9b1; }
+.text-orange { color: #f97316; }
+
+.vadvisory-text {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.vadvisory-action {
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+/* Comparison Table */
+.village-table-card {
+  overflow: hidden;
+}
+
+.village-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vfilter-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.vfilter-btn.active {
+  background: rgba(0, 201, 177, 0.2);
+  border-color: var(--color-teal);
+  color: #00c9b1;
+}
+
+.village-table-wrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.village-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.village-table th {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.village-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vtable-row:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vcell-farm-name {
+  font-weight: 600;
+  color: #fff;
+}
+
+.vcell-farmer-name {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.vcell-loc {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.vcell-coords {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text-muted);
+}
+
+.vcell-crop-badge {
+  background: rgba(0, 201, 177, 0.1);
+  color: var(--color-teal);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-right: 6px;
+}
+
+.vcell-area {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.vcell-soil {
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.vcell-irrig {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.vcell-strain {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.vcell-recovery-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vcell-rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.vtable-open-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.vtable-open-btn:hover {
+  background: rgba(0, 201, 177, 0.2);
+  border-color: var(--color-teal);
+  color: var(--color-teal);
+}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   X, MapPin, Cloud, Droplets, Wind,
-  Check, AlertTriangle, ArrowRight, Loader2, Compass
+  Check, AlertTriangle, ArrowRight, Loader2, Compass, Navigation
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
@@ -12,21 +12,52 @@ import {
 } from '../../utils/constants';
 import './PinDropModal.css';
 
-// Fix for custom pin icon in Leaflet
+// Custom Pin Icon
 const pinIcon = new L.DivIcon({
   className: 'custom-pin-icon',
   html: `<div class="pin-marker-pulse"><div class="pin-marker-dot"></div></div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12]
+  iconSize: [28, 28],
+  iconAnchor: [14, 14]
 });
 
-// Component to handle map clicks and drop the pin
-function MapClickHandler({ onLocationSelect }) {
+// District Quick Presets for North India farmers
+const DISTRICT_PRESETS = [
+  { name: 'Ludhiana', lat: 30.9010, lng: 75.8573, state: 'Punjab' },
+  { name: 'Hisar', lat: 29.1492, lng: 75.7217, state: 'Haryana' },
+  { name: 'Sri Ganganagar', lat: 29.9167, lng: 73.8833, state: 'Rajasthan' },
+  { name: 'Bathinda', lat: 30.2110, lng: 74.9455, state: 'Punjab' },
+  { name: 'Amritsar', lat: 31.6340, lng: 74.8723, state: 'Punjab' },
+  { name: 'Sirsa', lat: 29.5334, lng: 75.0177, state: 'Haryana' },
+];
+
+// Handles map sizing, auto-panning, and click events
+function MapController({ coords, onLocationSelect }) {
+  const map = useMap();
+
+  useEffect(() => {
+    // Critical: Invalidate size after modal animation finishes to prevent gray tiles
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 300);
+    const t3 = setTimeout(() => map.invalidateSize(), 600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (coords?.lat && coords?.lng) {
+      map.panTo([coords.lat, coords.lng], { animate: true });
+    }
+  }, [coords.lat, coords.lng, map]);
+
   useMapEvents({
     click(e) {
       onLocationSelect(e.latlng.lat, e.latlng.lng);
     },
   });
+
   return null;
 }
 
@@ -38,6 +69,7 @@ export default function PinDropModal() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [locatingGPS, setLocatingGPS] = useState(false);
 
   // Form Fields
   const [farmerName, setFarmerName] = useState('');
@@ -74,10 +106,29 @@ export default function PinDropModal() {
   }, [state.isPinDropModalOpen]);
 
   const handleLocationSelect = (lat, lng) => {
-    const roundedLat = parseFloat(lat.toFixed(5));
-    const roundedLng = parseFloat(lng.toFixed(5));
+    const roundedLat = parseFloat(Number(lat).toFixed(5));
+    const roundedLng = parseFloat(Number(lng).toFixed(5));
     setCoords({ lat: roundedLat, lng: roundedLng });
     fetchWeather(roundedLat, roundedLng);
+  };
+
+  const handleGPSLocation = () => {
+    if (!navigator.geolocation) {
+      setErrorMsg('Geolocation is not supported by your browser');
+      return;
+    }
+    setLocatingGPS(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocatingGPS(false);
+        handleLocationSelect(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        setLocatingGPS(false);
+        setErrorMsg('Could not detect GPS location. Please click on the map.');
+      },
+      { timeout: 8000 }
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -121,14 +172,14 @@ export default function PinDropModal() {
         <div className="pindrop-header">
           <div className="pindrop-title-group">
             <div className="pindrop-icon-box">
-              <MapPin size={20} />
+              <MapPin size={22} />
             </div>
             <div>
               <h3>Pin Your Farm — Panchayat Kiosk</h3>
-              <p>Click on the map to pinpoint your exact plot and generate a WHOOP soil health profile</p>
+              <p>Click on the map or drag the pin to your exact field coordinates</p>
             </div>
           </div>
-          <button className="pindrop-close-btn" onClick={closePinDropModal}>
+          <button className="pindrop-close-btn" onClick={closePinDropModal} title="Close modal">
             <X size={18} />
           </button>
         </div>
@@ -145,26 +196,61 @@ export default function PinDropModal() {
           <div className="pindrop-map-pane">
             <div className="pindrop-map-header">
               <span className="pindrop-map-instruction">
-                <Compass size={13} /> Click anywhere on map to drop pin
+                <Compass size={14} /> Click or drag pin to position
               </span>
               <span className="pindrop-coords-pill">
                 {coords.lat.toFixed(4)}°N, {coords.lng.toFixed(4)}°E
               </span>
             </div>
 
+            {/* Quick District Presets */}
+            <div className="pindrop-quick-presets">
+              <button
+                type="button"
+                className="preset-pill-btn gps"
+                onClick={handleGPSLocation}
+                disabled={locatingGPS}
+              >
+                <Navigation size={11} className={locatingGPS ? 'spin' : ''} />
+                <span>{locatingGPS ? 'Detecting...' : 'My GPS'}</span>
+              </button>
+              {DISTRICT_PRESETS.map(d => (
+                <button
+                  type="button"
+                  key={d.name}
+                  className="preset-pill-btn"
+                  onClick={() => handleLocationSelect(d.lat, d.lng)}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
+
+            {/* The Map */}
             <div className="pindrop-leaflet-wrapper">
               <MapContainer
                 center={[coords.lat, coords.lng]}
                 zoom={8}
-                style={{ height: '360px', width: '100%', borderRadius: '10px' }}
+                style={{ height: '340px', width: '100%', borderRadius: '10px' }}
+                zoomControl={true}
               >
                 <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; CARTO'
-                  subdomains="abcd"
+                  url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  maxZoom={19}
                 />
-                <MapClickHandler onLocationSelect={handleLocationSelect} />
-                <Marker position={[coords.lat, coords.lng]} icon={pinIcon} />
+                <MapController coords={coords} onLocationSelect={handleLocationSelect} />
+                <Marker
+                  position={[coords.lat, coords.lng]}
+                  icon={pinIcon}
+                  draggable={true}
+                  eventHandlers={{
+                    dragend(e) {
+                      const latlng = e.target.getLatLng();
+                      handleLocationSelect(latlng.lat, latlng.lng);
+                    }
+                  }}
+                />
               </MapContainer>
             </div>
 
@@ -172,7 +258,7 @@ export default function PinDropModal() {
             <div className="pindrop-weather-box">
               <div className="weather-box-title">
                 <Cloud size={14} />
-                <span>Live Micro-Climate for Pinned Coordinates</span>
+                <span>Live Micro-Climate for Pinned Location</span>
                 {weatherLoading && <Loader2 size={13} className="spin" />}
               </div>
               {weather ? (

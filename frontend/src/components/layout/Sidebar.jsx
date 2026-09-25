@@ -3,13 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FlaskConical, Map, TrendingUp,
   BookOpen, Settings, Leaf, ChevronLeft, ChevronRight,
-  Waves
+  Waves, Users
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import FarmSwitcher from '../farms/FarmSwitcher';
 import './Sidebar.css';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/village', icon: Users, label: 'Village Hub' },
   { path: '/analyze', icon: FlaskConical, label: 'Analyzer' },
   { path: '/map', icon: Map, label: 'Map View' },
   { path: '/trends', icon: TrendingUp, label: 'Trends' },
@@ -32,7 +34,7 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="logo-text">
             <span className="logo-name">TerraSal</span>
-            <span className="logo-tagline">Salinity Intelligence</span>
+            <span className="logo-tagline">Panchayat Kiosk</span>
           </div>
         )}
       </div>
@@ -57,6 +59,9 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Village Farm Sessions (Gemini chat-style) */}
+      {!collapsed && <FarmSwitcher />}
 
       {/* Footer */}
       <div className="sidebar-footer">

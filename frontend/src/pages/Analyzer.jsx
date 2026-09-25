@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   FlaskConical, ChevronRight, AlertTriangle, CheckCircle,
   Info, Droplets, ArrowDownUp, CloudRain, Layers, Waves,
-  Sprout, Lightbulb, RefreshCw
+  Sprout, Lightbulb, RefreshCw, MapPin, Activity
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -34,11 +34,26 @@ const PRESETS = [
 ];
 
 export default function Analyzer() {
-  const { state, setAnalyzerResult } = useApp();
+  const { state, activeFarm, openPinDropModal, setAnalyzerResult } = useApp();
   const [inputs, setInputs] = useState(state.analyzerInputs ?? DEFAULT_INPUTS);
   const [result, setResult] = useState(state.analyzerResult ?? null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('factors');
+  const [activeTab, setActiveTab] = useState('whoop');
+
+  const loadActiveFarm = () => {
+    if (!activeFarm) return;
+    setInputs({
+      groundwaterEC: activeFarm.groundwaterEC ?? 3.5,
+      waterTableDepth: activeFarm.waterTableDepth ?? 2.5,
+      soilType: activeFarm.soilType ?? 'loamy',
+      drainageQuality: activeFarm.drainageQuality ?? 'moderate',
+      rainfallLast30Days: activeFarm.rainfallLast30Days ?? 15,
+      irrigationMethod: activeFarm.irrigationMethod ?? 'flood',
+      cropType: activeFarm.cropType ?? 'wheat',
+      terrain: 'flat',
+    });
+    setResult(null);
+  };
 
   const handleChange = (key, value) => {
     setInputs(prev => ({ ...prev, [key]: value }));
@@ -80,9 +95,24 @@ export default function Analyzer() {
         <p>Enter field parameters to generate a full soil salinity risk assessment and crop advisory</p>
       </div>
 
-      {/* Presets */}
+      {/* Presets & Active Farm */}
       <div className="analyzer-presets">
         <span className="preset-label"><Layers size={13} /> Quick Load:</span>
+        {activeFarm && (
+          <button
+            className="preset-btn active-farm-load-btn"
+            onClick={loadActiveFarm}
+            title="Load data from currently active village farm"
+          >
+            ⚡ Active Farm: {activeFarm.name}
+          </button>
+        )}
+        <button
+          className="preset-btn pin-drop-quick-btn"
+          onClick={openPinDropModal}
+        >
+          <MapPin size={12} /> Drop Pin on Map
+        </button>
         {PRESETS.map((preset, i) => (
           <button
             key={i}
@@ -303,6 +333,7 @@ export default function Analyzer() {
               {/* Tabs */}
               <div className="result-tabs">
                 {[
+                  { key: 'whoop', label: '⚡ WHOOP Vitals' },
                   { key: 'factors', label: 'Factor Breakdown' },
                   { key: 'recommendations', label: 'Recommendations' },
                   { key: 'crops', label: 'Crop Advisory' },
@@ -317,6 +348,65 @@ export default function Analyzer() {
                   </button>
                 ))}
               </div>
+
+              {/* WHOOP Vitals Tab */}
+              {activeTab === 'whoop' && result.whoopMetrics && (
+                <div className="card fade-in whoop-tab-card">
+                  <div className="card-header">
+                    <div className="section-title">
+                      <div className="section-title-icon"><Activity size={16} /></div>
+                      WHOOP Soil Strain & Recovery Diagnostic
+                    </div>
+                    <span className="chip" style={{
+                      color: result.whoopMetrics.recoveryZone === 'GREEN' ? '#22c55e' : result.whoopMetrics.recoveryZone === 'YELLOW' ? '#f59e0b' : '#ef4444',
+                      borderColor: result.whoopMetrics.recoveryZone === 'GREEN' ? 'rgba(34,197,94,0.3)' : result.whoopMetrics.recoveryZone === 'YELLOW' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
+                      background: result.whoopMetrics.recoveryZone === 'GREEN' ? 'rgba(34,197,94,0.1)' : result.whoopMetrics.recoveryZone === 'YELLOW' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)'
+                    }}>
+                      {result.whoopMetrics.recoveryZone} RECOVERY ({result.whoopMetrics.soilRecovery}%)
+                    </span>
+                  </div>
+
+                  <div className="whoop-tab-grid">
+                    <div className="whoop-tab-item">
+                      <span className="whoop-tab-lbl">Soil Strain Score</span>
+                      <div className="whoop-tab-val" style={{ color: result.whoopMetrics.soilStrain >= 14 ? '#f97316' : '#22c55e' }}>
+                        {result.whoopMetrics.soilStrain} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 21.0</span>
+                      </div>
+                      <div className="whoop-tab-sub">{result.whoopMetrics.strainCategory} (Target: &lt; {result.whoopMetrics.targetStrainMax})</div>
+                    </div>
+
+                    <div className="whoop-tab-item">
+                      <span className="whoop-tab-lbl">Soil Resilience Index</span>
+                      <div className="whoop-tab-val" style={{ color: '#00c9b1' }}>
+                        {result.whoopMetrics.vitals.soilResilienceIndex} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 100</span>
+                      </div>
+                      <div className="whoop-tab-sub">Natural buffering and flushing capacity</div>
+                    </div>
+
+                    <div className="whoop-tab-item">
+                      <span className="whoop-tab-lbl">Osmotic Root Suction</span>
+                      <div className="whoop-tab-val">{result.whoopMetrics.vitals.osmoticPressure} <span style={{ fontSize: '12px', color: '#94a3b8' }}>atm</span></div>
+                      <div className="whoop-tab-sub">{result.whoopMetrics.vitals.osmoticStatus}</div>
+                    </div>
+
+                    <div className="whoop-tab-item">
+                      <span className="whoop-tab-lbl">Capillary Salt Influx</span>
+                      <div className="whoop-tab-val">{result.whoopMetrics.vitals.capillaryFlux} <span style={{ fontSize: '12px', color: '#94a3b8' }}>mm/day</span></div>
+                      <div className="whoop-tab-sub">{result.whoopMetrics.vitals.capillaryStatus}</div>
+                    </div>
+                  </div>
+
+                  <div className="whoop-tab-window">
+                    <div className="whoop-tab-window-title">
+                      Optimal Irrigation Window: <strong>{result.whoopMetrics.irrigationWindow.optimalTime}</strong>
+                    </div>
+                    <p>{result.whoopMetrics.irrigationWindow.reason}</p>
+                    <div className="whoop-tab-window-action">
+                      <strong>Daily Advisory:</strong> {result.whoopMetrics.irrigationWindow.actionToday}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Factor Breakdown Tab */}
               {activeTab === 'factors' && (

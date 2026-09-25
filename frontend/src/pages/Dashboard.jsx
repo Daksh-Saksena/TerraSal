@@ -8,23 +8,25 @@ import RiskGauge from '../components/ui/RiskGauge';
 import MetricCard from '../components/ui/MetricCard';
 import FieldCard from '../components/ui/FieldCard';
 import ECTrendChart from '../components/charts/ECTrendChart';
+import WhoopSoilHealth from '../components/whoop/WhoopSoilHealth';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { state } = useApp();
+  const { state, activeFarm, openPinDropModal } = useApp();
   const { fields, summaryStats } = state;
-
-  const criticalAlerts = fields.flatMap(f =>
-    f.alerts.map(a => ({ ...a, fieldName: f.name, level: f.riskLevel, fieldId: f.id }))
-  ).filter((_, i) => i < 5);
 
   return (
     <div className="page-container fade-in">
       {/* Page Header */}
       <div className="page-header">
         <h1>Salinity Command Center</h1>
-        <p>Real-time monitoring across 6 fields in Punjab, Haryana & Rajasthan</p>
+        <p>Panchayat Village Kiosk — Real-time salinity & soil health monitoring across village fields</p>
       </div>
+
+      {/* Active Farm WHOOP Soil Health Vitals */}
+      {activeFarm && (
+        <WhoopSoilHealth farm={activeFarm} onOpenPinDrop={openPinDropModal} />
+      )}
 
       {/* Top KPI Row */}
       <div className="grid-4 fade-in-delay-1">

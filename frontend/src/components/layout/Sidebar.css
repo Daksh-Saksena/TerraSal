@@ -32,12 +32,12 @@
   height: 36px;
   min-width: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #00c9b1, #006f66);
+  background: linear-gradient(135deg, #008a50, #005c36);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 201, 177, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 138, 80, 0.25);
 }
 
 .logo-text {
@@ -48,17 +48,17 @@
 }
 
 .logo-name {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
 .logo-tagline {
   font-size: 0.6875rem;
-  color: var(--color-teal);
-  font-weight: 500;
+  color: var(--color-primary);
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -92,17 +92,17 @@
 
 .nav-item:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   text-decoration: none;
 }
 
 .nav-item.active {
-  color: var(--color-teal);
+  color: var(--color-primary);
   background: var(--color-teal-dim);
 }
 
 .nav-item.active .nav-icon {
-  color: var(--color-teal);
+  color: var(--color-primary);
 }
 
 .nav-icon {
@@ -124,7 +124,7 @@
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: var(--color-teal);
+  background: var(--color-primary);
   border-radius: 99px 0 0 99px;
 }
 
@@ -152,7 +152,7 @@
   height: 32px;
   min-width: 32px;
   border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.05);
+  background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   display: flex;
@@ -163,6 +163,6 @@
 }
 
 .sidebar-toggle:hover {
-  background: rgba(255,255,255,0.1);
+  background: var(--border-card);
   color: var(--text-primary);
 }

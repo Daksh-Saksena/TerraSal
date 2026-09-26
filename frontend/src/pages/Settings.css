@@ -262,7 +262,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00c9b1, #006f66);
+  background: linear-gradient(135deg, #008a50, #005c36);
   color: #fff;
   font-size: 1.5rem;
   font-weight: 700;
@@ -270,7 +270,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0,201,177,0.3);
+  box-shadow: 0 4px 16px rgba(0, 138, 80, 0.3);
 }
 
 .account-fields {

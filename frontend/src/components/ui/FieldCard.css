@@ -65,7 +65,7 @@
 }
 
 .field-score-val {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.875rem;
   font-weight: 700;
 }

@@ -1,3 +1,10 @@
+.alerts-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 14px 0;
+  text-align: center;
+}
+
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -46,7 +53,7 @@
   align-items: center;
   gap: 10px;
   padding: 14px;
-  background: rgba(255,255,255,0.03);
+  background: var(--bg-hover);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
 }
@@ -58,13 +65,13 @@
   flex-shrink: 0;
 }
 
-.risk-bd-dot.critical { background: var(--color-critical); box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+.risk-bd-dot.critical { background: var(--color-critical); box-shadow: 0 0 8px rgba(202,50,20,0.5); }
 .risk-bd-dot.high { background: var(--color-high); }
 .risk-bd-dot.moderate { background: var(--color-moderate); }
 .risk-bd-dot.low { background: var(--color-safe); }
 
 .risk-bd-val {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -92,13 +99,14 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.03);
+  background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   transition: all var(--transition);
 }
 
 .alert-row:hover {
-  background: rgba(255,255,255,0.05);
+  background: var(--border-subtle);
+  border-color: var(--border-accent);
 }
 
 .alert-level-dot {
@@ -139,7 +147,7 @@
   display: flex;
   gap: 10px;
   padding: 10px 12px;
-  background: rgba(255,255,255,0.02);
+  background: var(--bg-hover);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   align-items: flex-start;
@@ -185,13 +193,13 @@
   align-items: center;
   gap: 2px;
   padding: 10px 6px;
-  background: rgba(255,255,255,0.03);
+  background: var(--bg-hover);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
 }
 
 .live-metric-val {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;

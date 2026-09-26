@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -10,6 +10,17 @@ import {
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import './VillageOverview.css';
+
+// Fixes gray-tile bug in modal/conditionally-rendered maps
+function MapResizeController() {
+  const map = useMap();
+  React.useEffect(() => {
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [map]);
+  return null;
+}
 
 // Custom Marker for village pins based on recovery
 const createVillageIcon = (zoneColor) => new L.DivIcon({
@@ -144,10 +155,11 @@ export default function VillageOverview() {
               style={{ height: '380px', width: '100%', borderRadius: '10px' }}
             >
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; CARTO'
-                subdomains="abcd"
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                maxZoom={19}
               />
+              <MapResizeController />
               {fields.map(farm => {
                 const rec = farm.soilRecovery ?? 50;
                 const zoneColor = rec >= 67 ? '#22c55e' : rec >= 34 ? '#f59e0b' : '#ef4444';

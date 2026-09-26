@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useApp } from '../context/AppContext';
@@ -10,11 +10,22 @@ import './MapView.css';
 // Fix for default Leaflet icon paths in React
 delete L.Icon.Default.prototype._getIconUrl;
 
+// Fixes gray-tile bug — invalidates Leaflet's container size after mount
+function MapResizeController() {
+  const map = useMap();
+  React.useEffect(() => {
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [map]);
+  return null;
+}
+
 const TREND_ICONS = { improving: '↓', stable: '→', worsening: '↑', critical: '⚠' };
 const TREND_COLORS = { improving: '#22c55e', stable: '#94a3b8', worsening: '#f97316', critical: '#ef4444' };
 
 const stateColors = {
-  'Punjab': '#00c9b1',
+  'Punjab': '#008a50',
   'Haryana': '#f59e0b',
   'Rajasthan': '#f97316',
 };
@@ -121,10 +132,11 @@ export default function MapView() {
               zoomControl={true}
             >
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                subdomains="abcd"
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                maxZoom={19}
               />
+              <MapResizeController />
               {filtered.map(region => (
                 <CircleMarker
                   key={region.id}

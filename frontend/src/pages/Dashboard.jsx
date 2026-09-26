@@ -8,7 +8,7 @@ import RiskGauge from '../components/ui/RiskGauge';
 import MetricCard from '../components/ui/MetricCard';
 import FieldCard from '../components/ui/FieldCard';
 import ECTrendChart from '../components/charts/ECTrendChart';
-import WhoopSoilHealth from '../components/whoop/WhoopSoilHealth';
+import SoilHealthCard from '../components/soil/SoilHealthCard';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -23,9 +23,9 @@ export default function Dashboard() {
         <p>Panchayat Village Kiosk — Real-time salinity & soil health monitoring across village fields</p>
       </div>
 
-      {/* Active Farm WHOOP Soil Health Vitals */}
+      {/* Active Farm Soil Health Card */}
       {activeFarm && (
-        <WhoopSoilHealth farm={activeFarm} onOpenPinDrop={openPinDropModal} />
+        <SoilHealthCard farm={activeFarm} onOpenPinDrop={openPinDropModal} />
       )}
 
       {/* Top KPI Row */}
@@ -47,7 +47,7 @@ export default function Dashboard() {
           change="+14% YoY"
           changeType="up"
           icon={Droplets}
-          iconColor="#00c9b1"
+          iconColor="#008a50"
           description="Safe threshold: 2.0 dS/m"
         />
         <MetricCard
@@ -152,25 +152,29 @@ export default function Dashboard() {
                 </div>
                 Active Alerts
               </div>
-              <span className="badge badge-critical">{fields.reduce((s, f) => s + f.alerts.length, 0)}</span>
+              <span className="badge badge-critical">{fields.reduce((s, f) => s + (f.alerts?.length ?? 0), 0)}</span>
             </div>
             <div className="alerts-list">
-              {fields.filter(f => f.alerts.length > 0).map(field =>
-                field.alerts.map((alert, i) => (
-                  <div key={`${field.id}-${i}`} className={`alert-row level-${field.riskLevel.toLowerCase()}`}>
-                    <div className={`alert-level-dot ${field.riskLevel.toLowerCase()}`} />
-                    <div className="alert-content">
-                      <div className="alert-msg">{alert}</div>
-                      <div className="alert-field">{field.name} · {field.location}</div>
+              {fields.filter(f => (f.alerts?.length ?? 0) > 0).length === 0 ? (
+                <div className="alerts-empty">No active alerts across monitored fields.</div>
+              ) : (
+                fields.filter(f => (f.alerts?.length ?? 0) > 0).map(field =>
+                  (field.alerts || []).map((alert, i) => (
+                    <div key={`${field.id}-${i}`} className={`alert-row level-${(field.riskLevel || 'low').toLowerCase()}`}>
+                      <div className={`alert-level-dot ${(field.riskLevel || 'low').toLowerCase()}`} />
+                      <div className="alert-content">
+                        <div className="alert-msg">{alert}</div>
+                        <div className="alert-field">{field.name} · {field.location}</div>
+                      </div>
+                      <span className={`badge badge-${(field.riskLevel || 'low').toLowerCase()}`}>{field.riskLevel || 'LOW'}</span>
                     </div>
-                    <span className={`badge badge-${field.riskLevel.toLowerCase()}`}>{field.riskLevel}</span>
-                  </div>
-                ))
+                  ))
+                )
               )}
             </div>
           </div>
 
-          {/* Quick Recommendations */}
+          {/* Priority Actions — derived from real field data */}
           <div className="card fade-in-delay-3">
             <div className="card-header">
               <div className="section-title">
@@ -179,46 +183,66 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="quick-rec-list">
-              {[
-                { priority: 'URGENT', action: 'Switch Sri Ganganagar from flood to drip irrigation', field: 'Ganganagar South Block', color: '#ef4444' },
-                { priority: 'HIGH', action: 'Apply leaching irrigation at Ludhiana North Block before next sowing', field: 'Ludhiana North Block', color: '#f97316' },
-                { priority: 'HIGH', action: 'Install subsurface drainage in Sirsa district fields', field: 'Sirsa Central', color: '#f97316' },
-                { priority: 'MEDIUM', action: 'Collect soil samples for EC & SAR testing — Bathinda', field: 'Bathinda Pilot Project', color: '#f59e0b' },
-              ].map((rec, i) => (
-                <div key={i} className="quick-rec-item">
-                  <span className="rec-priority" style={{ color: rec.color, borderColor: `${rec.color}40`, background: `${rec.color}15` }}>
-                    {rec.priority}
-                  </span>
-                  <div className="rec-content">
-                    <div className="rec-action">{rec.action}</div>
-                    <div className="rec-field">{rec.field}</div>
-                  </div>
-                </div>
-              ))}
+              {fields
+                .filter(f => f.riskLevel === 'CRITICAL' || f.riskLevel === 'HIGH' || f.riskLevel === 'MODERATE')
+                .sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0))
+                .slice(0, 4)
+                .map(field => {
+                  const color = field.riskLevel === 'CRITICAL' ? '#ef4444' : field.riskLevel === 'HIGH' ? '#f97316' : '#f59e0b';
+                  const action =
+                    field.riskLevel === 'CRITICAL' && (field.irrigationMethod === 'flood' || field.irrigationMethod === 'canal')
+                      ? `Switch ${field.name} from ${field.irrigationMethod} to drip irrigation immediately and apply leaching flush`
+                      : field.riskLevel === 'CRITICAL'
+                      ? `Apply emergency leaching irrigation and get soil EC tested at KVK — ${field.name}`
+                      : field.riskLevel === 'HIGH'
+                      ? `Schedule pre-sowing leaching irrigation before next crop cycle at ${field.name}`
+                      : `Monitor soil EC monthly and apply preventive leaching at ${field.name}`;
+                  return (
+                    <div key={field.id} className="quick-rec-item">
+                      <span className="rec-priority" style={{ color, borderColor: `${color}40`, background: `${color}15` }}>
+                        {field.riskLevel}
+                      </span>
+                      <div className="rec-content">
+                        <div className="rec-action">{action}</div>
+                        <div className="rec-field">{field.name} · {field.location}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              {fields.filter(f => f.riskLevel === 'CRITICAL' || f.riskLevel === 'HIGH' || f.riskLevel === 'MODERATE').length === 0 && (
+                <div className="alerts-empty">All fields are at low risk — no urgent actions needed.</div>
+              )}
             </div>
           </div>
 
-          {/* Live Metrics Strip */}
-          <div className="card card-sm fade-in-delay-4">
-            <div className="card-header">
-              <span className="card-title">Live Readings — Ganganagar (Critical)</span>
-              <span className="live-dot" />
-            </div>
-            <div className="live-metrics-strip">
-              {[
-                { label: 'EC', value: '6.8', unit: 'dS/m', color: '#ef4444' },
-                { label: 'Water Table', value: '1.2', unit: 'm', color: '#ef4444' },
-                { label: 'Soil Temp', value: '28.4', unit: '°C', color: '#f59e0b' },
-                { label: 'Humidity', value: '52', unit: '%', color: '#00c9b1' },
-              ].map((m, i) => (
-                <div key={i} className="live-metric-item">
-                  <div className="live-metric-val" style={{ color: m.color }}>{m.value}</div>
-                  <div className="live-metric-unit">{m.unit}</div>
-                  <div className="live-metric-label">{m.label}</div>
+          {/* Live Readings — worst field from real data */}
+          {(() => {
+            const worst = fields.sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0))[0];
+            if (!worst) return null;
+            const readings = [
+              { label: 'EC', value: worst.groundwaterEC ?? worst.metrics?.ec ?? '—', unit: 'dS/m', color: (worst.groundwaterEC || 0) > 4 ? '#ef4444' : '#f59e0b' },
+              { label: 'Water Table', value: worst.waterTableDepth ?? worst.metrics?.waterTable ?? '—', unit: 'm', color: (worst.waterTableDepth || 3) < 2 ? '#ef4444' : '#f59e0b' },
+              { label: 'Rainfall 30d', value: worst.rainfallLast30Days ?? worst.metrics?.rainfall ?? '—', unit: 'mm', color: '#008a50' },
+              { label: 'Risk Score', value: worst.riskScore ?? '—', unit: '/100', color: worst.riskLevel === 'CRITICAL' ? '#ef4444' : '#f97316' },
+            ];
+            return (
+              <div className="card card-sm fade-in-delay-4">
+                <div className="card-header">
+                  <span className="card-title">Live Readings — {worst.name}</span>
+                  <span className="live-dot" />
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="live-metrics-strip">
+                  {readings.map((m, i) => (
+                    <div key={i} className="live-metric-item">
+                      <div className="live-metric-val" style={{ color: m.color }}>{m.value}</div>
+                      <div className="live-metric-unit">{m.unit}</div>
+                      <div className="live-metric-label">{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

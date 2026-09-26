@@ -377,7 +377,7 @@ export default function Analyzer() {
 
                     <div className="whoop-tab-item">
                       <span className="whoop-tab-lbl">Soil Resilience Index</span>
-                      <div className="whoop-tab-val" style={{ color: '#00c9b1' }}>
+                      <div className="whoop-tab-val" style={{ color: '#008a50' }}>
                         {result.whoopMetrics.vitals.soilResilienceIndex} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 100</span>
                       </div>
                       <div className="whoop-tab-sub">Natural buffering and flushing capacity</div>

@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(4, 8, 16, 0.85);
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
@@ -18,9 +18,9 @@
   max-width: 980px;
   max-height: 90vh;
   overflow-y: auto;
-  background: #0d1b2e;
-  border: 1px solid rgba(0, 201, 177, 0.3);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 201, 177, 0.15);
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-card-hover);
   border-radius: var(--radius-lg);
   padding: 24px;
 }
@@ -31,7 +31,7 @@
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .pindrop-title-group {
@@ -41,8 +41,8 @@
 }
 
 .pindrop-icon-box {
-  background: rgba(0, 201, 177, 0.15);
-  color: var(--color-teal);
+  background: var(--color-teal-dim);
+  color: var(--color-primary);
   padding: 10px;
   border-radius: var(--radius-sm);
   display: flex;
@@ -51,9 +51,10 @@
 }
 
 .pindrop-title-group h3 {
+  font-family: var(--font-heading);
   font-size: 18px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 
@@ -64,8 +65,8 @@
 }
 
 .pindrop-close-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   padding: 8px;
   border-radius: var(--radius-sm);
@@ -77,18 +78,18 @@
 }
 
 .pindrop-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.4);
+  background: var(--color-critical-bg);
+  color: var(--color-critical);
+  border-color: rgba(202, 50, 20, 0.4);
 }
 
 .pindrop-error-banner {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fca5a5;
+  background: var(--color-critical-bg);
+  border: 1px solid rgba(202, 50, 20, 0.3);
+  color: var(--color-critical);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -126,23 +127,59 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--color-teal);
-  font-weight: 500;
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 .pindrop-coords-pill {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
   padding: 3px 8px;
   border-radius: 6px;
-  color: #e2e8f0;
+  color: var(--text-primary);
   font-family: monospace;
   font-size: 11px;
 }
 
+.pindrop-quick-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.preset-pill-btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--transition);
+}
+
+.preset-pill-btn:hover {
+  background: var(--bg-active);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.preset-pill-btn.gps {
+  background: rgba(0, 138, 80, 0.12);
+  color: var(--color-primary);
+  border-color: rgba(0, 138, 80, 0.3);
+  font-weight: 600;
+}
+
 .pindrop-leaflet-wrapper {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -156,7 +193,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(0, 201, 177, 0.4);
+  background: rgba(0, 138, 80, 0.35);
   position: relative;
   display: flex;
   align-items: center;
@@ -168,21 +205,21 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #00c9b1;
+  background: var(--color-primary);
   border: 2px solid #fff;
-  box-shadow: 0 0 10px #00c9b1;
+  box-shadow: 0 0 10px var(--color-primary);
 }
 
 @keyframes pinPulse {
-  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 201, 177, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 201, 177, 0); }
-  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 201, 177, 0); }
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 138, 80, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 138, 80, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 138, 80, 0); }
 }
 
 /* Weather Box */
 .pindrop-weather-box {
-  background: rgba(15, 28, 50, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
 }
@@ -193,7 +230,7 @@
   gap: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-teal);
+  color: var(--color-primary);
   margin-bottom: 8px;
 }
 
@@ -209,9 +246,10 @@
 }
 
 .weather-val {
+  font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .weather-lbl {
@@ -247,17 +285,17 @@
 .form-group label {
   font-size: 12px;
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
 .form-group input[type="text"],
 .form-group input[type="number"],
 .form-group select,
 .form-group textarea {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
-  color: #fff;
+  color: var(--text-primary);
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
@@ -268,12 +306,12 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--color-teal);
-  background: rgba(0, 201, 177, 0.08);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(0, 138, 80, 0.2);
 }
 
 .form-group input[type="range"] {
-  accent-color: var(--color-teal);
+  accent-color: var(--color-primary);
   cursor: pointer;
   margin-top: 4px;
 }
@@ -292,9 +330,9 @@
   text-transform: uppercase;
 }
 
-.ec-tag.safe { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-.ec-tag.high { background: rgba(249, 115, 22, 0.15); color: #f97316; }
-.ec-tag.critical { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.ec-tag.safe { background: var(--color-safe-bg); color: var(--color-safe); }
+.ec-tag.high { background: var(--color-high-bg); color: var(--color-high); }
+.ec-tag.critical { background: var(--color-critical-bg); color: var(--color-critical); }
 
 /* Actions */
 .pindrop-actions {
@@ -307,26 +345,27 @@
 
 .btn-cancel {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-card);
   color: var(--text-secondary);
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   font-size: 13px;
   cursor: pointer;
+  transition: var(--transition);
 }
 
 .btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .btn-submit {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #00c9b1 0%, #009e8b 100%);
+  background: var(--color-primary);
   border: none;
-  color: #070d18;
+  color: #ffffff;
   font-weight: 700;
   padding: 9px 18px;
   border-radius: var(--radius-sm);
@@ -336,8 +375,9 @@
 }
 
 .btn-submit:hover:not(:disabled) {
+  background: var(--color-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 201, 177, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 138, 80, 0.35);
 }
 
 .btn-submit:disabled {

@@ -5,6 +5,7 @@ const AppContext = createContext(null);
 const initialState = {
   loading: true,
   error: null,
+  theme: typeof window !== 'undefined' ? (localStorage.getItem('terrasal_theme') || 'light') : 'light',
   fields: [],
   activeFarmId: null,
   isPinDropModalOpen: false,
@@ -116,6 +117,10 @@ const reducer = (state, action) => {
         ...state,
         notifications: state.notifications.map(n => ({ ...n, read: true })),
       };
+    case 'SET_THEME':
+      return { ...state, theme: action.payload };
+    case 'TOGGLE_THEME':
+      return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
     default:
       return state;
   }
@@ -123,6 +128,12 @@ const reducer = (state, action) => {
 
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Sync theme attribute on <html> element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    localStorage.setItem('terrasal_theme', state.theme);
+  }, [state.theme]);
 
   const loadData = async (targetActiveId = null) => {
     dispatch({ type: 'FETCH_START' });
@@ -156,6 +167,8 @@ export const AppProvider = ({ children }) => {
     loadData();
   }, []);
 
+  const toggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
+  const setTheme = (t) => dispatch({ type: 'SET_THEME', payload: t });
   const setActiveFarmId = (id) => dispatch({ type: 'SET_ACTIVE_FARM', payload: id });
   const openPinDropModal = () => dispatch({ type: 'OPEN_PIN_DROP_MODAL' });
   const closePinDropModal = () => dispatch({ type: 'CLOSE_PIN_DROP_MODAL' });
@@ -202,6 +215,9 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       state,
+      theme: state.theme,
+      toggleTheme,
+      setTheme,
       activeFarm,
       setActiveFarmId,
       openPinDropModal,

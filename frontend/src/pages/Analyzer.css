@@ -522,7 +522,7 @@
 .whoop-tab-val {
   font-size: 22px;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -533,28 +533,28 @@
 
 .whoop-tab-window {
   margin-top: 16px;
-  background: rgba(0, 201, 177, 0.08);
-  border: 1px solid rgba(0, 201, 177, 0.25);
+  background: var(--color-teal-dim);
+  border: 1px solid var(--border-accent);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
 }
 
 .whoop-tab-window-title {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 
 .whoop-tab-window p {
   font-size: 12px;
-  color: #cbd5e1;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 8px;
 }
 
 .whoop-tab-window-action {
   font-size: 12px;
-  color: var(--color-teal);
-  border-top: 1px solid rgba(0, 201, 177, 0.2);
+  color: var(--color-primary);
+  border-top: 1px solid var(--border-subtle);
   padding-top: 8px;
 }

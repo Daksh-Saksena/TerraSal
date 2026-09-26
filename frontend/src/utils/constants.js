@@ -69,13 +69,15 @@ export const EC_THRESHOLDS = {
 };
 
 export const CHART_COLORS = {
-  teal: '#00C9B1',
-  amber: '#F4A261',
-  crimson: '#E63946',
-  blue: '#4ECDC4',
-  purple: '#9B59B6',
-  green: '#22c55e',
-  navy: '#1a3a5c',
+  primary: '#008a50',
+  teal: '#008a50',
+  emerald: '#10b981',
+  blue: '#3b82f6',
+  purple: '#8b5cf6',
+  amber: '#f59e0b',
+  crimson: '#ca3214',
+  green: '#008a50',
+  navy: '#171717',
 };
 
 export const APP_VERSION = '1.0.0-beta';

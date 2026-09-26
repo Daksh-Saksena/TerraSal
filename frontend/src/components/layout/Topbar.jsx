@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Search, RefreshCw, ChevronDown, X, CheckCheck } from 'lucide-react';
+import { Bell, Search, RefreshCw, ChevronDown, X, CheckCheck, Sun, Moon } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getRelativeTime } from '../../utils/formatters';
 import './Topbar.css';
 
 export default function Topbar({ pageTitle }) {
-  const { state, markNotificationRead, markAllRead } = useApp();
+  const { state, theme, toggleTheme, markNotificationRead, markAllRead } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const notifRef = useRef(null);
@@ -53,6 +53,17 @@ export default function Topbar({ pageTitle }) {
             placeholder="Search fields, districts..."
           />
         </div>
+
+        {/* Theme Switcher: tweakcn Supabase Light / Dark */}
+        <button
+          className="icon-btn theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to Supabase Light Mode' : 'Switch to Supabase Dark Mode'}
+          id="theme-toggle-btn"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
 
         {/* Refresh */}
         <button

@@ -4,9 +4,9 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--topbar-height);
-  background: rgba(7, 13, 24, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -23,7 +23,7 @@
 }
 
 .topbar-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -35,7 +35,7 @@
   gap: 6px;
   font-size: 0.75rem;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.04);
+  background: var(--bg-hover);
   padding: 4px 10px;
   border-radius: 20px;
   border: 1px solid var(--border-subtle);
@@ -45,7 +45,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-teal);
+  background: var(--color-primary);
   animation: livePulse 2s infinite;
 }
 
@@ -90,9 +90,9 @@
 
 .search-input:focus {
   outline: none;
-  border-color: var(--color-teal);
+  border-color: var(--color-primary);
   width: 260px;
-  box-shadow: 0 0 0 3px rgba(0, 201, 177, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 138, 80, 0.15);
 }
 
 /* Icon Buttons */
@@ -100,7 +100,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.05);
+  background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   display: flex;
@@ -112,8 +112,15 @@
 }
 
 .icon-btn:hover {
-  background: rgba(255,255,255,0.1);
+  background: var(--border-card);
   color: var(--text-primary);
+}
+
+.theme-toggle-btn {
+  color: var(--color-primary);
+}
+.theme-toggle-btn:hover {
+  border-color: var(--border-accent);
 }
 
 .icon-btn.spinning svg {
@@ -156,10 +163,10 @@
   top: calc(100% + 8px);
   right: 0;
   width: 340px;
-  background: #1a2d4a;
+  background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-card);
   z-index: 200;
   overflow: hidden;
   animation: fadeInUp 0.2s ease;
@@ -181,7 +188,7 @@
   align-items: center;
   gap: 5px;
   font-size: 0.75rem;
-  color: var(--color-teal);
+  color: var(--color-primary);
   background: none;
   border: none;
   cursor: pointer;
@@ -205,7 +212,7 @@
 
 .notif-item:last-child { border-bottom: none; }
 
-.notif-item:hover { background: rgba(255,255,255,0.03); }
+.notif-item:hover { background: var(--bg-hover); }
 
 .notif-item.read { opacity: 0.65; }
 
@@ -236,7 +243,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-teal);
+  background: var(--color-primary);
   margin-top: 6px;
   flex-shrink: 0;
 }
@@ -248,14 +255,14 @@
   gap: 10px;
   padding: 6px 12px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.05);
+  background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   transition: all var(--transition);
 }
 
 .user-chip:hover {
-  background: rgba(255,255,255,0.09);
+  background: var(--border-subtle);
   border-color: var(--border-accent);
 }
 
@@ -263,7 +270,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00c9b1, #006f66);
+  background: var(--color-primary);
   color: #fff;
   font-size: 0.75rem;
   font-weight: 700;

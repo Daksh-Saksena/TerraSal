@@ -5,7 +5,7 @@
 }
 
 .gauge-score {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
   font-size: 40px;
   font-weight: 800;
   dominant-baseline: middle;

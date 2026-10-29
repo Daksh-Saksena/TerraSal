@@ -65,7 +65,6 @@ export default function FactorBreakdownChart({ factors = [], height = 260 }) {
             <Cell
               key={i}
               fill={getSeverityColor(entry.severity)}
-              style={{ filter: `drop-shadow(0 0 4px ${getSeverityColor(entry.severity)}60)` }}
             />
           ))}
         </Bar>

@@ -74,7 +74,6 @@ export default function RiskGauge({ score = 0, size = 220, showLabel = true }) {
           strokeDashoffset={CIRCUMFERENCE}
           style={{
             transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease',
-            filter: `drop-shadow(0 0 8px ${color}80)`,
           }}
         />
 

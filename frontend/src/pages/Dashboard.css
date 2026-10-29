@@ -65,7 +65,7 @@
   flex-shrink: 0;
 }
 
-.risk-bd-dot.critical { background: var(--color-critical); box-shadow: 0 0 8px rgba(202,50,20,0.5); }
+.risk-bd-dot.critical { background: var(--color-critical); }
 .risk-bd-dot.high { background: var(--color-high); }
 .risk-bd-dot.moderate { background: var(--color-moderate); }
 .risk-bd-dot.low { background: var(--color-safe); }
@@ -116,7 +116,7 @@
   flex-shrink: 0;
 }
 
-.alert-level-dot.critical { background: var(--color-critical); animation: pulseCritical 2s infinite; }
+.alert-level-dot.critical { background: var(--color-critical); }
 .alert-level-dot.high { background: var(--color-high); }
 .alert-level-dot.moderate { background: var(--color-moderate); }
 .alert-level-dot.low { background: var(--color-safe); }

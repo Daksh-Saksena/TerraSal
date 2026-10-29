@@ -19,7 +19,7 @@ export default function FarmSwitcher() {
       <div className="farm-switcher-header">
         <div className="farm-switcher-title">
           <Activity size={13} />
-          <span>Village Farm Sessions</span>
+          <span>Registered Farms</span>
         </div>
         <button
           className="farm-switcher-add-btn"
@@ -62,8 +62,8 @@ export default function FarmSwitcher() {
                     <span className="dot-sep">·</span>
                     <span className="crop-sub-name">{farm.cropType}</span>
                     <span className="dot-sep">·</span>
-                    <span className="strain-sub-val" style={{ color: strain >= 14 ? '#f97316' : '#94a3b8' }}>
-                      S:{strain}
+                    <span className="area-sub-val" style={{ color: 'var(--text-muted)' }}>
+                      {farm.area} ac
                     </span>
                   </div>
                 </div>

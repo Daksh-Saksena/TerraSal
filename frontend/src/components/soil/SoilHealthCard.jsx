@@ -155,12 +155,9 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
 
   return (
     <div className="shc-card fade-in">
-      <div className="shc-accent-bar" style={{ background: `linear-gradient(90deg, ${mainColor}, ${mainColor}44)` }} />
-
       {/* Header */}
       <div className="shc-header">
         <div className="shc-identity">
-          <div className="shc-live-dot" style={{ background: mainColor }} />
           <div>
             <div className="shc-farm-name">{farm.name}</div>
             <div className="shc-meta">
@@ -192,7 +189,6 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
                 stroke={mainColor}
                 strokeDasharray={circ}
                 strokeDashoffset={offset}
-                style={{ filter: `drop-shadow(0 0 10px ${mainColor}88)` }}
               />
             </svg>
             <div className="shc-ring-inner">

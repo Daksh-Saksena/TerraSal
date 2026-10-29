@@ -37,10 +37,6 @@ export default function Topbar({ pageTitle }) {
     <header className="topbar">
       <div className="topbar-left">
         <h2 className="topbar-title">{pageTitle}</h2>
-        <div className="topbar-meta">
-          <span className="live-dot" />
-          <span>Live Data · Updated 2 min ago</span>
-        </div>
       </div>
 
       <div className="topbar-right">

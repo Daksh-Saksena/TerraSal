@@ -19,8 +19,8 @@ export default function Dashboard() {
     <div className="page-container fade-in">
       {/* Page Header */}
       <div className="page-header">
-        <h1>Salinity Command Center</h1>
-        <p>Panchayat Village Kiosk: Real-time salinity and soil health monitoring across village fields</p>
+        <h1>Field Salinity Overview</h1>
+        <p>Panchayat Soil Portal: Salinity diagnostic and root zone tracking across registered village plots</p>
       </div>
 
       {/* Active Farm Soil Health Card */}
@@ -61,14 +61,14 @@ export default function Dashboard() {
           description={`${summaryStats.criticalFields} critical, ${summaryStats.highRiskFields} high risk`}
         />
         <MetricCard
-          title="Sensors Online"
+          title="Monitored Plots"
           value={summaryStats.connectedSensors}
           unit={`/${summaryStats.totalFields}`}
-          change="1 offline"
+          change="Telemetry active"
           changeType="stable"
           icon={Cpu}
           iconColor="#22c55e"
-          description="Live data streaming"
+          description="In-situ sensor telemetry"
         />
       </div>
 
@@ -81,7 +81,7 @@ export default function Dashboard() {
           {/* Regional Risk Summary */}
           <div className="card fade-in-delay-2">
             <div className="card-header">
-              <span className="card-title">Overall Platform Risk</span>
+              <span className="card-title">Regional Salinity Summary</span>
               <span className="chip"><MapPin size={11} /> 3 states · 6 fields</span>
             </div>
             <div className="risk-overview">
@@ -228,8 +228,8 @@ export default function Dashboard() {
             return (
               <div className="card card-sm fade-in-delay-4">
                 <div className="card-header">
-                  <span className="card-title">Live Readings: {worst.name}</span>
-                  <span className="live-dot" />
+                  <span className="card-title">Field Metrics: {worst.name}</span>
+                  <span className="chip">{worst.location}</span>
                 </div>
                 <div className="live-metrics-strip">
                   {readings.map((m, i) => (

@@ -16,7 +16,7 @@ import './PinDropModal.css';
 // Custom Pin Icon
 const pinIcon = new L.DivIcon({
   className: 'custom-pin-icon',
-  html: `<div class="pin-marker-pulse"><div class="pin-marker-dot"></div></div>`,
+  html: `<div class="pin-marker-wrap"><div class="pin-marker-dot"></div></div>`,
   iconSize: [28, 28],
   iconAnchor: [14, 14]
 });

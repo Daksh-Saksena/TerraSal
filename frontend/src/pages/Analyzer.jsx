@@ -369,11 +369,11 @@ export default function Analyzer() {
 
                   <div className="whoop-tab-grid">
                     <div className="whoop-tab-item">
-                      <span className="whoop-tab-lbl">Soil Strain Score</span>
+                      <span className="whoop-tab-lbl">Root Osmotic Load</span>
                       <div className="whoop-tab-val" style={{ color: result.whoopMetrics.soilStrain >= 14 ? '#f97316' : '#22c55e' }}>
-                        {result.whoopMetrics.soilStrain} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 21.0</span>
+                        {result.whoopMetrics.soilStrain} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 20</span>
                       </div>
-                      <div className="whoop-tab-sub">{result.whoopMetrics.strainCategory} (Target: &lt; {result.whoopMetrics.targetStrainMax})</div>
+                      <div className="whoop-tab-sub">{result.whoopMetrics.strainCategory}</div>
                     </div>
 
                     <div className="whoop-tab-item">

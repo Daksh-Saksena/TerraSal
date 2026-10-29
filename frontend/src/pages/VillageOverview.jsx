@@ -5,8 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import {
   Users, Activity, Droplets, ShieldCheck,
   AlertTriangle, ArrowUpRight, TrendingUp, Layers,
-  Compass, MapPin, Sparkles, CheckCircle2, ChevronRight,
-  RefreshCw, Key, Bot, X, Check, Lock
+  Compass, MapPin, BookOpen, CheckCircle2, ChevronRight,
+  RefreshCw, X, Check
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +27,7 @@ function MapResizeController() {
 // Custom Marker for village pins based on recovery
 const createVillageIcon = (zoneColor) => new L.DivIcon({
   className: 'village-map-pin',
-  html: `<div class="village-pin-outer" style="border-color: ${zoneColor}; box-shadow: 0 0 10px ${zoneColor}"><div class="village-pin-core" style="background: ${zoneColor}"></div></div>`,
+  html: `<div class="village-pin-outer" style="border-color: ${zoneColor}"><div class="village-pin-core" style="background: ${zoneColor}"></div></div>`,
   iconSize: [22, 22],
   iconAnchor: [11, 11]
 });
@@ -39,10 +39,6 @@ export default function VillageOverview() {
   const [filterZone, setFilterZone] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [inputKey, setInputKey] = useState('');
-  const [savingKey, setSavingKey] = useState(false);
-  const [keyStatusMsg, setKeyStatusMsg] = useState(null);
 
   const fetchBenchmarks = async () => {
     try {
@@ -62,7 +58,7 @@ export default function VillageOverview() {
     fetchBenchmarks();
   }, [state.fields]);
 
-  const handleRegenerateAI = async () => {
+  const handleRefreshAdvisories = async () => {
     setRegenerating(true);
     try {
       const res = await fetch('/api/village/regenerate-ai', { method: 'POST' });
@@ -71,42 +67,12 @@ export default function VillageOverview() {
         setBenchmarkData(prev => ({
           ...prev,
           advisories: data.advisories,
-          aiMeta: data.aiMeta
         }));
       }
     } catch (err) {
-      console.error('Failed to regenerate AI advisories:', err);
+      console.error('Failed to refresh field advisories:', err);
     } finally {
       setRegenerating(false);
-    }
-  };
-
-  const handleSaveApiKey = async (e) => {
-    e.preventDefault();
-    if (!inputKey.trim()) return;
-    setSavingKey(true);
-    try {
-      const res = await fetch('/api/ai/set-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: inputKey.trim(), model: 'gpt-4o-mini' })
-      });
-      if (res.ok) {
-        setKeyStatusMsg({ type: 'success', text: 'API Key saved! Generating insights with GPT-4o-mini...' });
-        setInputKey('');
-        setTimeout(() => {
-          setShowKeyModal(false);
-          setKeyStatusMsg(null);
-          handleRegenerateAI();
-        }, 1200);
-      } else {
-        const err = await res.json();
-        setKeyStatusMsg({ type: 'error', text: err.error || 'Failed to save key' });
-      }
-    } catch (err) {
-      setKeyStatusMsg({ type: 'error', text: err.message });
-    } finally {
-      setSavingKey(false);
     }
   };
 
@@ -135,8 +101,6 @@ export default function VillageOverview() {
     navigate('/');
   };
 
-  const isAIConfigured = benchmarkData?.aiMeta?.configured;
-  const isAIGenerated = benchmarkData?.aiMeta?.source === 'gpt-4o-mini';
   const advisories = benchmarkData?.advisories || [];
 
   return (
@@ -147,19 +111,10 @@ export default function VillageOverview() {
           <h1>Village Panchayat Soil Health Hub</h1>
           <p>Collective monitoring and cross-field salinity intelligence across all village plots</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button 
-            className="village-ai-key-btn"
-            onClick={() => setShowKeyModal(true)}
-            title="Configure OpenAI API Key"
-          >
-            <Key size={14} />
-            <span>{isAIConfigured ? 'OpenAI Connected' : 'Set OpenAI Key'}</span>
-            {isAIConfigured && <span className="ai-status-dot online" />}
-          </button>
+        <div>
           <button className="village-add-farm-btn" onClick={openPinDropModal}>
             <MapPin size={15} />
-            <span>Drop Pin for New Farm</span>
+            <span>Add Field Plot</span>
           </button>
         </div>
       </div>
@@ -181,11 +136,11 @@ export default function VillageOverview() {
 
         <div className="card village-stat-card">
           <div className="vstat-top">
-            <span className="vstat-label">Village Avg Strain</span>
+            <span className="vstat-label">Root Osmotic Stress</span>
             <Activity size={18} className="vstat-icon orange" />
           </div>
-          <div className="vstat-value">{stats.avgStrain} <span className="vstat-unit">/ 21.0</span></div>
-          <div className="vstat-sub">Cumulative root osmotic load</div>
+          <div className="vstat-value">{stats.avgStrain} <span className="vstat-unit">load</span></div>
+          <div className="vstat-sub">Cumulative root zone salinity stress</div>
         </div>
 
         <div className="card village-stat-card">
@@ -274,7 +229,7 @@ export default function VillageOverview() {
         <div className="card village-advisory-card">
           <div className="card-header">
             <div className="section-title">
-              <div className="section-title-icon"><Sparkles size={16} /></div>
+              <div className="section-title-icon"><BookOpen size={16} /></div>
               <span>Community Soil Advisories</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -282,8 +237,8 @@ export default function VillageOverview() {
                 Field Extension Bulletin
               </span>
               <button 
-                className="btn-ai-refresh"
-                onClick={handleRegenerateAI}
+                className="btn btn-secondary btn-sm"
+                onClick={handleRefreshAdvisories}
                 disabled={regenerating}
                 title="Refresh field advisories"
               >
@@ -427,69 +382,6 @@ export default function VillageOverview() {
           </table>
         </div>
       </div>
-
-      {/* OpenAI API Key Modal */}
-      {showKeyModal && (
-        <div className="modal-overlay fade-in" onClick={() => setShowKeyModal(false)}>
-          <div className="modal-card ai-key-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div className="section-title-icon"><Bot size={18} /></div>
-                <h3>Configure OpenAI API Key</h3>
-              </div>
-              <button className="modal-close-btn" onClick={() => setShowKeyModal(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveApiKey} className="ai-key-form">
-              <p className="ai-key-description">
-                TerraSal uses <strong>GPT-4o-mini</strong> to synthesize village farm metrics and generate dynamic, agronomist-level peer intelligence.
-              </p>
-
-              <div className="form-group">
-                <label>OpenAI API Key</label>
-                <div className="input-with-icon">
-                  <Lock size={15} className="input-icon" />
-                  <input
-                    type="password"
-                    placeholder="sk-proj-..."
-                    value={inputKey}
-                    onChange={e => setInputKey(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <span className="form-hint">Model: <strong>gpt-4o-mini</strong>. Your key is saved locally to your backend <code>.env</code> file.</span>
-              </div>
-
-              {keyStatusMsg && (
-                <div className={`key-status-banner ${keyStatusMsg.type}`}>
-                  {keyStatusMsg.type === 'success' ? <Check size={14} /> : <AlertTriangle size={14} />}
-                  <span>{keyStatusMsg.text}</span>
-                </div>
-              )}
-
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowKeyModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={savingKey || !inputKey.trim()}
-                >
-                  {savingKey ? 'Saving...' : 'Save & Enable AI'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

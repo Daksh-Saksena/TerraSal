@@ -293,12 +293,6 @@ a:hover { text-decoration: underline; }
   background: rgba(239,68,68,0.15);
   color: #ef4444;
   border: 1px solid rgba(239,68,68,0.3);
-  animation: pulseCritical 2s infinite;
-}
-
-@keyframes pulseCritical {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
 }
 
 /* ─── Buttons ────────────────────────────────────────────────── */

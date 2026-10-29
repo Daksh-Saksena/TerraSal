@@ -17,7 +17,7 @@ const sensorDevices = [
 
 const apiSources = [
   { name: 'IMD Weather API', description: 'India Meteorological Department rainfall and forecast data', status: 'not-configured', key: '' },
-  { name: 'CGWB Groundwater API', description: 'Central Ground Water Board — water table depth data', status: 'not-configured', key: '' },
+  { name: 'CGWB Groundwater API', description: 'Central Ground Water Board: water table depth data', status: 'not-configured', key: '' },
   { name: 'ICAR Soil Database', description: 'Indian Council of Agricultural Research soil classification', status: 'not-configured', key: '' },
   { name: 'PM-KISAN Farmer Registry', description: 'Government farmer identification and location data', status: 'not-configured', key: '' },
 ];
@@ -202,7 +202,7 @@ export default function Settings() {
                       {sensor.status === 'offline' && (
                         <div className="alert alert-critical" style={{ margin: 0 }}>
                           <AlertTriangle size={14} />
-                          Sensor offline — check field installation and power supply.
+                          Sensor offline: check field installation and power supply.
                         </div>
                       )}
                     </div>

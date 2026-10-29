@@ -10,7 +10,7 @@ import './MapView.css';
 // Fix for default Leaflet icon paths in React
 delete L.Icon.Default.prototype._getIconUrl;
 
-// Fixes gray-tile bug — invalidates Leaflet's container size after mount
+// Fixes gray-tile bug by invalidating Leaflet container size after mount
 function MapResizeController() {
   const map = useMap();
   React.useEffect(() => {
@@ -196,8 +196,8 @@ export default function MapView() {
               <div className="legend-title">Risk Level</div>
               {[
                 { level: 'CRITICAL', label: 'Critical (≥80)' },
-                { level: 'HIGH', label: 'High (60–79)' },
-                { level: 'MODERATE', label: 'Moderate (35–59)' },
+                { level: 'HIGH', label: 'High (60 to 79)' },
+                { level: 'MODERATE', label: 'Moderate (35 to 59)' },
                 { level: 'LOW', label: 'Low (<35)' },
               ].map(item => (
                 <div key={item.level} className="legend-item">

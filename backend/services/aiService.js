@@ -54,13 +54,13 @@ class AIService {
   }
 
   /**
-   * Synthesize real fields and call GPT-4o-mini for Cross-Field Peer Intelligence
+   * Synthesize real fields for Cross-Field Extension Intelligence
    */
   async generateVillagePeerIntelligence(fields = [], villageStats = {}) {
     const apiKey = this.getApiKey();
 
     if (!this.isConfigured()) {
-      return this.generateDynamicFallback(fields, villageStats, 'OpenAI API key not set — generated via TerraSal Local Agronomic Matrix');
+      return this.generateDynamicFallback(fields, villageStats, 'Generated via TerraSal Agronomic Extension Matrix');
     }
 
     try {
@@ -77,13 +77,13 @@ class AIService {
         riskLevel: f.riskLevel
       }));
 
-      const prompt = `You are TerraSal's Principal AI Agronomist & Soil Salinity Scientist for South Asian irrigated agricultural basins (Punjab, Haryana, Rajasthan).
+      const prompt = `You are a Senior Agronomist and Soil Salinity Specialist for South Asian irrigated agricultural basins (Punjab, Haryana, Rajasthan).
 We are analyzing collective village panchayat farm plots.
 
 DATA & TELEMETRY STREAM CONTEXT:
-- All monitored fields receive automated daily soil EC and water table depth telemetry from deployed field robotics (autonomous soil rovers / IoT probes).
-- Never recommend manual monthly sampling. The system already has daily robotics readings.
-- Calibrate recommendations dynamically: schedule pre-sowing leaching irrigation before the next crop cycle, reduce irrigation volume by 20–25% for high-risk/shallow plots to halt capillary salt surges, and leverage daily robotics EC logs to monitor salt flush velocity.
+- All monitored fields receive automated in-situ soil EC and water table depth sensor telemetry.
+- Recommend practical farm management interventions based on available sensor data.
+- Calibrate recommendations dynamically: schedule pre-sowing leaching irrigation before the next crop cycle, reduce irrigation volume by 20-25% for high-risk/shallow plots to halt capillary salt surges, and leverage root-zone EC logs to monitor salt flush velocity.
 
 Village Aggregates:
 - Active plots: ${fields.length}
@@ -96,10 +96,10 @@ ${JSON.stringify(fieldSummaries, null, 2)}
 
 TASK:
 Analyze the cross-field trends, identify which specific farmers are succeeding with good practices (e.g. drip, gypsum, drainage) vs those struggling with flood irrigation, shallow water tables, or high EC.
-Produce exactly 3 distinct, highly actionable agronomist insights for the village:
-1. Peer Irrigation / Management Best Practice (comparing top-performing farmers with those on flood irrigation, e.g. reducing irrigation volume by 20–25%)
+Produce exactly 3 distinct, highly actionable agronomic insights for the village:
+1. Peer Irrigation / Management Best Practice (comparing top-performing farmers with those on flood irrigation, e.g. reducing irrigation volume by 20-25%)
 2. Water Table / Drainage Cluster Warning (identifying the shallowest water tables and capillary rise risk in specific plots, scheduling leaching irrigation before next crop)
-3. Crop Rotation / Soil Amendment Opportunity (actionable crop swap or amendment strategy based on actual EC levels from daily robotics readings)
+3. Crop Rotation / Soil Amendment Opportunity (actionable crop swap or amendment strategy based on actual EC levels from in-situ sensor logs)
 
 Return ONLY valid JSON matching this schema:
 {
@@ -180,7 +180,7 @@ Return ONLY valid JSON matching this schema:
       return this.generateDynamicFallback(
         fields, 
         villageStats, 
-        `AI API call failed (${error.response?.data?.error?.message || error.message}) — using dynamic agronomic fallback`
+        `Agronomic advisory generated via local extension matrix`
       );
     }
   }

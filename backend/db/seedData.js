@@ -20,7 +20,7 @@ export const fieldsData = [
     rainfallLast30Days: 14,
     notes: 'Canal branch 4 inlet side. Rising groundwater causing salt rings after heavy winter watering.',
     alerts: [
-      'EC has reached 4.6 dS/m — exceeding safe threshold for wheat',
+      'EC has reached 4.6 dS/m: exceeding safe threshold for wheat',
       'Water table at 1.8m: Risk of secondary capillary salinization'
     ]
   },
@@ -63,7 +63,7 @@ export const fieldsData = [
     rainfallLast30Days: 3,
     notes: 'Emergency plot. Heavy clay soil with very poor infiltration. Surface salt crusting visible across 60% of plot.',
     alerts: [
-      'CRITICAL: Groundwater EC reached 6.8 dS/m — severe root zone damage',
+      'CRITICAL: Groundwater EC reached 6.8 dS/m: severe root zone damage',
       'Shallow water table (1.2m) actively pumping salts to surface',
       'Switch from flood to drip irrigation immediately'
     ]

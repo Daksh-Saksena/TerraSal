@@ -10,8 +10,8 @@ export const cropDatabase = [
     scientificName: 'Hordeum vulgare',
     category: 'Cereal',
     toleranceLevel: 'very-high',
-    ecThreshold50: 13.0, // dS/m — 50% yield loss
-    ecMaxTolerable: 8.0, // dS/m — threshold above which stress begins
+    ecThreshold50: 13.0, // dS/m: 50% yield loss
+    ecMaxTolerable: 8.0, // dS/m: threshold above which stress begins
     yieldReduction: '10% per dS/m above 8',
     idealSoilTypes: ['sandy', 'sandy-loam', 'loamy'],
     waterRequirement: 'low',
@@ -64,7 +64,7 @@ export const cropDatabase = [
     notes: 'Drought and salt tolerant. Good oilseed alternative.',
     icon: '🌻',
   },
-  // Moderately tolerant (ECe 4–8 dS/m)
+  // Moderately tolerant (ECe 4-8 dS/m)
   {
     id: 'wheat',
     name: 'Wheat',

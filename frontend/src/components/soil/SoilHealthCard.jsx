@@ -61,10 +61,10 @@ const buildMetrics = (farm, vitals) => {
       safeValue: 'Ideal: deeper than 3 m',
       barPct: Math.min(100, Math.round(Math.max(0, (4.5 - wt) / 4.5) * 100)),
       plain: wt < 2.0
-        ? `Underground water is only ${wt}m below the surface — very close. It is rising and pulling dissolved salts up into your root zone.`
+        ? `Underground water is only ${wt}m below the surface, which is very close. It is rising and pulling dissolved salts up into your root zone.`
         : wt < 3.0
         ? `Water table at ${wt}m is somewhat close. Some salt rise is possible during hot dry periods.`
-        : `Water table is deep (${wt}m) — low risk of salts rising to the surface.`,
+        : `Water table is deep at ${wt}m, giving low risk of salts rising to the surface.`,
     },
     {
       key: 'rain', icon: CloudRain, iconClass: 'metric-icon-amber',
@@ -76,7 +76,7 @@ const buildMetrics = (farm, vitals) => {
         ? `Very little rain this month (${rain}mm). Without rain to flush salts, they are building up in the root zone.`
         : rain < 40
         ? `Rainfall is below ideal (${rain}mm). Some natural flushing is happening but not enough to prevent build-up.`
-        : `Good rainfall (${rain}mm) is washing salts deeper below the roots — a positive sign.`,
+        : `Good rainfall (${rain}mm) is washing salts deeper below the roots, which is a positive sign.`,
     },
     {
       key: 'leach', icon: Zap, iconClass: 'metric-icon-orange',
@@ -85,7 +85,7 @@ const buildMetrics = (farm, vitals) => {
       safeValue: 'Extra water beyond crop dose to flush salts',
       barPct: Math.min(100, leachReq),
       plain: leachReq > 30
-        ? `You need ${leachReq}% more water than the crop needs just to flush out salt. This is a high leaching requirement — a sign of heavy salt accumulation.`
+        ? `You need ${leachReq}% more water than the crop needs just to flush out salt. This high leaching requirement indicates heavy salt accumulation.`
         : leachReq > 10
         ? `Apply about ${leachReq}% extra water each irrigation to prevent salt from building up in the root zone.`
         : `Salt flush needed is low (${leachReq}%). Conditions are manageable with normal irrigation.`,
@@ -100,7 +100,7 @@ const buildMetrics = (farm, vitals) => {
         ? `Salt in the soil is creating very high resistance for roots (${osmP.toFixed(2)} atm). Plants cannot absorb water properly even when soil is wet.`
         : osmP > 1.0
         ? `Roots face moderate resistance from salt (${osmP.toFixed(2)} atm). Crop growth and yield are being reduced.`
-        : `Roots are absorbing water normally — low osmotic resistance.`,
+        : `Roots are absorbing water normally with low osmotic resistance.`,
     },
   ];
 };
@@ -114,19 +114,19 @@ const getTopAction = (farm, riskScore) => {
 
   if (riskScore >= 80) {
     return (m === 'flood' || m === 'canal')
-      ? { urgency: 'urgent', text: `Critical root-zone salinity (${ec} dS/m). Stop flood irrigation immediately and switch to drip. Schedule a heavy leaching flush (25–40% extra water over crop dose) before the next crop cycle; daily robotics stream will track root salt clearance.` }
-      : { urgency: 'urgent', text: `Apply emergency leaching irrigation (30–40% extra water over crop dose). Daily robotics readings are logging high EC (${ec} dS/m) — flush salts below the root zone before sowing.` };
+      ? { urgency: 'urgent', text: `Critical root-zone salinity (${ec} dS/m). Stop flood irrigation immediately and switch to drip. Schedule a heavy leaching flush (25% to 40% extra water over crop dose) before the next crop cycle. Soil sensors will track root salt clearance.` }
+      : { urgency: 'urgent', text: `Apply emergency leaching irrigation (30% to 40% extra water over crop dose). Field probes record high EC (${ec} dS/m). Flush salts below the root zone before sowing.` };
   }
   if (riskScore >= 60) {
     if (ec > thr)
-      return { urgency: 'high', text: `Your well water EC (${ec} dS/m) is above the safe limit for ${cn} (${thr} dS/m). Schedule a leaching irrigation before the next crop and reduce irrigation volume by 20–25%. Daily robotics telemetry will track salt reduction.` };
+      return { urgency: 'high', text: `Your tubewell water EC (${ec} dS/m) is above the safe limit for ${cn} (${thr} dS/m). Schedule a leaching irrigation before next sowing and reduce irrigation volume by 20% to 25%. Sensors will monitor salt reduction.` };
     if (wt < 2.0)
-      return { urgency: 'high', text: `Water table is too shallow (${wt}m). Reduce irrigation volume by 20–25% to prevent capillary salt rise. Daily robotics readings will monitor water table and EC trends.` };
-    return { urgency: 'high', text: `Schedule a leaching irrigation before the next crop. Reduce irrigation volume by 20–25%. Daily EC readings are tracked continuously via field robotics.` };
+      return { urgency: 'high', text: `Water table is too shallow (${wt}m). Reduce irrigation volume by 20% to 25% to prevent capillary salt rise. Sensor logs will monitor water table and EC trends.` };
+    return { urgency: 'high', text: `Schedule a leaching irrigation before the next crop. Reduce irrigation volume by 20% to 25%. Daily EC readings are tracked continuously.` };
   }
   if (riskScore >= 35)
-    return { urgency: 'medium', text: `Conditions are manageable. Schedule a preventive leaching irrigation before the next crop. Daily robotics EC stream (${ec} dS/m) indicates stable soil balance.` };
-  return { urgency: 'good', text: `Your field is healthy. Daily robotics EC readings (${ec} dS/m) are within safe limits. Current irrigation volume is optimal.` };
+    return { urgency: 'medium', text: `Conditions are manageable. Schedule a preventive leaching irrigation before the next crop. Tubewell EC readings (${ec} dS/m) indicate stable soil balance.` };
+  return { urgency: 'good', text: `Your field is healthy. Tubewell EC readings (${ec} dS/m) are within safe limits. Current irrigation volume is optimal.` };
 };
 
 export default function SoilHealthCard({ farm, onOpenPinDrop }) {
@@ -204,7 +204,7 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
           <div className="shc-score-risk">Risk Score · {label.short}</div>
           <div className="shc-irr-tip">
             <Clock size={12} />
-            <span>Irrigate 5–8 AM to cut evaporation and salt crusting</span>
+            <span>Irrigate 5 to 8 AM to cut evaporation and salt crusting</span>
           </div>
         </div>
 

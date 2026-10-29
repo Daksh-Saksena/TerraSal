@@ -39,7 +39,7 @@ export default function Analyzer() {
   const [inputs, setInputs] = useState(state.analyzerInputs ?? DEFAULT_INPUTS);
   const [result, setResult] = useState(state.analyzerResult ?? null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('whoop');
+  const [activeTab, setActiveTab] = useState('vitals');
 
   const loadActiveFarm = () => {
     if (!activeFarm) return;
@@ -148,7 +148,7 @@ export default function Analyzer() {
                 min="0" max="15" step="0.1"
                 onChange={e => handleChange('groundwaterEC', parseFloat(e.target.value) || 0)}
               />
-              <span className="form-hint">Electrical conductivity of irrigation water (0–15 dS/m)</span>
+              <span className="form-hint">Electrical conductivity of irrigation water (0 to 15 dS/m)</span>
             </div>
 
             {/* Water Table Depth */}
@@ -334,7 +334,7 @@ export default function Analyzer() {
               {/* Tabs */}
               <div className="result-tabs">
                 {[
-                  { key: 'whoop', label: '⚡ WHOOP Vitals' },
+                  { key: 'vitals', label: 'Soil & Root Vitals' },
                   { key: 'factors', label: 'Factor Breakdown' },
                   { key: 'recommendations', label: 'Recommendations' },
                   { key: 'crops', label: 'Crop Advisory' },
@@ -350,13 +350,13 @@ export default function Analyzer() {
                 ))}
               </div>
 
-              {/* WHOOP Vitals Tab */}
-              {activeTab === 'whoop' && result.whoopMetrics && (
+              {/* Soil & Root Vitals Tab */}
+              {activeTab === 'vitals' && result.whoopMetrics && (
                 <div className="card fade-in whoop-tab-card">
                   <div className="card-header">
                     <div className="section-title">
                       <div className="section-title-icon"><Activity size={16} /></div>
-                      WHOOP Soil Strain & Recovery Diagnostic
+                      Soil Stress & Root Recovery Diagnostic
                     </div>
                     <span className="chip" style={{
                       color: result.whoopMetrics.recoveryZone === 'GREEN' ? '#22c55e' : result.whoopMetrics.recoveryZone === 'YELLOW' ? '#f59e0b' : '#ef4444',
@@ -459,7 +459,7 @@ export default function Analyzer() {
                       <div className="card-header">
                         <div className="section-title">
                           <div className="section-title-icon"><ChevronRight size={15} /></div>
-                          Short-Term (1–3 months)
+                          Short-Term (1 to 3 months)
                         </div>
                       </div>
                       {result.recommendations.shortTerm.map((r, i) => (

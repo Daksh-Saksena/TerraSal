@@ -20,7 +20,7 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="page-header">
         <h1>Salinity Command Center</h1>
-        <p>Panchayat Village Kiosk — Real-time salinity & soil health monitoring across village fields</p>
+        <p>Panchayat Village Kiosk: Real-time salinity and soil health monitoring across village fields</p>
       </div>
 
       {/* Active Farm Soil Health Card */}
@@ -130,7 +130,7 @@ export default function Dashboard() {
             <div className="card-header">
               <div className="section-title">
                 <div className="section-title-icon"><TrendingUp size={16} /></div>
-                EC Trend — Last 24 Months
+                EC Trend (Last 24 Months)
               </div>
               <div className="chip">
                 <span style={{ color: '#ef4444' }}>↑</span> Worsening
@@ -174,7 +174,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Priority Actions — derived from real field data */}
+          {/* Priority Actions */}
           <div className="card fade-in-delay-3">
             <div className="card-header">
               <div className="section-title">
@@ -193,10 +193,10 @@ export default function Dashboard() {
                     field.riskLevel === 'CRITICAL' && (field.irrigationMethod === 'flood' || field.irrigationMethod === 'canal')
                       ? `Switch ${field.name} from ${field.irrigationMethod} to drip irrigation immediately and apply leaching flush`
                       : field.riskLevel === 'CRITICAL'
-                      ? `Apply emergency leaching irrigation and get soil EC tested at KVK — ${field.name}`
+                      ? `Apply emergency leaching irrigation and get soil EC tested at KVK: ${field.name}`
                       : field.riskLevel === 'HIGH'
-                      ? `Schedule pre-sowing leaching irrigation and reduce volume by 20–25% at ${field.name}`
-                      : `Daily robotics EC stream active — apply calibrated preventive leaching at ${field.name}`;
+                      ? `Schedule pre-sowing leaching irrigation and reduce volume by 20% to 25% at ${field.name}`
+                      : `Sensor telemetry active: apply preventive leaching flush at ${field.name}`;
                   return (
                     <div key={field.id} className="quick-rec-item">
                       <span className="rec-priority" style={{ color, borderColor: `${color}40`, background: `${color}15` }}>
@@ -210,25 +210,25 @@ export default function Dashboard() {
                   );
                 })}
               {fields.filter(f => f.riskLevel === 'CRITICAL' || f.riskLevel === 'HIGH' || f.riskLevel === 'MODERATE').length === 0 && (
-                <div className="alerts-empty">All fields are at low risk — no urgent actions needed.</div>
+                <div className="alerts-empty">All fields are at low risk: no urgent actions needed.</div>
               )}
             </div>
           </div>
 
-          {/* Live Readings — worst field from real data */}
+          {/* Live Readings */}
           {(() => {
             const worst = fields.sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0))[0];
             if (!worst) return null;
             const readings = [
-              { label: 'EC', value: worst.groundwaterEC ?? worst.metrics?.ec ?? '—', unit: 'dS/m', color: (worst.groundwaterEC || 0) > 4 ? '#ef4444' : '#f59e0b' },
-              { label: 'Water Table', value: worst.waterTableDepth ?? worst.metrics?.waterTable ?? '—', unit: 'm', color: (worst.waterTableDepth || 3) < 2 ? '#ef4444' : '#f59e0b' },
-              { label: 'Rainfall 30d', value: worst.rainfallLast30Days ?? worst.metrics?.rainfall ?? '—', unit: 'mm', color: '#008a50' },
-              { label: 'Risk Score', value: worst.riskScore ?? '—', unit: '/100', color: worst.riskLevel === 'CRITICAL' ? '#ef4444' : '#f97316' },
+              { label: 'EC', value: worst.groundwaterEC ?? worst.metrics?.ec ?? '-', unit: 'dS/m', color: (worst.groundwaterEC || 0) > 4 ? '#ef4444' : '#f59e0b' },
+              { label: 'Water Table', value: worst.waterTableDepth ?? worst.metrics?.waterTable ?? '-', unit: 'm', color: (worst.waterTableDepth || 3) < 2 ? '#ef4444' : '#f59e0b' },
+              { label: 'Rainfall 30d', value: worst.rainfallLast30Days ?? worst.metrics?.rainfall ?? '-', unit: 'mm', color: '#008a50' },
+              { label: 'Risk Score', value: worst.riskScore ?? '-', unit: '/100', color: worst.riskLevel === 'CRITICAL' ? '#ef4444' : '#f97316' },
             ];
             return (
               <div className="card card-sm fade-in-delay-4">
                 <div className="card-header">
-                  <span className="card-title">Live Readings — {worst.name}</span>
+                  <span className="card-title">Live Readings: {worst.name}</span>
                   <span className="live-dot" />
                 </div>
                 <div className="live-metrics-strip">

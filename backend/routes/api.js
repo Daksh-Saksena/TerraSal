@@ -56,7 +56,7 @@ router.get('/weather/coords', async (req, res) => {
 });
 
 /**
- * Get all fields (with farmer name, coords, whoop metrics, and alerts)
+ * Get all fields (with farmer name, coords, root zone metrics, and alerts)
  */
 router.get('/fields', async (req, res) => {
   try {
@@ -86,7 +86,7 @@ router.get('/fields', async (req, res) => {
       field.stressProbability = field.stressProbability ?? Math.round((field.riskScore || 50) * 0.95);
       field.lastUpdated = field.lastUpdated || 'Recently';
 
-      // Attach diagnostic & WHOOP metrics
+      // Attach diagnostic & soil health metrics
       const analysis = analyzeSalinity({
         groundwaterEC: field.groundwaterEC,
         waterTableDepth: field.waterTableDepth,
@@ -199,7 +199,7 @@ router.post('/fields', async (req, res) => {
     if (analysis.riskScore >= 60) {
       await execute('INSERT INTO alerts (fieldId, message) VALUES (?, ?)', [
         id,
-        `Initial assessment: Elevated salinity risk (${analysis.riskScore}/100) — Soil Strain at ${analysis.soilStrain}`
+        `Initial assessment: Elevated salinity risk (${analysis.riskScore}/100) - Soil Strain at ${analysis.soilStrain}`
       ]);
     }
 

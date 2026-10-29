@@ -176,7 +176,7 @@ export default function PinDropModal() {
               <MapPin size={22} />
             </div>
             <div>
-              <h3>Pin Your Farm — Panchayat Kiosk</h3>
+              <h3>Register Farm Plot: Panchayat Kiosk</h3>
               <p>Click on the map or drag the pin to your exact field coordinates</p>
             </div>
           </div>

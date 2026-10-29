@@ -45,7 +45,7 @@ export default function FarmSwitcher() {
               onClick={() => setActiveFarmId(farm.id)}
             >
               <div className="farm-session-left">
-                {/* Mini WHOOP Recovery Ring Indicator */}
+                {/* Soil Recovery Ring Indicator */}
                 <div className="farm-mini-ring" style={{ borderColor: `${zoneColor}60` }}>
                   <span className="farm-mini-recovery" style={{ color: zoneColor }}>
                     {recovery}%

@@ -270,31 +270,25 @@ export default function VillageOverview() {
           </div>
         </div>
 
-        {/* Right: AI Cross-Field Peer Intelligence */}
+        {/* Right: Community Soil Advisories */}
         <div className="card village-advisory-card">
           <div className="card-header">
             <div className="section-title">
               <div className="section-title-icon"><Sparkles size={16} /></div>
-              <span>Cross-Field Peer Intelligence</span>
+              <span>Community Soil Advisories</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {isAIGenerated ? (
-                <span className="chip chip-ai-active">
-                  <Bot size={12} /> GPT-4o-mini
-                </span>
-              ) : (
-                <span className="chip" style={{ color: 'var(--color-teal)' }}>
-                  Agronomist Match
-                </span>
-              )}
+              <span className="chip" style={{ color: 'var(--color-teal)' }}>
+                Field Extension Bulletin
+              </span>
               <button 
                 className="btn-ai-refresh"
                 onClick={handleRegenerateAI}
                 disabled={regenerating}
-                title="Regenerate cross-field insights with AI"
+                title="Refresh field advisories"
               >
                 <RefreshCw size={13} className={regenerating ? 'spin' : ''} />
-                <span>{regenerating ? 'Analyzing...' : 'Refresh'}</span>
+                <span>{regenerating ? 'Updating...' : 'Refresh'}</span>
               </button>
             </div>
           </div>
@@ -302,8 +296,8 @@ export default function VillageOverview() {
           <div className="village-advisories-list">
             {regenerating ? (
               <div className="ai-loading-box">
-                <Bot size={24} className="spin text-teal" />
-                <p>Synthesizing village plots & calculating cross-field peer strategies via GPT-4o-mini...</p>
+                <RefreshCw size={24} className="spin text-teal" />
+                <p>Updating cross-field soil data and agronomic recommendations...</p>
               </div>
             ) : advisories.length > 0 ? (
               advisories.map((item, index) => {
@@ -318,11 +312,6 @@ export default function VillageOverview() {
                     <div className="vadvisory-title">
                       <Icon size={16} className={iconColor} />
                       <span>{item.badge || item.title}</span>
-                      {item.aiGenerated && (
-                        <span className="badge-ai-pill">
-                          <Sparkles size={10} /> GPT-4o-mini
-                        </span>
-                      )}
                     </div>
                     <p className="vadvisory-text">
                       {item.message}
@@ -337,7 +326,7 @@ export default function VillageOverview() {
               })
             ) : (
               <div className="empty-advisories-box">
-                <p>No advisories computed. Add village plots to generate cross-field peer intelligence.</p>
+                <p>No advisories computed. Add village plots to view cross-field recommendations.</p>
               </div>
             )}
           </div>
@@ -349,7 +338,7 @@ export default function VillageOverview() {
         <div className="card-header">
           <div className="section-title">
             <div className="section-title-icon"><Layers size={16} /></div>
-            Village Cross-Field Comparison Matrix
+            Village Field Directory & Comparison
           </div>
 
           {/* Filter Pills */}
@@ -395,7 +384,7 @@ export default function VillageOverview() {
                     </td>
                     <td>
                       <div className="vcell-loc">{farm.location}</div>
-                      <div className="vcell-coords">{farm.lat ? `${farm.lat.toFixed(3)}°N, ${farm.lng.toFixed(3)}°E` : '—'}</div>
+                      <div className="vcell-coords">{farm.lat ? `${farm.lat.toFixed(3)}°N, ${farm.lng.toFixed(3)}°E` : '-'}</div>
                     </td>
                     <td>
                       <span className="vcell-crop-badge">{farm.cropType}</span>

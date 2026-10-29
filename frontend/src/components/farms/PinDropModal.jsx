@@ -7,6 +7,7 @@ import {
   Check, AlertTriangle, ArrowRight, Loader2, Compass, Navigation
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { getApiUrl } from '../../utils/api';
 import {
   SOIL_TYPES, CROP_TYPES, IRRIGATION_METHODS, DRAINAGE_QUALITIES
 } from '../../utils/constants';
@@ -87,7 +88,7 @@ export default function PinDropModal() {
   const fetchWeather = async (lat, lon) => {
     setWeatherLoading(true);
     try {
-      const res = await fetch(`/api/weather/coords?lat=${lat}&lon=${lon}`);
+      const res = await fetch(getApiUrl(`/api/weather/coords?lat=${lat}&lon=${lon}`));
       if (res.ok) {
         const data = await res.json();
         setWeather(data);

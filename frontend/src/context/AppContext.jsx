@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { getApiUrl } from '../utils/api';
 
 const AppContext = createContext(null);
 
@@ -139,14 +140,14 @@ export const AppProvider = ({ children }) => {
     dispatch({ type: 'FETCH_START' });
     try {
       const [fieldsRes, regionsRes, trendsRes, cropsRes] = await Promise.all([
-        fetch('/api/fields'),
-        fetch('/api/regions'),
-        fetch('/api/trends'),
-        fetch('/api/crops')
+        fetch(getApiUrl('/api/fields')),
+        fetch(getApiUrl('/api/regions')),
+        fetch(getApiUrl('/api/trends')),
+        fetch(getApiUrl('/api/crops'))
       ]);
       
       if (!fieldsRes.ok || !regionsRes.ok || !trendsRes.ok || !cropsRes.ok) {
-        throw new Error('Unable to connect to TerraSal backend server (port 3000). Please ensure backend is running.');
+        throw new Error('Unable to connect to TerraSal backend API. Please ensure the backend is running and reachable.');
       }
 
       const fields = await fieldsRes.json();
@@ -176,7 +177,7 @@ export const AppProvider = ({ children }) => {
 
   const addFarm = async (farmData) => {
     try {
-      const res = await fetch('/api/fields', {
+      const res = await fetch(getApiUrl('/api/fields'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(farmData)
@@ -194,7 +195,7 @@ export const AppProvider = ({ children }) => {
 
   const deleteFarm = async (id) => {
     try {
-      const res = await fetch(`/api/fields/${id}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/fields/${id}`), { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete farm');
       await loadData();
     } catch (err) {

@@ -1,43 +1,44 @@
 import express from 'express';
-import { db } from '../db/schema.js';
+import { queryAll, queryGet, execute } from '../db/index.js';
 import { analyzeSalinity } from '../services/salinityEngine.js';
-import { cropDatabase } from '../services/cropDatabase.js'; // fallback if not in DB
+import { cropDatabase } from '../services/cropDatabase.js';
+import { getWeatherForCoordinates, updateWeatherForAllFields } from '../services/weatherService.js';
 
 const router = express.Router();
 
-// Helper to wrap db.all into a promise
-const queryAll = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(query, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
+/**
+ * Health check endpoint
+ * Used by Vercel deployment checks and monitoring.
+ */
+router.get('/health', async (req, res) => {
+  try {
+    const ping = await queryGet('SELECT 1 as ok');
+    const fieldCount = await queryGet('SELECT COUNT(*) as count FROM fields');
+    res.json({
+      status: 'healthy',
+      database: 'connected',
+      tablesReady: true,
+      fieldsCount: fieldCount?.count ?? 0,
+      environment: process.env.NODE_ENV || 'production',
+      timestamp: new Date().toISOString()
     });
-  });
-};
-
-// Helper to wrap db.get into a promise
-const queryGet = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(query, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
+  } catch (err) {
+    console.error('[Health] Check failed:', err.message);
+    res.status(503).json({
+      status: 'degraded',
+      database: 'error',
+      message: err.message,
+      hint: process.env.VERCEL && !process.env.TURSO_DATABASE_URL
+        ? 'Please configure TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Vercel project environment variables.'
+        : undefined,
+      timestamp: new Date().toISOString()
     });
-  });
-};
+  }
+});
 
-// Helper to wrap db.run into a promise
-const execute = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(query, params, function(err) {
-      if (err) reject(err);
-      else resolve(this);
-    });
-  });
-};
-
-// Weather by coordinates (for pin-drop on map)
-import { getWeatherForCoordinates } from '../services/weatherService.js';
-
+/**
+ * Weather by coordinates (for pin-drop on map)
+ */
 router.get('/weather/coords', async (req, res) => {
   try {
     const lat = parseFloat(req.query.lat);
@@ -48,28 +49,32 @@ router.get('/weather/coords', async (req, res) => {
     const weather = await getWeatherForCoordinates(lat, lon);
     res.json(weather);
   } catch (err) {
+    console.error('[API] /weather/coords error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get all fields (with farmer name, coords, whoop metrics, and alerts)
+/**
+ * Get all fields (with farmer name, coords, whoop metrics, and alerts)
+ */
 router.get('/fields', async (req, res) => {
   try {
     const fields = await queryAll('SELECT * FROM fields');
-    
+
     // Attach metrics and alerts
-    for (let field of fields) {
-      field.sensorConnected = !!field.sensorConnected;
+    for (const field of fields) {
+      field.sensorConnected = Boolean(field.sensorConnected);
       const metrics = await queryGet('SELECT * FROM metrics WHERE fieldId = ?', [field.id]);
+
       if (metrics) {
         field.metrics = {
-          ec: metrics.ec,
-          waterTable: metrics.waterTable,
-          rainfall: metrics.rainfall
+          ec: metrics.ec ?? 0,
+          waterTable: metrics.waterTable ?? 0,
+          rainfall: metrics.rainfall ?? 0
         };
-        field.groundwaterEC = metrics.ec;
-        field.waterTableDepth = metrics.waterTable;
-        field.rainfallLast30Days = metrics.rainfall;
+        field.groundwaterEC = metrics.ec ?? 0;
+        field.waterTableDepth = metrics.waterTable ?? 0;
+        field.rainfallLast30Days = metrics.rainfall ?? 0;
       } else {
         field.metrics = { ec: 0, waterTable: 0, rainfall: 0 };
         field.groundwaterEC = 0;
@@ -80,7 +85,7 @@ router.get('/fields', async (req, res) => {
       field.stressProbability = field.stressProbability ?? Math.round((field.riskScore || 50) * 0.95);
       field.lastUpdated = field.lastUpdated || 'Recently';
 
-      // Attach WHOOP metrics if not already stored
+      // Attach diagnostic & WHOOP metrics
       const analysis = analyzeSalinity({
         groundwaterEC: field.groundwaterEC,
         waterTableDepth: field.waterTableDepth,
@@ -91,6 +96,7 @@ router.get('/fields', async (req, res) => {
         cropType: field.cropType || 'wheat',
         terrain: 'flat'
       });
+
       field.whoopMetrics = analysis.whoopMetrics;
       field.soilStrain = field.soilStrain ?? analysis.soilStrain;
       field.soilRecovery = field.soilRecovery ?? analysis.soilRecovery;
@@ -98,14 +104,17 @@ router.get('/fields', async (req, res) => {
       const alerts = await queryAll('SELECT message FROM alerts WHERE fieldId = ?', [field.id]);
       field.alerts = alerts.map(a => a.message);
     }
-    
+
     res.json(fields);
   } catch (error) {
+    console.error('[API] /fields error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Register new farm (pin drop or manual entry)
+/**
+ * Register new farm (pin drop or manual entry)
+ */
 router.post('/fields', async (req, res) => {
   try {
     const {
@@ -123,10 +132,16 @@ router.post('/fields', async (req, res) => {
       waterTableDepth,
       rainfallLast30Days,
       notes
-    } = req.body;
+    } = req.body || {};
 
-    if (!name || !cropType || !soilType) {
-      return res.status(400).json({ error: 'Name, cropType, and soilType are required' });
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Farm name is required' });
+    }
+    if (!cropType || typeof cropType !== 'string') {
+      return res.status(400).json({ error: 'Crop type is required' });
+    }
+    if (!soilType || typeof soilType !== 'string') {
+      return res.status(400).json({ error: 'Soil type is required' });
     }
 
     const id = `field-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
@@ -155,14 +170,14 @@ router.post('/fields', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        name,
-        farmerName || 'Village Farmer',
+        name.trim(),
+        (farmerName && farmerName.trim()) || 'Village Farmer',
         location || `${fieldLat.toFixed(4)}°N, ${fieldLng.toFixed(4)}°E`,
         fieldLat,
         fieldLng,
         parseFloat(area) || 10,
-        cropType,
-        soilType,
+        cropType.trim(),
+        soilType.trim(),
         drainageQuality || 'moderate',
         irrigationMethod || 'flood',
         1,
@@ -193,60 +208,77 @@ router.post('/fields', async (req, res) => {
       analysis
     });
   } catch (err) {
-    console.error('Error creating field:', err);
+    console.error('[API] Error creating field:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Delete a field
+/**
+ * Delete a field
+ */
 router.delete('/fields/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'Field ID parameter is required' });
+    }
+
+    const field = await queryGet('SELECT id FROM fields WHERE id = ?', [id]);
+    if (!field) {
+      return res.status(404).json({ error: `Field '${id}' not found` });
+    }
+
     await execute('DELETE FROM metrics WHERE fieldId = ?', [id]);
     await execute('DELETE FROM alerts WHERE fieldId = ?', [id]);
     await execute('DELETE FROM fields WHERE id = ?', [id]);
-    res.json({ success: true, message: `Field ${id} removed` });
+
+    res.json({ success: true, message: `Field ${id} removed successfully` });
   } catch (err) {
+    console.error(`[API] Error deleting field ${req.params.id}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Cross-field Village Benchmarking & Community Intelligence
+/**
+ * Cross-field Village Benchmarking & Community Intelligence
+ */
 router.get('/village/benchmarks', async (req, res) => {
   try {
     const fields = await queryAll('SELECT * FROM fields');
     if (!fields.length) {
-      return res.json({ villageStats: null, rankings: [], advisories: [] });
+      return res.json({ villageStats: null, fields: [], advisories: [] });
     }
 
-    // Attach metrics to calculate accurate averages
-    for (let f of fields) {
+    for (const f of fields) {
       const m = await queryGet('SELECT * FROM metrics WHERE fieldId = ?', [f.id]);
-      f.groundwaterEC = m?.ec || 0;
-      f.waterTableDepth = m?.waterTable || 0;
+      f.groundwaterEC = m?.ec ?? 0;
+      f.waterTableDepth = m?.waterTable ?? 0;
+
       const diag = analyzeSalinity({
         groundwaterEC: f.groundwaterEC,
         waterTableDepth: f.waterTableDepth,
-        soilType: f.soilType,
-        drainageQuality: f.drainageQuality,
+        soilType: f.soilType || 'loamy',
+        drainageQuality: f.drainageQuality || 'moderate',
         rainfallLast30Days: m?.rainfall || 10,
-        irrigationMethod: f.irrigationMethod,
-        cropType: f.cropType
+        irrigationMethod: f.irrigationMethod || 'flood',
+        cropType: f.cropType || 'wheat',
+        terrain: 'flat'
       });
+
       f.soilRecovery = diag.soilRecovery;
       f.soilStrain = diag.soilStrain;
-      f.recoveryZone = diag.whoopMetrics.recoveryZone;
+      f.recoveryZone = diag.whoopMetrics?.recoveryZone || 'YELLOW';
     }
 
-    const totalAcres = fields.reduce((sum, f) => sum + (f.area || 0), 0);
+    const totalAcres = fields.reduce((sum, f) => sum + (parseFloat(f.area) || 0), 0);
     const avgRecovery = Math.round(fields.reduce((sum, f) => sum + (f.soilRecovery || 50), 0) / fields.length);
     const avgStrain = parseFloat((fields.reduce((sum, f) => sum + (f.soilStrain || 10), 0) / fields.length).toFixed(1));
     const greenFarms = fields.filter(f => f.soilRecovery >= 67).length;
     const yellowFarms = fields.filter(f => f.soilRecovery >= 34 && f.soilRecovery < 67).length;
     const redFarms = fields.filter(f => f.soilRecovery < 34).length;
 
-    // Estimated village salt deposition in tons this season: Area * EC * water applied factor
-    const villageSaltTons = parseFloat((totalAcres * (fields.reduce((sum, f) => sum + f.groundwaterEC, 0) / fields.length) * 0.18).toFixed(1));
+    const avgEC = fields.reduce((sum, f) => sum + (parseFloat(f.groundwaterEC) || 0), 0) / fields.length;
+    const villageSaltTons = parseFloat((totalAcres * avgEC * 0.18).toFixed(1));
 
     // Peer Learning / Cross-field advisories
     const advisories = [];
@@ -304,21 +336,27 @@ router.get('/village/benchmarks', async (req, res) => {
       advisories
     });
   } catch (err) {
+    console.error('[API] /village/benchmarks error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get all regions
+/**
+ * Get all regions
+ */
 router.get('/regions', async (req, res) => {
   try {
     const regions = await queryAll('SELECT * FROM regions');
     res.json(regions);
   } catch (error) {
+    console.error('[API] /regions error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get all trends
+/**
+ * Get all trends
+ */
 router.get('/trends', async (req, res) => {
   try {
     const waterTableData = await queryAll('SELECT * FROM waterTableTrends');
@@ -327,8 +365,7 @@ router.get('/trends', async (req, res) => {
     const yoyData = await queryAll('SELECT * FROM yoyTrends');
     const riskScoreTrend = await queryAll('SELECT * FROM riskScoreTrends');
     const ecTrendData = await queryAll('SELECT * FROM ecTrends');
-    
-    // format ecTrendData __safe
+
     const formattedEcTrendData = ecTrendData.map(d => ({
       ...d,
       __safe: d.safeThreshold
@@ -343,26 +380,56 @@ router.get('/trends', async (req, res) => {
       ecTrendData: formattedEcTrendData
     });
   } catch (error) {
+    console.error('[API] /trends error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get crop database
+/**
+ * Get crop database
+ */
 router.get('/crops', (req, res) => {
   res.json(cropDatabase);
 });
 
-// Run salinity analysis
+/**
+ * Run salinity analysis
+ */
 router.post('/analyze', (req, res) => {
   try {
     const inputs = req.body;
     if (!inputs) {
-      return res.status(400).json({ error: "No inputs provided" });
+      return res.status(400).json({ error: 'No inputs provided' });
     }
     const result = analyzeSalinity(inputs);
     res.json(result);
   } catch (error) {
+    console.error('[API] /analyze error:', error.message);
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Vercel Cron endpoint for scheduled weather refresh
+ * Secured via CRON_SECRET if configured.
+ */
+router.get('/cron/weather', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid CRON_SECRET' });
+  }
+
+  try {
+    const result = await updateWeatherForAllFields();
+    res.json({
+      success: true,
+      message: 'Weather update completed',
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('[Cron] Weather update failed:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 

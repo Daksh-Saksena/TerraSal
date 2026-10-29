@@ -1,28 +1,8 @@
 import express from 'express';
-import { db } from '../db/schema.js';
+import { queryGet, execute } from '../db/index.js';
 import { analyzeSalinity } from '../services/salinityEngine.js';
 
 const router = express.Router();
-
-// Helper to wrap db.get into a promise
-const queryGet = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(query, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-};
-
-// Helper to wrap db.run into a promise
-const execute = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(query, params, function(err) {
-      if (err) reject(err);
-      else resolve(this);
-    });
-  });
-};
 
 /**
  * POST /api/telemetry
@@ -41,65 +21,74 @@ const execute = (query, params = []) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { fieldId, metrics } = req.body;
+    const { fieldId, metrics } = req.body || {};
 
     if (!fieldId || !metrics || typeof metrics.ec !== 'number' || typeof metrics.waterTable !== 'number') {
-      return res.status(400).json({ error: 'Invalid payload format' });
+      return res.status(400).json({ error: 'Invalid payload: fieldId, metrics.ec (number), and metrics.waterTable (number) are required' });
     }
 
     // 1. Fetch current field profile and rainfall
     const field = await queryGet('SELECT * FROM fields WHERE id = ?', [fieldId]);
     if (!field) {
-      return res.status(404).json({ error: 'Field not found' });
+      return res.status(404).json({ error: `Field '${fieldId}' not found` });
     }
 
     const currentMetrics = await queryGet('SELECT rainfall FROM metrics WHERE fieldId = ?', [fieldId]);
-    const currentRainfall = currentMetrics ? currentMetrics.rainfall : 0;
+    const currentRainfall = currentMetrics ? (parseFloat(currentMetrics.rainfall) || 0) : 0;
 
     // 2. Run the salinity prediction engine with the new live data
     const analysisInputs = {
       groundwaterEC: metrics.ec,
       waterTableDepth: metrics.waterTable,
-      soilType: field.soilType,
-      drainageQuality: field.drainageQuality || 'moderate', // default if missing
+      soilType: field.soilType || 'loamy',
+      drainageQuality: field.drainageQuality || 'moderate',
       rainfallLast30Days: currentRainfall,
       irrigationMethod: field.irrigationMethod || 'flood',
-      cropType: field.cropType,
-      terrain: 'flat' // Simplified
+      cropType: field.cropType || 'wheat',
+      terrain: 'flat'
     };
 
     const analysisResult = analyzeSalinity(analysisInputs);
 
     // 3. Update the database
-    // Update metrics
     await execute(
       'UPDATE metrics SET ec = ?, waterTable = ? WHERE fieldId = ?', 
       [metrics.ec, metrics.waterTable, fieldId]
     );
 
-    // Update field risk scores
     await execute(
-      'UPDATE fields SET riskScore = ?, riskLevel = ? WHERE id = ?',
-      [analysisResult.riskScore, analysisResult.riskLevel, fieldId]
+      'UPDATE fields SET riskScore = ?, riskLevel = ?, stressProbability = ?, soilStrain = ?, soilRecovery = ?, lastUpdated = ? WHERE id = ?',
+      [
+        analysisResult.riskScore,
+        analysisResult.riskLevel,
+        analysisResult.stressProbability,
+        analysisResult.soilStrain,
+        analysisResult.soilRecovery,
+        'Just now (Sensor)',
+        fieldId
+      ]
     );
 
     // 4. Generate alerts if risk is high/critical
-    if (analysisResult.riskScore > 60) {
-      const alertMsg = `[${new Date().toISOString()}] Sensor alert: EC reached ${metrics.ec} dS/m, WT at ${metrics.waterTable}m. Risk level: ${analysisResult.riskLevel}`;
+    if (analysisResult.riskScore >= 60) {
+      const alertMsg = `[${new Date().toISOString()}] Live Sensor Alert: EC reached ${metrics.ec} dS/m, Water Table at ${metrics.waterTable}m (${analysisResult.riskLevel} risk).`;
       await execute('INSERT INTO alerts (fieldId, message) VALUES (?, ?)', [fieldId, alertMsg]);
     }
 
-    console.log(`[Telemetry] Received data for ${fieldId}. New Risk Score: ${analysisResult.riskScore}`);
+    console.log(`[Telemetry] Processed sensor reading for field ${fieldId}. Updated Risk Score: ${analysisResult.riskScore}`);
 
     res.status(200).json({ 
       success: true, 
+      fieldId,
       riskScore: analysisResult.riskScore, 
-      riskLevel: analysisResult.riskLevel 
+      riskLevel: analysisResult.riskLevel,
+      soilStrain: analysisResult.soilStrain,
+      soilRecovery: analysisResult.soilRecovery
     });
 
   } catch (error) {
-    console.error('[Telemetry] Error processing sensor data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[Telemetry] Error processing reading:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 

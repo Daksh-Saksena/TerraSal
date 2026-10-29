@@ -2,7 +2,11 @@ node_modules/
 .DS_Store
 *.sqlite
 *.sqlite-journal
+*.db
 *.log
 .env
+.env.local
+.env.*.local
 dist/
 build/
+.vercel

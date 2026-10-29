@@ -193,17 +193,16 @@ const getWaterTableDescription = (depth, score) => {
  * @param {string} inputs.terrain - depression|flat|gentle-slope|moderate-slope|steep
  * @returns {Object} Full risk assessment result
  */
-export const analyzeSalinity = (inputs) => {
-  const {
-    groundwaterEC,
-    waterTableDepth,
-    soilType,
-    drainageQuality,
-    rainfallLast30Days,
-    irrigationMethod,
-    cropType,
-    terrain = 'flat',
-  } = inputs;
+export const analyzeSalinity = (rawInputs = {}) => {
+  const inputs = rawInputs || {};
+  const groundwaterEC = typeof inputs.groundwaterEC === 'number' ? inputs.groundwaterEC : (parseFloat(inputs.groundwaterEC) || 2.0);
+  const waterTableDepth = typeof inputs.waterTableDepth === 'number' ? inputs.waterTableDepth : (parseFloat(inputs.waterTableDepth) || 3.0);
+  const soilType = String(inputs.soilType || 'loamy').toLowerCase();
+  const drainageQuality = String(inputs.drainageQuality || 'moderate').toLowerCase();
+  const rainfallLast30Days = typeof inputs.rainfallLast30Days === 'number' ? inputs.rainfallLast30Days : (parseFloat(inputs.rainfallLast30Days) || 15);
+  const irrigationMethod = String(inputs.irrigationMethod || 'flood').toLowerCase();
+  const cropType = String(inputs.cropType || 'wheat').toLowerCase();
+  const terrain = String(inputs.terrain || 'flat').toLowerCase();
 
   // Compute individual factor scores (0–10)
   const factorScores = {
@@ -350,7 +349,7 @@ export const analyzeSalinity = (inputs) => {
   // 3. Soil Vitals (WHOOP Health Monitor equivalent)
   const osmoticPressure = parseFloat((groundwaterEC * 0.36).toFixed(2));
   const capillaryFlux = waterTableDepth < 2.0 ? parseFloat(((2.5 - waterTableDepth) * 3.2).toFixed(1)) : 0.4;
-  const cropEcThreshold = inputs.cropType === 'barley' ? 8.0 : inputs.cropType === 'cotton' ? 7.7 : inputs.cropType === 'wheat' ? 6.0 : 3.0;
+  const cropEcThreshold = cropType === 'barley' ? 8.0 : cropType === 'cotton' ? 7.7 : cropType === 'wheat' ? 6.0 : 3.0;
   const leachingCalc = Math.round((groundwaterEC / Math.max(1, 5 * cropEcThreshold - groundwaterEC)) * 100);
   const leachingRequirement = Math.min(65, Math.max(5, isNaN(leachingCalc) ? 15 : leachingCalc));
 
@@ -408,14 +407,21 @@ export const analyzeSalinity = (inputs) => {
 
 // ─── Explanation Generator ──────────────────────────────────────────────────
 
-const generateExplanation = (riskLevel, riskScore, inputs, factorScores, topFactors) => {
+const generateExplanation = (riskLevel, riskScore, rawInputs, factorScores, topFactors) => {
+  const inputs = {
+    groundwaterEC: rawInputs?.groundwaterEC ?? 2.0,
+    waterTableDepth: rawInputs?.waterTableDepth ?? 3.0,
+    drainageQuality: String(rawInputs?.drainageQuality || 'moderate').replace('-', ' '),
+    cropType: rawInputs?.cropType || 'wheat',
+    rainfallLast30Days: rawInputs?.rainfallLast30Days ?? 15,
+  };
   const levelDescriptions = {
-    CRITICAL: `The soil salinity risk assessment for this field is CRITICAL (score: ${riskScore}/100). Immediate intervention is required. The primary drivers are ${topFactors}. At groundwater EC of ${inputs.groundwaterEC} dS/m with a water table only ${inputs.waterTableDepth}m deep, salts are actively accumulating in the root zone through capillary rise. The ${inputs.drainageQuality.replace('-', ' ')} drainage is unable to leach accumulated salts. ${inputs.cropType} — which has relatively low salt tolerance — is at severe risk of yield failure this season if conditions remain unchanged.`,
-    HIGH: `The soil salinity risk assessment is HIGH (score: ${riskScore}/100). The combination of ${topFactors} creates conditions where significant crop stress is likely. Groundwater EC of ${inputs.groundwaterEC} dS/m is above safe thresholds for ${inputs.cropType}. With ${inputs.drainageQuality.replace('-', ' ')} drainage and only ${inputs.rainfallLast30Days}mm of rainfall in the past 30 days, natural salt leaching is insufficient. Without intervention, expect 20–40% yield reduction this season.`,
+    CRITICAL: `The soil salinity risk assessment for this field is CRITICAL (score: ${riskScore}/100). Immediate intervention is required. The primary drivers are ${topFactors}. At groundwater EC of ${inputs.groundwaterEC} dS/m with a water table only ${inputs.waterTableDepth}m deep, salts are actively accumulating in the root zone through capillary rise. The ${inputs.drainageQuality} drainage is unable to leach accumulated salts. ${inputs.cropType} — which has relatively low salt tolerance — is at severe risk of yield failure this season if conditions remain unchanged.`,
+    HIGH: `The soil salinity risk assessment is HIGH (score: ${riskScore}/100). The combination of ${topFactors} creates conditions where significant crop stress is likely. Groundwater EC of ${inputs.groundwaterEC} dS/m is above safe thresholds for ${inputs.cropType}. With ${inputs.drainageQuality} drainage and only ${inputs.rainfallLast30Days}mm of rainfall in the past 30 days, natural salt leaching is insufficient. Without intervention, expect 20–40% yield reduction this season.`,
     MODERATE: `The soil salinity risk assessment is MODERATE (score: ${riskScore}/100). Conditions are manageable but trending in a concerning direction. Key factors are ${topFactors}. Groundwater EC of ${inputs.groundwaterEC} dS/m is within tolerable limits for ${inputs.cropType} but leaving little buffer. Proactive management now can prevent escalation to a high-risk scenario.`,
     LOW: `The soil salinity risk assessment is LOW (score: ${riskScore}/100). Current conditions are favorable. Groundwater EC of ${inputs.groundwaterEC} dS/m is well within safe limits for ${inputs.cropType}. Continue current management practices and monitor quarterly. Preventive measures will maintain this healthy status.`,
   };
-  return levelDescriptions[riskLevel];
+  return levelDescriptions[riskLevel] || levelDescriptions.MODERATE;
 };
 
 // ─── Recommendation Generator ───────────────────────────────────────────────
@@ -482,7 +488,8 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
   });
 
   // Irrigation recommendations
-  if (inputs.irrigationMethod === 'flood' || inputs.irrigationMethod === 'canal') {
+  const irrigation = String(inputs?.irrigationMethod || 'flood').toLowerCase();
+  if (irrigation === 'flood' || irrigation === 'canal') {
     irrigationChanges.push({
       title: 'Switch to Drip Irrigation',
       description: 'Drip irrigation reduces water consumption by 40–60% and prevents salt accumulation by delivering water directly to the root zone without wetting the soil surface.',
@@ -507,7 +514,7 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
   }
 
   // Alternative crops based on EC levels
-  const ec = inputs.groundwaterEC;
+  const ec = typeof inputs?.groundwaterEC === 'number' ? inputs.groundwaterEC : (parseFloat(inputs?.groundwaterEC) || 2.0);
   if (ec >= 6) {
     alternativeCrops.push('Sugar Beet (tolerates up to 7.0 dS/m)', 'Barley (tolerates up to 8.0 dS/m)', 'Safflower (tolerates up to 5.3 dS/m)');
   } else if (ec >= 4) {

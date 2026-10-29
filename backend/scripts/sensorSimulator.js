@@ -1,33 +1,14 @@
 import axios from 'axios';
-import { db } from '../db/schema.js';
+import { queryAll, queryGet } from '../db/index.js';
 
-const API_URL = 'http://localhost:3000/api/telemetry';
-
-// Helper to wrap db queries
-const queryAll = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(query, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
-};
-
-const queryGet = (query, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(query, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-};
+const API_URL = process.env.API_URL || 'http://localhost:3000/api/telemetry';
 
 async function simulateSensors() {
-  console.log('[SensorSimulator] Starting IoT sensor simulation...');
-  
+  console.log(`[SensorSimulator] Starting IoT sensor simulation targeting ${API_URL}...`);
+
   // Only fields that have connected sensors
   const fields = await queryAll('SELECT id FROM fields WHERE sensorConnected = 1');
-  
+
   if (fields.length === 0) {
     console.log('[SensorSimulator] No connected sensors found. Exiting.');
     return;
@@ -50,10 +31,10 @@ async function simulateSensors() {
       const wtFluctuation = (Math.random() * 0.04) - 0.02;
 
       const newEC = Math.max(0.1, parseFloat((currentMetrics.ec + ecFluctuation).toFixed(2)));
-      const newWT = Math.max(0.1, parseFloat((currentMetrics.waterTable + wtFluctuation).toFixed(2)));
+      const newWT = Math.max(0.5, parseFloat((currentMetrics.waterTable + wtFluctuation).toFixed(2)));
 
       const payload = {
-        sensorId: `TS-Node-${fieldId.split('-')[1]}`,
+        sensorId: `TS-Sensor-${fieldId.slice(-4).toUpperCase()}`,
         fieldId,
         metrics: {
           ec: newEC,
@@ -62,13 +43,13 @@ async function simulateSensors() {
         timestamp: new Date().toISOString()
       };
 
-      await axios.post(API_URL, payload);
-      console.log(`[SensorSimulator] Sent payload for ${fieldId} | EC: ${newEC} | WT: ${newWT}`);
+      const res = await axios.post(API_URL, payload);
+      console.log(`[SensorSimulator] Sent data for ${fieldId}: EC=${newEC}, WT=${newWT}. Response: ${res.data.riskLevel} (${res.data.riskScore})`);
+
     } catch (err) {
-      console.error(`[SensorSimulator] Failed to send telemetry for ${fieldId}:`, err.response?.data || err.message);
+      console.error(`[SensorSimulator] Failed sending data for ${fieldId}:`, err.message);
     }
-  }, 10000); // 10 seconds
+  }, 10000);
 }
 
-// Start simulation
-setTimeout(simulateSensors, 3000); // Wait for server to be up
+simulateSensors();

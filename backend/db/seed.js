@@ -1,21 +1,15 @@
-import { db, initializeDB } from './schema.js';
+import { initializeDB, queryAll } from './index.js';
 
-// No mock data: this script only initializes the schema and clears all tables.
 async function seed() {
-  await initializeDB();
-  console.log('Database initialized. Clearing existing data...');
-
-  db.serialize(() => {
-    const tables = ['fields', 'alerts', 'metrics', 'regions', 'waterTableTrends', 'seasonalTrends', 'rainfallECTrends', 'yoyTrends', 'riskScoreTrends', 'ecTrends'];
-    tables.forEach(table => {
-      db.run(`DELETE FROM ${table}`);
-    });
-    console.log('Done. Database is empty.');
-  });
-
-  setTimeout(() => {
-    db.close();
-  }, 1000);
+  console.log('[Seed] Initializing database and checking baseline datasets...');
+  try {
+    await initializeDB();
+    const fields = await queryAll('SELECT id, name FROM fields');
+    console.log(`[Seed] Success! Database currently has ${fields.length} field(s) registered.`);
+  } catch (err) {
+    console.error('[Seed] Error during database seeding:', err.message);
+    process.exit(1);
+  }
 }
 
 seed();

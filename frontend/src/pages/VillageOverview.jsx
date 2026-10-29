@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../utils/api';
 import './VillageOverview.css';
 
 // Fixes gray-tile bug in modal/conditionally-rendered maps
@@ -40,7 +41,7 @@ export default function VillageOverview() {
   useEffect(() => {
     const fetchBenchmarks = async () => {
       try {
-        const res = await fetch('/api/village/benchmarks');
+        const res = await fetch(getApiUrl('/api/village/benchmarks'));
         if (res.ok) {
           const data = await res.json();
           setBenchmarkData(data);

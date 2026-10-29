@@ -5,6 +5,7 @@ import {
   Sprout, Lightbulb, RefreshCw, MapPin, Activity
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { getApiUrl } from '../utils/api';
 
 import RiskGauge from '../components/ui/RiskGauge';
 import RiskBadge from '../components/ui/RiskBadge';
@@ -63,7 +64,7 @@ export default function Analyzer() {
     setLoading(true);
     setResult(null);
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch(getApiUrl('/api/analyze'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(inputs)

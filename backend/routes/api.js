@@ -3,6 +3,7 @@ import { queryAll, queryGet, execute } from '../db/index.js';
 import { analyzeSalinity } from '../services/salinityEngine.js';
 import { cropDatabase } from '../services/cropDatabase.js';
 import { getWeatherForCoordinates, updateWeatherForAllFields } from '../services/weatherService.js';
+import { aiService } from '../services/aiService.js';
 
 const router = express.Router();
 
@@ -280,40 +281,22 @@ router.get('/village/benchmarks', async (req, res) => {
     const avgEC = fields.reduce((sum, f) => sum + (parseFloat(f.groundwaterEC) || 0), 0) / fields.length;
     const villageSaltTons = parseFloat((totalAcres * avgEC * 0.18).toFixed(1));
 
-    // Peer Learning / Cross-field advisories
-    const advisories = [];
-    const dripFarmers = fields.filter(f => f.irrigationMethod === 'drip' && f.soilRecovery > 60);
-    const floodFarmers = fields.filter(f => (f.irrigationMethod === 'flood' || f.irrigationMethod === 'canal') && f.soilRecovery < 40);
+    const villageStats = {
+      totalFields: fields.length,
+      totalAcres,
+      avgRecovery,
+      avgStrain,
+      greenFarms,
+      yellowFarms,
+      redFarms,
+      villageSaltTons
+    };
 
-    if (dripFarmers.length > 0 && floodFarmers.length > 0) {
-      advisories.push({
-        type: 'peer_irrigation',
-        title: 'Community Drip Transition Opportunity',
-        message: `${dripFarmers[0].farmerName || dripFarmers[0].name} is maintaining a ${dripFarmers[0].soilRecovery}% Soil Recovery on ${dripFarmers[0].cropType} using Drip, while ${floodFarmers[0].farmerName || floodFarmers[0].name} is suffering at ${floodFarmers[0].soilRecovery}% on flood irrigation. Adopting drip could reduce village canal salt burden by ~35%.`,
-        sourceFarmer: dripFarmers[0].farmerName || dripFarmers[0].name,
-        targetFarmer: floodFarmers[0].farmerName || floodFarmers[0].name
-      });
-    }
-
-    if (redFarms > 0) {
-      advisories.push({
-        type: 'critical_drainage',
-        title: 'Subsurface Drainage Collective',
-        message: `${redFarms} village fields are in Red Recovery Zone due to water table shallower than 1.8m. A shared community tile drainage pipe along the village boundary canal could lower water table by 0.6m across all ${fields.length} plots.`
-      });
-    }
+    // AI-Powered Cross-field peer advisories using GPT-4o-mini (or smart dynamic fallback)
+    const aiResult = await aiService.generateVillagePeerIntelligence(fields, villageStats);
 
     res.json({
-      villageStats: {
-        totalFields: fields.length,
-        totalAcres,
-        avgRecovery,
-        avgStrain,
-        greenFarms,
-        yellowFarms,
-        redFarms,
-        villageSaltTons
-      },
+      villageStats,
       fields: fields.map(f => ({
         id: f.id,
         name: f.name,
@@ -333,7 +316,12 @@ router.get('/village/benchmarks', async (req, res) => {
         soilRecovery: f.soilRecovery,
         recoveryZone: f.recoveryZone
       })),
-      advisories
+      advisories: aiResult.advisories || [],
+      aiMeta: {
+        source: aiResult.source,
+        model: aiService.model,
+        configured: aiService.isConfigured()
+      }
     });
   } catch (err) {
     console.error('[API] /village/benchmarks error:', err.message);
@@ -341,9 +329,73 @@ router.get('/village/benchmarks', async (req, res) => {
   }
 });
 
-/**
- * Get all regions
- */
+// Force regenerate village advisories via AI
+router.post('/village/regenerate-ai', async (req, res) => {
+  try {
+    const fields = await queryAll('SELECT * FROM fields');
+    for (let f of fields) {
+      const m = await queryGet('SELECT * FROM metrics WHERE fieldId = ?', [f.id]);
+      f.groundwaterEC = m?.ec || 0;
+      f.waterTableDepth = m?.waterTable || 0;
+      const diag = analyzeSalinity({
+        groundwaterEC: f.groundwaterEC,
+        waterTableDepth: f.waterTableDepth,
+        soilType: f.soilType,
+        drainageQuality: f.drainageQuality,
+        rainfallLast30Days: m?.rainfall || 10,
+        irrigationMethod: f.irrigationMethod,
+        cropType: f.cropType
+      });
+      f.soilRecovery = diag.soilRecovery;
+      f.soilStrain = diag.soilStrain;
+    }
+
+    const totalAcres = fields.reduce((sum, f) => sum + (f.area || 0), 0);
+    const avgRecovery = Math.round(fields.reduce((sum, f) => sum + (f.soilRecovery || 50), 0) / (fields.length || 1));
+    const avgStrain = parseFloat((fields.reduce((sum, f) => sum + (f.soilStrain || 10), 0) / (fields.length || 1)).toFixed(1));
+    const villageSaltTons = parseFloat((totalAcres * (fields.reduce((sum, f) => sum + f.groundwaterEC, 0) / (fields.length || 1)) * 0.18).toFixed(1));
+
+    const villageStats = {
+      totalFields: fields.length,
+      totalAcres,
+      avgRecovery,
+      avgStrain,
+      villageSaltTons
+    };
+
+    const aiResult = await aiService.generateVillagePeerIntelligence(fields, villageStats);
+    res.json({
+      success: true,
+      advisories: aiResult.advisories,
+      aiMeta: {
+        source: aiResult.source,
+        model: aiService.model,
+        configured: aiService.isConfigured()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// AI Configuration routes
+router.get('/ai/status', (req, res) => {
+  res.json(aiService.getStatus());
+});
+
+router.post('/ai/set-key', (req, res) => {
+  const { apiKey, model } = req.body;
+  if (!apiKey || typeof apiKey !== 'string') {
+    return res.status(400).json({ error: 'Valid apiKey string is required' });
+  }
+  aiService.setApiKey(apiKey);
+  if (model) aiService.model = model;
+  res.json({
+    success: true,
+    message: 'OpenAI API key saved successfully',
+    status: aiService.getStatus()
+  });
+});
 router.get('/regions', async (req, res) => {
   try {
     const regions = await queryAll('SELECT * FROM regions');

@@ -441,11 +441,11 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
     immediate.push('Collect soil samples for laboratory EC and SAR (Sodium Adsorption Ratio) analysis');
     immediate.push('Contact local agriculture department or KVK for emergency soil health intervention');
   } else if (riskLevel === 'HIGH') {
-    immediate.push('Reduce irrigation frequency and volume by 25–30%');
-    immediate.push('Apply pre-sowing leaching irrigation before next crop cycle');
-    immediate.push('Get groundwater quality tested at certified laboratory');
+    immediate.push('Schedule pre-sowing leaching irrigation before next crop cycle');
+    immediate.push('Reduce irrigation volume by 20–25% to prevent capillary salt rise');
+    immediate.push('Daily robotics EC telemetry active — tracking root-zone leaching response');
   } else if (riskLevel === 'MODERATE') {
-    immediate.push('Monitor soil EC monthly using portable EC meter');
+    immediate.push('Daily robotics EC monitoring active — tracking daily soil salinity drift');
     immediate.push('Schedule preventive leaching irrigation before next sowing');
   }
 

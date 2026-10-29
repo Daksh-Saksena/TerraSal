@@ -5,7 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import {
   Users, Activity, Droplets, ShieldCheck,
   AlertTriangle, ArrowUpRight, TrendingUp, Layers,
-  Compass, MapPin, Sparkles, CheckCircle2, ChevronRight
+  Compass, MapPin, Sparkles, CheckCircle2, ChevronRight,
+  RefreshCw, Key, Bot, X, Check, Lock
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -32,28 +33,82 @@ const createVillageIcon = (zoneColor) => new L.DivIcon({
 });
 
 export default function VillageOverview() {
-  const { state, setActiveFarmId, openPinDropModal } = useApp();
+  const { state, setActiveFarmId, openPinDropModal, loadData } = useApp();
   const navigate = useNavigate();
   const [benchmarkData, setBenchmarkData] = useState(null);
   const [filterZone, setFilterZone] = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [regenerating, setRegenerating] = useState(false);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [inputKey, setInputKey] = useState('');
+  const [savingKey, setSavingKey] = useState(false);
+  const [keyStatusMsg, setKeyStatusMsg] = useState(null);
+
+  const fetchBenchmarks = async () => {
+    try {
+      const res = await fetch(getApiUrl('/api/village/benchmarks'));
+      if (res.ok) {
+        const data = await res.json();
+        setBenchmarkData(data);
+      }
+    } catch (err) {
+      console.warn('Failed to load village benchmarks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBenchmarks = async () => {
-      try {
-        const res = await fetch(getApiUrl('/api/village/benchmarks'));
-        if (res.ok) {
-          const data = await res.json();
-          setBenchmarkData(data);
-        }
-      } catch (err) {
-        console.warn('Failed to load village benchmarks:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBenchmarks();
   }, [state.fields]);
+
+  const handleRegenerateAI = async () => {
+    setRegenerating(true);
+    try {
+      const res = await fetch('/api/village/regenerate-ai', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setBenchmarkData(prev => ({
+          ...prev,
+          advisories: data.advisories,
+          aiMeta: data.aiMeta
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to regenerate AI advisories:', err);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const handleSaveApiKey = async (e) => {
+    e.preventDefault();
+    if (!inputKey.trim()) return;
+    setSavingKey(true);
+    try {
+      const res = await fetch('/api/ai/set-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: inputKey.trim(), model: 'gpt-4o-mini' })
+      });
+      if (res.ok) {
+        setKeyStatusMsg({ type: 'success', text: 'API Key saved! Generating insights with GPT-4o-mini...' });
+        setInputKey('');
+        setTimeout(() => {
+          setShowKeyModal(false);
+          setKeyStatusMsg(null);
+          handleRegenerateAI();
+        }, 1200);
+      } else {
+        const err = await res.json();
+        setKeyStatusMsg({ type: 'error', text: err.error || 'Failed to save key' });
+      }
+    } catch (err) {
+      setKeyStatusMsg({ type: 'error', text: err.message });
+    } finally {
+      setSavingKey(false);
+    }
+  };
 
   const fields = state.fields || [];
   const stats = benchmarkData?.villageStats || {
@@ -80,6 +135,10 @@ export default function VillageOverview() {
     navigate('/');
   };
 
+  const isAIConfigured = benchmarkData?.aiMeta?.configured;
+  const isAIGenerated = benchmarkData?.aiMeta?.source === 'gpt-4o-mini';
+  const advisories = benchmarkData?.advisories || [];
+
   return (
     <div className="page-container fade-in">
       {/* Header */}
@@ -88,10 +147,21 @@ export default function VillageOverview() {
           <h1>Village Panchayat Soil Health Hub</h1>
           <p>Collective monitoring and cross-field salinity intelligence across all village plots</p>
         </div>
-        <button className="village-add-farm-btn" onClick={openPinDropModal}>
-          <MapPin size={15} />
-          <span>Drop Pin for New Farm</span>
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            className="village-ai-key-btn"
+            onClick={() => setShowKeyModal(true)}
+            title="Configure OpenAI API Key"
+          >
+            <Key size={14} />
+            <span>{isAIConfigured ? 'OpenAI Connected' : 'Set OpenAI Key'}</span>
+            {isAIConfigured && <span className="ai-status-dot online" />}
+          </button>
+          <button className="village-add-farm-btn" onClick={openPinDropModal}>
+            <MapPin size={15} />
+            <span>Drop Pin for New Farm</span>
+          </button>
+        </div>
       </div>
 
       {/* Village KPI Strip */}
@@ -200,52 +270,76 @@ export default function VillageOverview() {
           </div>
         </div>
 
-        {/* Right: Peer Learning & Community Agronomy */}
+        {/* Right: AI Cross-Field Peer Intelligence */}
         <div className="card village-advisory-card">
           <div className="card-header">
             <div className="section-title">
               <div className="section-title-icon"><Sparkles size={16} /></div>
-              Cross-Field Peer Intelligence
+              <span>Cross-Field Peer Intelligence</span>
             </div>
-            <span className="chip" style={{ color: 'var(--color-teal)' }}>Agronomist Match</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {isAIGenerated ? (
+                <span className="chip chip-ai-active">
+                  <Bot size={12} /> GPT-4o-mini
+                </span>
+              ) : (
+                <span className="chip" style={{ color: 'var(--color-teal)' }}>
+                  Agronomist Match
+                </span>
+              )}
+              <button 
+                className="btn-ai-refresh"
+                onClick={handleRegenerateAI}
+                disabled={regenerating}
+                title="Regenerate cross-field insights with AI"
+              >
+                <RefreshCw size={13} className={regenerating ? 'spin' : ''} />
+                <span>{regenerating ? 'Analyzing...' : 'Refresh'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="village-advisories-list">
-            <div className="vadvisory-item drip-highlight">
-              <div className="vadvisory-title">
-                <CheckCircle2 size={16} className="text-teal" />
-                <span>Peer Irrigation Best Practice</span>
+            {regenerating ? (
+              <div className="ai-loading-box">
+                <Bot size={24} className="spin text-teal" />
+                <p>Synthesizing village plots & calculating cross-field peer strategies via GPT-4o-mini...</p>
               </div>
-              <p className="vadvisory-text">
-                <strong>Balwinder Singh</strong> & <strong>Rawat Singh</strong> are achieving <strong>80%+ Recovery</strong> by utilizing drip irrigation with early-morning fertigation cycles.
-              </p>
-              <div className="vadvisory-action">
-                Recommended Action: Neighboring farmers on flood irrigation can save ~42% irrigation water and reduce root salt stress by adopting this protocol.
-              </div>
-            </div>
+            ) : advisories.length > 0 ? (
+              advisories.map((item, index) => {
+                const isWarning = item.type === 'water_table_warning' || item.type === 'critical_drainage';
+                const isRotation = item.type === 'crop_rotation';
+                const highlight = item.highlight || (isWarning ? 'warning-highlight' : isRotation ? 'info-highlight' : 'drip-highlight');
+                const Icon = isWarning ? AlertTriangle : isRotation ? TrendingUp : CheckCircle2;
+                const iconColor = isWarning ? 'text-orange' : isRotation ? 'text-blue' : 'text-teal';
 
-            <div className="vadvisory-item warning-highlight">
-              <div className="vadvisory-title">
-                <AlertTriangle size={16} className="text-orange" />
-                <span>Canal Cluster Water Table Warning</span>
+                return (
+                  <div key={item.id || index} className={`vadvisory-item ${highlight} fade-in`}>
+                    <div className="vadvisory-title">
+                      <Icon size={16} className={iconColor} />
+                      <span>{item.badge || item.title}</span>
+                      {item.aiGenerated && (
+                        <span className="badge-ai-pill">
+                          <Sparkles size={10} /> GPT-4o-mini
+                        </span>
+                      )}
+                    </div>
+                    <p className="vadvisory-text">
+                      {item.message}
+                    </p>
+                    {item.action && (
+                      <div className="vadvisory-action">
+                        {item.action}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="empty-advisories-box">
+                <p>No advisories computed. Add village plots to generate cross-field peer intelligence.</p>
               </div>
-              <p className="vadvisory-text">
-                Plots near Sri Ganganagar South Block have a shallow water table at <strong>1.2m</strong>. Capillary rise is pumping <strong>2.4 mm/day</strong> of salt-laden water into the cotton root zone.
-              </p>
-              <div className="vadvisory-action">
-                Recommended Action: Schedule collective subsurface drainage cleaning before next sowing season.
-              </div>
-            </div>
-
-            <div className="vadvisory-item info-highlight">
-              <div className="vadvisory-title">
-                <TrendingUp size={16} className="text-teal" />
-                <span>Crop Rotation Opportunity</span>
-              </div>
-              <p className="vadvisory-text">
-                For plots exceeding 5.0 dS/m EC, transitioning next winter cycle from sensitive Wheat to salt-tolerant <strong>Barley</strong> or <strong>Sugar Beet</strong> will preserve 85% normal yield.
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -260,19 +354,19 @@ export default function VillageOverview() {
 
           {/* Filter Pills */}
           <div className="village-filter-pills">
-            {['ALL', 'GREEN', 'YELLOW', 'RED'].map(z => (
+            {['ALL', 'GREEN', 'YELLOW', 'RED'].map(zone => (
               <button
-                key={z}
-                className={`vfilter-btn ${filterZone === z ? 'active' : ''}`}
-                onClick={() => setFilterZone(z)}
+                key={zone}
+                className={`vfilter-pill ${filterZone === zone ? 'active' : ''}`}
+                onClick={() => setFilterZone(zone)}
               >
-                {z === 'ALL' ? 'All Plots' : `${z} Zone`}
+                {zone === 'ALL' ? 'All Plots' : `${zone} Zone`}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="village-table-wrap">
+        <div className="table-responsive">
           <table className="village-table">
             <thead>
               <tr>
@@ -290,8 +384,8 @@ export default function VillageOverview() {
             <tbody>
               {filteredFields.map(farm => {
                 const rec = farm.soilRecovery ?? 50;
-                const zoneColor = rec >= 67 ? '#22c55e' : rec >= 34 ? '#f59e0b' : '#ef4444';
                 const strain = farm.soilStrain ?? 12.0;
+                const zoneColor = rec >= 67 ? '#22c55e' : rec >= 34 ? '#f59e0b' : '#ef4444';
 
                 return (
                   <tr key={farm.id} className="vtable-row">
@@ -344,6 +438,69 @@ export default function VillageOverview() {
           </table>
         </div>
       </div>
+
+      {/* OpenAI API Key Modal */}
+      {showKeyModal && (
+        <div className="modal-overlay fade-in" onClick={() => setShowKeyModal(false)}>
+          <div className="modal-card ai-key-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="section-title-icon"><Bot size={18} /></div>
+                <h3>Configure OpenAI API Key</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setShowKeyModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveApiKey} className="ai-key-form">
+              <p className="ai-key-description">
+                TerraSal uses <strong>GPT-4o-mini</strong> to synthesize village farm metrics and generate dynamic, agronomist-level peer intelligence.
+              </p>
+
+              <div className="form-group">
+                <label>OpenAI API Key</label>
+                <div className="input-with-icon">
+                  <Lock size={15} className="input-icon" />
+                  <input
+                    type="password"
+                    placeholder="sk-proj-..."
+                    value={inputKey}
+                    onChange={e => setInputKey(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <span className="form-hint">Model: <strong>gpt-4o-mini</strong>. Your key is saved locally to your backend <code>.env</code> file.</span>
+              </div>
+
+              {keyStatusMsg && (
+                <div className={`key-status-banner ${keyStatusMsg.type}`}>
+                  {keyStatusMsg.type === 'success' ? <Check size={14} /> : <AlertTriangle size={14} />}
+                  <span>{keyStatusMsg.text}</span>
+                </div>
+              )}
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowKeyModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={savingKey || !inputKey.trim()}
+                >
+                  {savingKey ? 'Saving...' : 'Save & Enable AI'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

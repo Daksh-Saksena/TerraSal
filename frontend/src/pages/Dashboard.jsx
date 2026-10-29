@@ -195,8 +195,8 @@ export default function Dashboard() {
                       : field.riskLevel === 'CRITICAL'
                       ? `Apply emergency leaching irrigation and get soil EC tested at KVK — ${field.name}`
                       : field.riskLevel === 'HIGH'
-                      ? `Schedule pre-sowing leaching irrigation before next crop cycle at ${field.name}`
-                      : `Monitor soil EC monthly and apply preventive leaching at ${field.name}`;
+                      ? `Schedule pre-sowing leaching irrigation and reduce volume by 20–25% at ${field.name}`
+                      : `Daily robotics EC stream active — apply calibrated preventive leaching at ${field.name}`;
                   return (
                     <div key={field.id} className="quick-rec-item">
                       <span className="rec-priority" style={{ color, borderColor: `${color}40`, background: `${color}15` }}>

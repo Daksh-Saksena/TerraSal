@@ -114,19 +114,19 @@ const getTopAction = (farm, riskScore) => {
 
   if (riskScore >= 80) {
     return (m === 'flood' || m === 'canal')
-      ? { urgency: 'urgent', text: `Stop flood irrigation immediately and switch to drip. Apply a heavy leaching flush (25–40% extra water over crop dose) before the next crop cycle to push salts down.` }
-      : { urgency: 'urgent', text: `Apply emergency leaching irrigation (30–40% extra water over crop dose) to push salts below the root zone. Get soil EC tested at the nearest KVK right away.` };
+      ? { urgency: 'urgent', text: `Critical root-zone salinity (${ec} dS/m). Stop flood irrigation immediately and switch to drip. Schedule a heavy leaching flush (25–40% extra water over crop dose) before the next crop cycle; daily robotics stream will track root salt clearance.` }
+      : { urgency: 'urgent', text: `Apply emergency leaching irrigation (30–40% extra water over crop dose). Daily robotics readings are logging high EC (${ec} dS/m) — flush salts below the root zone before sowing.` };
   }
   if (riskScore >= 60) {
     if (ec > thr)
-      return { urgency: 'high', text: `Your well water EC (${ec} dS/m) is above the safe limit for ${cn} (${thr} dS/m). Do a pre-sowing leaching irrigation and consider applying gypsum to the soil.` };
+      return { urgency: 'high', text: `Your well water EC (${ec} dS/m) is above the safe limit for ${cn} (${thr} dS/m). Schedule a leaching irrigation before the next crop and reduce irrigation volume by 20–25%. Daily robotics telemetry will track salt reduction.` };
     if (wt < 2.0)
-      return { urgency: 'high', text: `Water table is too shallow (${wt}m). Over-irrigating raises it further and pulls more salt to the surface. Reduce irrigation frequency and consider subsurface drainage.` };
-    return { urgency: 'high', text: `Schedule a leaching irrigation before the next crop. Monitor soil EC monthly. Reduce irrigation volume by 20–25%.` };
+      return { urgency: 'high', text: `Water table is too shallow (${wt}m). Reduce irrigation volume by 20–25% to prevent capillary salt rise. Daily robotics readings will monitor water table and EC trends.` };
+    return { urgency: 'high', text: `Schedule a leaching irrigation before the next crop. Reduce irrigation volume by 20–25%. Daily EC readings are tracked continuously via field robotics.` };
   }
   if (riskScore >= 35)
-    return { urgency: 'medium', text: `Conditions are manageable. Do a preventive leaching irrigation before sowing. Consider switching to drip irrigation to reduce long-term salt build-up.` };
-  return { urgency: 'good', text: `Your field is healthy. Keep up current practices and do a routine soil EC test each season to catch any early changes.` };
+    return { urgency: 'medium', text: `Conditions are manageable. Schedule a preventive leaching irrigation before the next crop. Daily robotics EC stream (${ec} dS/m) indicates stable soil balance.` };
+  return { urgency: 'good', text: `Your field is healthy. Daily robotics EC readings (${ec} dS/m) are within safe limits. Current irrigation volume is optimal.` };
 };
 
 export default function SoilHealthCard({ farm, onOpenPinDrop }) {

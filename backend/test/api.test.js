@@ -108,11 +108,15 @@ test('API: POST and DELETE /api/fields flow', async () => {
 });
 
 test('API: POST /api/telemetry processes sensor update', async () => {
+  const fieldsRes = await fetch(`${baseUrl}/api/fields`);
+  const fields = await fieldsRes.json();
+  const targetId = fields[0]?.id || 'field-001';
+
   const telemetryRes = await fetch(`${baseUrl}/api/telemetry`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      fieldId: 'field-001',
+      fieldId: targetId,
       metrics: {
         ec: 4.8,
         waterTable: 1.6

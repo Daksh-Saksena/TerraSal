@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import ECTrendChart from '../components/charts/ECTrendChart';

@@ -1,14 +1,12 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Droplets, ArrowDownUp, CloudRain, ChevronRight, Wifi, WifiOff } from 'lucide-react';
 import RiskBadge from './RiskBadge';
-import { formatEC, formatDepth, formatRainfall, getRelativeTime } from '../../utils/formatters';
-import { getScoreGradient } from '../../utils/formatters';
+import { formatEC, formatDepth, formatRainfall, getScoreGradient } from '../../utils/formatters';
 import './FieldCard.css';
 
 export default function FieldCard({ field }) {
   const {
-    id, name, location, area, cropType, riskScore, riskLevel,
+    name, location, area, cropType, riskScore, riskLevel,
     groundwaterEC, waterTableDepth, rainfallLast30Days,
     alerts, lastUpdated, sensorConnected, stressProbability,
   } = field;
@@ -93,7 +91,7 @@ export default function FieldCard({ field }) {
       {/* Footer */}
       <div className="field-card-footer">
         <div className="field-footer-left">
-          <span className="field-area">{area} ac · {cropType}</span>
+          <span className="field-area">{area} ac · {cropType} · {lastUpdated || 'Active'}</span>
           <span className={`sensor-status ${sensorConnected ? 'connected' : 'disconnected'}`}>
             {sensorConnected ? <Wifi size={11} /> : <WifiOff size={11} />}
             {sensorConnected ? 'Live' : 'Offline'}

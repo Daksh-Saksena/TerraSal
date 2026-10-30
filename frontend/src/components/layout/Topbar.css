@@ -273,3 +273,120 @@
   line-height: 1;
   margin-top: 2px;
 }
+
+/* Role & Language Switchers */
+.role-switch-wrap,
+.lang-switch-wrap {
+  position: relative;
+}
+
+.role-badge-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.role-badge-btn.panchayat {
+  border-color: rgba(0, 138, 80, 0.4);
+  background: rgba(0, 138, 80, 0.08);
+  color: var(--color-primary);
+}
+
+.role-badge-btn.farmer {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+}
+
+.role-btn-text {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  padding: 0 8px;
+}
+
+.lang-code-tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-menu-box {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 6px;
+  z-index: 100;
+  min-width: 180px;
+  animation: fadeIn 0.15s ease;
+}
+
+.dropdown-header-title {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 6px 10px 4px;
+}
+
+.dropdown-item-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition);
+  font-family: inherit;
+}
+
+.dropdown-item-btn:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-item-btn.active {
+  background: var(--bg-hover);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.dropdown-item-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-item-desc {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Plus, User, Trash2, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import './FarmSwitcher.css';
 
@@ -36,7 +35,6 @@ export default function FarmSwitcher() {
           const isActive = farm.id === activeFarm?.id;
           const recovery = farm.soilRecovery ?? 50;
           const zoneColor = recovery >= 67 ? '#22c55e' : recovery >= 34 ? '#f59e0b' : '#ef4444';
-          const strain = farm.soilStrain ?? 12.0;
 
           return (
             <div

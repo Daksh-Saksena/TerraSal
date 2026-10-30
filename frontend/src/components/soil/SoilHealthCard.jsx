@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Droplets, Layers, CloudRain, Zap, Gauge,
   AlertTriangle, CheckCircle2, Info, MapPin, User, Clock

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   BookOpen, Sprout, Droplets, Layers, ExternalLink,
   ChevronDown, ChevronUp, Download, CheckCircle
@@ -191,10 +191,15 @@ export default function Recommendations() {
             {label}
           </button>
         ))}
-        <button className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto' }}>
-          <Download size={14} />
-          Export PDF
-        </button>
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => window.print()}
+            title="Print or Save Advisory Guide as PDF"
+          >
+            <Download size={14} />
+            <span>Export / Print Advisory</span>
+          </button>
       </div>
 
       {/* Crop Guide */}
@@ -251,11 +256,10 @@ export default function Recommendations() {
                       </td>
                       <td><span className="chip">{crop.category}</span></td>
                       <td>
-                        <span className={`badge badge-${
-                          crop.toleranceLevel === 'very-high' ? 'low' :
-                          crop.toleranceLevel === 'high' ? 'moderate' :
-                          crop.toleranceLevel === 'moderate' ? 'high' : 'critical'
-                        }`}>
+                        <span className={`badge badge-${crop.toleranceLevel === 'very-high' ? 'low' :
+                            crop.toleranceLevel === 'high' ? 'moderate' :
+                              crop.toleranceLevel === 'moderate' ? 'high' : 'critical'
+                          }`}>
                           {crop.toleranceLevel.replace('-', ' ')}
                         </span>
                       </td>
@@ -272,10 +276,9 @@ export default function Recommendations() {
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>{crop.yieldReduction}</td>
                       <td><span className="chip">{crop.season}</span></td>
                       <td>
-                        <span className={`badge ${
-                          crop.waterRequirement === 'low' ? 'badge-low' :
-                          crop.waterRequirement === 'moderate' ? 'badge-moderate' : 'badge-high'
-                        }`}>
+                        <span className={`badge ${crop.waterRequirement === 'low' ? 'badge-low' :
+                            crop.waterRequirement === 'moderate' ? 'badge-moderate' : 'badge-high'
+                          }`}>
                           {crop.waterRequirement}
                         </span>
                       </td>

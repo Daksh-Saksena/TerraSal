@@ -1,11 +1,23 @@
 import express from 'express';
 import { queryAll, queryGet, execute } from '../db/index.js';
-import { analyzeSalinity } from '../services/salinityEngine.js';
+import {
+  analyzeSalinity,
+  simulateCropSwitch,
+  evaluateLabSoilReport,
+  FAO_CROP_PARAMETERS
+} from '../services/salinityEngine.js';
 import { cropDatabase } from '../services/cropDatabase.js';
-import { getWeatherForCoordinates, updateWeatherForAllFields } from '../services/weatherService.js';
+import {
+  getWeatherForCoordinates,
+  get7DayForecastForCoordinates,
+  updateWeatherForAllFields
+} from '../services/weatherService.js';
 import { aiService } from '../services/aiService.js';
 
 const router = express.Router();
+
+// Helper to safely parse numeric inputs without swallowing 0
+const parseNum = (val, def) => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : def;
 
 /**
  * Health check endpoint
@@ -56,16 +68,45 @@ router.get('/weather/coords', async (req, res) => {
 });
 
 /**
- * Get all fields (with farmer name, coords, root zone metrics, and alerts)
+ * 7-Day Weather Forecast & Leaching Recommendation
+ */
+router.get('/weather/forecast', async (req, res) => {
+  try {
+    const lat = parseFloat(req.query.lat) || 30.9;
+    const lon = parseFloat(req.query.lon || req.query.lng) || 75.85;
+    const forecast = await get7DayForecastForCoordinates(lat, lon);
+    res.json(forecast);
+  } catch (err) {
+    console.error('[API] /weather/forecast error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Get all fields (Optimized batch query to prevent N+1 overhead)
  */
 router.get('/fields', async (req, res) => {
   try {
-    const fields = await queryAll('SELECT * FROM fields');
+    const [fields, allMetrics, allAlerts] = await Promise.all([
+      queryAll('SELECT * FROM fields'),
+      queryAll('SELECT * FROM metrics'),
+      queryAll('SELECT fieldId, message FROM alerts')
+    ]);
 
-    // Attach metrics and alerts
+    const metricsMap = new Map();
+    for (const m of allMetrics) {
+      metricsMap.set(m.fieldId, m);
+    }
+
+    const alertsMap = new Map();
+    for (const a of allAlerts) {
+      if (!alertsMap.has(a.fieldId)) alertsMap.set(a.fieldId, []);
+      alertsMap.get(a.fieldId).push(a.message);
+    }
+
     for (const field of fields) {
       field.sensorConnected = Boolean(field.sensorConnected);
-      const metrics = await queryGet('SELECT * FROM metrics WHERE fieldId = ?', [field.id]);
+      const metrics = metricsMap.get(field.id);
 
       if (metrics) {
         field.metrics = {
@@ -101,9 +142,7 @@ router.get('/fields', async (req, res) => {
       field.whoopMetrics = analysis.whoopMetrics;
       field.soilStrain = field.soilStrain ?? analysis.soilStrain;
       field.soilRecovery = field.soilRecovery ?? analysis.soilRecovery;
-
-      const alerts = await queryAll('SELECT message FROM alerts WHERE fieldId = ?', [field.id]);
-      field.alerts = alerts.map(a => a.message);
+      field.alerts = alertsMap.get(field.id) || [];
     }
 
     res.json(fields);
@@ -146,11 +185,12 @@ router.post('/fields', async (req, res) => {
     }
 
     const id = `field-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
-    const ec = parseFloat(groundwaterEC) || 3.0;
-    const wt = parseFloat(waterTableDepth) || 2.5;
-    const rain = parseFloat(rainfallLast30Days) || 15;
-    const fieldLat = parseFloat(lat) || 30.9;
-    const fieldLng = parseFloat(lng) || 75.85;
+    const ec = parseNum(groundwaterEC, 3.0);
+    const wt = parseNum(waterTableDepth, 2.5);
+    const rain = parseNum(rainfallLast30Days, 15);
+    const fieldLat = parseNum(lat, 30.9);
+    const fieldLng = parseNum(lng, 75.85);
+    const farmArea = Math.max(0.1, parseNum(area, 10));
 
     // Run salinity diagnostic
     const analysis = analyzeSalinity({
@@ -176,7 +216,7 @@ router.post('/fields', async (req, res) => {
         location || `${fieldLat.toFixed(4)}°N, ${fieldLng.toFixed(4)}°E`,
         fieldLat,
         fieldLng,
-        parseFloat(area) || 10,
+        farmArea,
         cropType.trim(),
         soilType.trim(),
         drainageQuality || 'moderate',
@@ -459,6 +499,51 @@ router.post('/analyze', (req, res) => {
     console.error('[API] /analyze error:', error.message);
     res.status(500).json({ error: error.message });
   }
+});
+
+/**
+ * What-If Crop Switch & Leaching Simulator (FAO Maas-Hoffman Model)
+ */
+router.post('/simulate-crop', (req, res) => {
+  try {
+    const { currentCrop, proposedCrop, groundwaterEC, leachingFraction } = req.body || {};
+    const result = simulateCropSwitch({
+      currentCrop,
+      proposedCrop,
+      groundwaterEC: parseFloat(groundwaterEC) || 3.5,
+      leachingFraction: parseFloat(leachingFraction) || 0.15
+    });
+    res.json(result);
+  } catch (err) {
+    console.error('[API] /simulate-crop error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Soil Lab Report Calibration (pH, ECe, SAR, Gypsum Requirement)
+ */
+router.post('/lab-calibrate', (req, res) => {
+  try {
+    const { labSoilEC, labPH, labSAR, soilType } = req.body || {};
+    const result = evaluateLabSoilReport({
+      labSoilEC,
+      labPH,
+      labSAR,
+      soilType
+    });
+    res.json(result);
+  } catch (err) {
+    console.error('[API] /lab-calibrate error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * FAO Crop Tolerance Parameters Reference Table
+ */
+router.get('/fao-crops', (req, res) => {
+  res.json(FAO_CROP_PARAMETERS);
 });
 
 /**

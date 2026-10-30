@@ -14,14 +14,24 @@ const router = express.Router();
  *   "fieldId": "field-001",
  *   "metrics": {
  *     "ec": 4.5,
- *     "waterTable": 1.7
+ *     "waterTable": 1.7,
+ *     "soilMoisture": 28.5
  *   },
  *   "timestamp": "2026-08-15T10:00:00Z"
  * }
  */
 router.post('/', async (req, res) => {
   try {
-    const { fieldId, metrics } = req.body || {};
+    // Optional sensor key authentication
+    const expectedKey = process.env.SENSOR_API_KEY;
+    if (expectedKey) {
+      const providedKey = req.headers['x-sensor-key'] || req.query.key;
+      if (providedKey !== expectedKey) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid or missing x-sensor-key header' });
+      }
+    }
+
+    const { fieldId, sensorId, metrics, timestamp } = req.body || {};
 
     if (!fieldId || !metrics || typeof metrics.ec !== 'number' || typeof metrics.waterTable !== 'number') {
       return res.status(400).json({ error: 'Invalid payload: fieldId, metrics.ec (number), and metrics.waterTable (number) are required' });
@@ -49,8 +59,9 @@ router.post('/', async (req, res) => {
     };
 
     const analysisResult = analyzeSalinity(analysisInputs);
+    const readingTime = timestamp || new Date().toISOString();
 
-    // 3. Update the database
+    // 3. Update the latest metrics & field score
     await execute(
       'UPDATE metrics SET ec = ?, waterTable = ? WHERE fieldId = ?', 
       [metrics.ec, metrics.waterTable, fieldId]
@@ -69,10 +80,27 @@ router.post('/', async (req, res) => {
       ]
     );
 
-    // 4. Generate alerts if risk is high/critical
+    // 4. Record into historical readings table
+    try {
+      await execute(
+        'INSERT INTO readings (fieldId, sensorId, ec, waterTable, soilMoisture, timestamp, source) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [fieldId, sensorId || 'TS-Node-Generic', metrics.ec, metrics.waterTable, metrics.soilMoisture ?? null, readingTime, 'sensor']
+      );
+    } catch (dbErr) {
+      console.warn('[Telemetry] Readings insert notice:', dbErr.message);
+    }
+
+    // 5. Generate alert with deduplication (don't duplicate if already alerted recently)
     if (analysisResult.riskScore >= 60) {
-      const alertMsg = `[${new Date().toISOString()}] Live Sensor Alert: EC reached ${metrics.ec} dS/m, Water Table at ${metrics.waterTable}m (${analysisResult.riskLevel} risk).`;
-      await execute('INSERT INTO alerts (fieldId, message) VALUES (?, ?)', [fieldId, alertMsg]);
+      const recentAlert = await queryGet(
+        'SELECT id FROM alerts WHERE fieldId = ? AND message LIKE ? ORDER BY id DESC LIMIT 1',
+        [fieldId, `%EC reached ${metrics.ec} dS/m%`]
+      );
+
+      if (!recentAlert) {
+        const alertMsg = `[${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}] Sensor Alert: EC reached ${metrics.ec} dS/m, Water Table at ${metrics.waterTable}m (${analysisResult.riskLevel} risk).`;
+        await execute('INSERT INTO alerts (fieldId, message) VALUES (?, ?)', [fieldId, alertMsg]);
+      }
     }
 
     console.log(`[Telemetry] Processed sensor reading for field ${fieldId}. Updated Risk Score: ${analysisResult.riskScore}`);
@@ -83,7 +111,8 @@ router.post('/', async (req, res) => {
       riskScore: analysisResult.riskScore, 
       riskLevel: analysisResult.riskLevel,
       soilStrain: analysisResult.soilStrain,
-      soilRecovery: analysisResult.soilRecovery
+      soilRecovery: analysisResult.soilRecovery,
+      recordedAt: readingTime
     });
 
   } catch (error) {

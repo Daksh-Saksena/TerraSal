@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeSalinity } from '../services/salinityEngine.js';
+import {
+  analyzeSalinity,
+  simulateCropSwitch,
+  evaluateLabSoilReport,
+  FAO_CROP_PARAMETERS
+} from '../services/salinityEngine.js';
 
 test('Salinity Engine: High risk scenario computation', () => {
   const result = analyzeSalinity({
@@ -58,4 +63,43 @@ test('Salinity Engine: Resilient against empty and null inputs', () => {
     assert.ok(nullResult.riskScore >= 0);
     assert.ok(typeof nullResult.explanation === 'string');
   });
+});
+
+test('Salinity Engine: What-If Crop Switch Simulation (FAO Maas-Hoffman)', () => {
+  const sim = simulateCropSwitch({
+    currentCrop: 'rice',
+    proposedCrop: 'barley',
+    groundwaterEC: 4.5,
+    leachingFraction: 0.15
+  });
+
+  assert.ok(sim.effectiveECe > 0);
+  assert.ok(sim.proposedCrop.potentialYield > sim.currentCrop.potentialYield);
+  assert.ok(sim.yieldAdvantagePercent > 0);
+  assert.ok(sim.recommendation.includes('Barley'));
+});
+
+test('Salinity Engine: Soil Lab Calibration & Gypsum Requirement', () => {
+  // Sodic soil scenario: high SAR and high pH
+  const sodicReport = evaluateLabSoilReport({
+    labSoilEC: 2.8,
+    labPH: 8.9,
+    labSAR: 16.0,
+    soilType: 'clay-loam'
+  });
+
+  assert.equal(sodicReport.soilClass, 'Sodic / Alkali Soil (Black Alkali)');
+  assert.ok(sodicReport.gypsumRequirementTonsPerAcre > 0);
+  assert.ok(sodicReport.primaryRemedy.includes('Gypsum'));
+
+  // Normal soil scenario
+  const normalReport = evaluateLabSoilReport({
+    labSoilEC: 1.2,
+    labPH: 7.2,
+    labSAR: 3.5,
+    soilType: 'loamy'
+  });
+
+  assert.equal(normalReport.soilClass, 'Normal (Non-saline)');
+  assert.equal(normalReport.gypsumRequirementTonsPerAcre, 0);
 });

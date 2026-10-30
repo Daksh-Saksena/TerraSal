@@ -542,3 +542,119 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
     soilTreatment,
   };
 };
+
+/**
+ * FAO Maas-Hoffman Crop Salinity Tolerance Parameters
+ * a = Threshold ECe (dS/m) at which yield begins to decline
+ * b = Percent yield decrease per dS/m increase beyond threshold
+ */
+export const FAO_CROP_PARAMETERS = {
+  'barley': { threshold: 8.0, slope: 5.0, name: 'Barley (Jau)', rating: 'Tolerant' },
+  'cotton': { threshold: 7.7, slope: 5.2, name: 'Cotton (Kapas)', rating: 'Tolerant' },
+  'sugar-beet': { threshold: 7.0, slope: 5.9, name: 'Sugar Beet', rating: 'Tolerant' },
+  'wheat': { threshold: 6.0, slope: 7.1, name: 'Wheat (Kanak)', rating: 'Moderately Tolerant' },
+  'sorghum': { threshold: 6.8, slope: 16.0, name: 'Sorghum (Jowar)', rating: 'Moderately Tolerant' },
+  'mustard': { threshold: 5.0, slope: 9.0, name: 'Mustard (Sarson)', rating: 'Moderately Tolerant' },
+  'sunflower': { threshold: 4.8, slope: 5.5, name: 'Sunflower', rating: 'Moderately Tolerant' },
+  'rice': { threshold: 3.0, slope: 12.0, name: 'Rice (Paddy)', rating: 'Moderately Sensitive' },
+  'chickpea': { threshold: 1.5, slope: 14.0, name: 'Chickpea (Chana)', rating: 'Sensitive' },
+  'lentil': { threshold: 1.2, slope: 18.0, name: 'Lentil (Masoor)', rating: 'Sensitive' }
+};
+
+/**
+ * What-If Crop Switch and Leaching Simulator
+ */
+export function simulateCropSwitch({ currentCrop = 'wheat', proposedCrop = 'barley', groundwaterEC = 3.5, leachingFraction = 0.15 }) {
+  const currentKey = currentCrop.toLowerCase();
+  const proposedKey = proposedCrop.toLowerCase();
+
+  const currentParams = FAO_CROP_PARAMETERS[currentKey] || { threshold: 5.0, slope: 8.0, name: currentCrop, rating: 'Moderate' };
+  const proposedParams = FAO_CROP_PARAMETERS[proposedKey] || { threshold: 7.0, slope: 6.0, name: proposedCrop, rating: 'Tolerant' };
+
+  // Effective root zone ECe under steady-state with leaching fraction LF
+  // ECe ≈ ECw / (2 * LF^0.5) under typical leaching
+  const lf = Math.max(0.05, Math.min(0.40, parseFloat(leachingFraction) || 0.15));
+  const effectiveECe = parseFloat((groundwaterEC / (2 * Math.sqrt(lf))).toFixed(2));
+
+  // Yield Loss calculation YL = b * (ECe - a)
+  const currentLoss = Math.max(0, Math.min(100, Math.round((effectiveECe - currentParams.threshold) * currentParams.slope)));
+  const proposedLoss = Math.max(0, Math.min(100, Math.round((effectiveECe - proposedParams.threshold) * proposedParams.slope)));
+  const yieldAdvantage = Math.max(0, currentLoss - proposedLoss);
+
+  // Leaching requirement to achieve 100% potential yield
+  const lrCurrent = Math.min(0.45, Math.max(0.05, groundwaterEC / (5 * currentParams.threshold - groundwaterEC)));
+  const lrProposed = Math.min(0.45, Math.max(0.05, groundwaterEC / (5 * proposedParams.threshold - groundwaterEC)));
+
+  return {
+    effectiveECe,
+    leachingFraction: lf,
+    currentCrop: {
+      name: currentParams.name,
+      thresholdEC: currentParams.threshold,
+      yieldLossPercent: currentLoss,
+      potentialYield: 100 - currentLoss,
+      leachingRequirement: parseFloat((lrCurrent * 100).toFixed(1))
+    },
+    proposedCrop: {
+      name: proposedParams.name,
+      thresholdEC: proposedParams.threshold,
+      yieldLossPercent: proposedLoss,
+      potentialYield: 100 - proposedLoss,
+      leachingRequirement: parseFloat((lrProposed * 100).toFixed(1))
+    },
+    yieldAdvantagePercent: yieldAdvantage,
+    recommendation: yieldAdvantage > 15
+      ? `High gain: Switching to ${proposedParams.name} will recover ~${yieldAdvantage}% in crop yield under current salinity (${groundwaterEC} dS/m).`
+      : yieldAdvantage > 0
+      ? `Moderate gain: Switching saves ~${yieldAdvantage}% yield. Ensure adequate drainage.`
+      : `Current crop ${currentParams.name} is already well-matched or superior for this salinity level.`
+  };
+}
+
+/**
+ * Soil Lab Report Diagnostic (pH, ECe, SAR, Gypsum Requirement)
+ */
+export function evaluateLabSoilReport({ labSoilEC, labPH, labSAR, soilType = 'loamy' }) {
+  const ec = parseFloat(labSoilEC) || 2.5;
+  const ph = parseFloat(labPH) || 7.5;
+  const sar = parseFloat(labSAR) || 6.0;
+
+  // Approximate ESP from SAR (USDA formula: ESP ≈ 100(-0.0126 + 0.01475*SAR)/(1 + (-0.0126 + 0.01475*SAR)))
+  const espEst = Math.max(1, Math.round((1.475 * sar) / (1 + (0.01475 * sar))));
+
+  // Classification (US Salinity Lab Staff, Handbook 60)
+  let soilClass = 'Normal (Non-saline)';
+  let primaryRemedy = 'No major chemical amendments required. Maintain good irrigation practices.';
+  let gypsumRequirementTonsPerAcre = 0;
+
+  if (ec >= 4.0 && sar < 13 && ph < 8.5) {
+    soilClass = 'Saline Soil (White Alkali)';
+    primaryRemedy = 'Chemical gypsum NOT needed. Physical leaching with fresh or low-EC canal water and sub-surface tile drainage is required.';
+  } else if (ec < 4.0 && sar >= 13 && ph >= 8.5) {
+    soilClass = 'Sodic / Alkali Soil (Black Alkali)';
+    // Gypsum requirement formula: GR = (ESP_initial - ESP_target) * CEC * factor
+    // Approx CEC by soil type: clay=25, loam=15, sand=8
+    const cec = soilType.includes('clay') ? 22 : soilType.includes('sand') ? 10 : 16;
+    const targetESP = 10;
+    const excessESP = Math.max(0, espEst - targetESP);
+    gypsumRequirementTonsPerAcre = parseFloat((excessESP * cec * 0.015).toFixed(1));
+    primaryRemedy = `Agricultural Gypsum (${gypsumRequirementTonsPerAcre} tons/acre) required to displace exchangeable sodium, followed by leaching after 15 days.`;
+  } else if (ec >= 4.0 && sar >= 13) {
+    soilClass = 'Saline-Sodic Soil';
+    const cec = soilType.includes('clay') ? 22 : 16;
+    const excessESP = Math.max(0, espEst - 10);
+    gypsumRequirementTonsPerAcre = parseFloat((excessESP * cec * 0.018).toFixed(1));
+    primaryRemedy = `Apply Gypsum (${gypsumRequirementTonsPerAcre} tons/acre) FIRST to stabilize soil structure, then perform leaching. Do NOT leach before adding calcium amendment!`;
+  }
+
+  return {
+    measuredECe: ec,
+    measuredPH: ph,
+    measuredSAR: sar,
+    estimatedESP: espEst,
+    soilClass,
+    primaryRemedy,
+    gypsumRequirementTonsPerAcre,
+    calibrationAdjustmentFactor: ec > 4.0 ? 1.25 : 1.0
+  };
+}

@@ -256,6 +256,24 @@ async function runInitialization() {
     )
   `);
 
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS readings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fieldId TEXT,
+      sensorId TEXT,
+      ec NUMERIC,
+      waterTable NUMERIC,
+      soilMoisture NUMERIC,
+      timestamp TEXT,
+      source TEXT,
+      FOREIGN KEY(fieldId) REFERENCES fields(id)
+    )
+  `);
+
+  await client.execute(`
+    CREATE INDEX IF NOT EXISTS idx_readings_field_time ON readings(fieldId, timestamp)
+  `);
+
   // 2. Safe non-destructive column migrations for fields table
   try {
     const tableInfo = await client.execute('PRAGMA table_info(fields)');

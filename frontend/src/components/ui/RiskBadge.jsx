@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertTriangle, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 
 const CONFIG = {

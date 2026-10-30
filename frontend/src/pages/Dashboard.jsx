@@ -1,7 +1,8 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import {
-  AlertTriangle, Droplets, ArrowDownUp, CloudRain,
-  Activity, Zap, TrendingUp, Cpu, MapPin
+  AlertTriangle, Droplets,
+  Activity, Zap, TrendingUp, Cpu, MapPin,
+  CloudRain, Sun, Printer, Shield, User, Info
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import RiskGauge from '../components/ui/RiskGauge';
@@ -9,23 +10,109 @@ import MetricCard from '../components/ui/MetricCard';
 import FieldCard from '../components/ui/FieldCard';
 import ECTrendChart from '../components/charts/ECTrendChart';
 import SoilHealthCard from '../components/soil/SoilHealthCard';
+import { getApiUrl } from '../utils/api';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { state, activeFarm, openPinDropModal } = useApp();
+  const { state, activeFarm, openPinDropModal, role, t } = useApp();
   const { fields, summaryStats } = state;
+  const [weatherForecast, setWeatherForecast] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    const fetchForecast = async () => {
+      try {
+        const lat = activeFarm?.lat || 30.9;
+        const lon = activeFarm?.lng || 75.85;
+        const res = await fetch(getApiUrl(`/api/weather/forecast?lat=${lat}&lon=${lon}`));
+        if (res.ok && active) {
+          const data = await res.json();
+          setWeatherForecast(data);
+        }
+      } catch (err) {
+        console.warn('Forecast fetch notice:', err);
+      }
+    };
+    fetchForecast();
+    return () => { active = false; };
+  }, [activeFarm]);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div className="page-container fade-in">
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>Field Salinity Overview</h1>
-        <p>Panchayat Soil Portal: Salinity diagnostic and root zone tracking across registered village plots</p>
+      {/* Mode Banner */}
+      <div className={`portal-banner ${role === 'farmer' ? 'farmer-mode' : 'panchayat-mode'}`}>
+        <div className="portal-banner-content">
+          <div className="portal-mode-badge">
+            {role === 'farmer' ? <User size={14} /> : <Shield size={14} />}
+            <span>{role === 'farmer' ? t('roleFarmer') : t('rolePanchayat')}</span>
+          </div>
+          <h2>
+            {role === 'farmer'
+              ? (activeFarm ? `Plot: ${activeFarm.name} · ${activeFarm.farmerName || 'Farmer'} (${activeFarm.area} ${t('acres')})` : t('farmerPortal'))
+              : t('panchayatPortal')}
+          </h2>
+          <p>
+            {role === 'farmer'
+              ? `Real-time root-zone salinity and soil recovery guidance for your ${activeFarm?.cropType || 'crop'} plot.`
+              : 'Community-level salinity diagnostic, plume tracking, and cross-plot reclamation across village.'}
+          </p>
+        </div>
+        <div className="portal-banner-actions">
+          {role === 'farmer' && activeFarm && (
+            <button className="portal-action-btn" onClick={handlePrint} title="Print Advisory Sheet for Kisan">
+              <Printer size={15} />
+              <span>{t('printReport')}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Active Farm Soil Health Card */}
       {activeFarm && (
         <SoilHealthCard farm={activeFarm} onOpenPinDrop={openPinDropModal} />
+      )}
+
+      {/* 7-Day Weather & Salinity Leaching Forecast Widget */}
+      {weatherForecast && (
+        <div className="card weather-forecast-card fade-in">
+          <div className="card-header">
+            <div className="weather-forecast-title">
+              <CloudRain size={18} className="text-primary" />
+              <span>{t('weatherForecast')}</span>
+            </div>
+            <span className="chip">{weatherForecast.location}</span>
+          </div>
+
+          {/* Smart Leaching Advice Callout */}
+          <div className={`leaching-advice-banner ${weatherForecast.adviceType}`}>
+            <Info size={18} className="advice-icon" />
+            <div className="advice-text">
+              <strong>Agro-Climatic Irrigation & Leaching Advice:</strong>
+              <p>{weatherForecast.leachingAdvice}</p>
+            </div>
+          </div>
+
+          {/* 7-Day Strip */}
+          <div className="forecast-days-strip">
+            {weatherForecast.forecast.map((d, i) => (
+              <div key={i} className={`forecast-day-item ${d.willRain ? 'rain-expected' : ''}`}>
+                <span className="fday-name">{d.day}</span>
+                <span className="fday-date">{d.date}</span>
+                <div className="fday-icon">
+                  {d.willRain ? <CloudRain size={20} className="text-primary" /> : <Sun size={20} className="text-secondary" />}
+                </div>
+                <span className="fday-temp">{d.tempMax}° / {d.tempMin}°</span>
+                <span className={`fday-rain ${d.rainMm > 0 ? 'has-rain' : ''}`}>
+                  {d.rainMm > 0 ? `${d.rainMm} mm` : '0 mm'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Top KPI Row */}

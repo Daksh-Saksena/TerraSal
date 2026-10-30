@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FlaskConical, Map, TrendingUp,
@@ -10,18 +9,18 @@ import FarmSwitcher from '../farms/FarmSwitcher';
 import './Sidebar.css';
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/village', icon: Users, label: 'Village Hub' },
-  { path: '/analyze', icon: FlaskConical, label: 'Analyzer' },
-  { path: '/map', icon: Map, label: 'Map View' },
-  { path: '/trends', icon: TrendingUp, label: 'Trends' },
-  { path: '/recommendations', icon: BookOpen, label: 'Advisory' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+  { path: '/', icon: LayoutDashboard, key: 'navDashboard', defaultLabel: 'Dashboard' },
+  { path: '/village', icon: Users, key: 'navVillage', defaultLabel: 'Village Hub' },
+  { path: '/analyze', icon: FlaskConical, key: 'navAnalyzer', defaultLabel: 'Analyzer' },
+  { path: '/map', icon: Map, key: 'navMap', defaultLabel: 'Map View' },
+  { path: '/trends', icon: TrendingUp, key: 'navTrends', defaultLabel: 'Trends' },
+  { path: '/recommendations', icon: BookOpen, key: 'navRecommendations', defaultLabel: 'Advisory' },
+  { path: '/settings', icon: Settings, key: 'navSettings', defaultLabel: 'Settings' },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
-  const { state, toggleSidebar } = useApp();
+  const { state, toggleSidebar, t } = useApp();
   const collapsed = state.sidebarCollapsed;
 
   return (
@@ -34,15 +33,16 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="logo-text">
             <span className="logo-name">TerraSal</span>
-            <span className="logo-tagline">Panchayat Kiosk</span>
+            <span className="logo-tagline">{t('appName')}</span>
           </div>
         )}
       </div>
 
       {/* Nav Items */}
       <nav className="sidebar-nav">
-        {navItems.map(({ path, icon: Icon, label }) => {
+        {navItems.map(({ path, icon: Icon, key, defaultLabel }) => {
           const isActive = location.pathname === path;
+          const label = t ? t(key) : defaultLabel;
           return (
             <Link
               key={path}

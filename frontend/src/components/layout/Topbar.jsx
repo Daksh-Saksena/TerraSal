@@ -1,31 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Search, RefreshCw, ChevronDown, X, CheckCheck, Sun, Moon } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Bell, Search, RefreshCw, ChevronDown, CheckCheck, Sun, Moon, Globe, Shield, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getRelativeTime } from '../../utils/formatters';
 import './Topbar.css';
 
 export default function Topbar({ pageTitle }) {
-  const { state, theme, toggleTheme, markNotificationRead, markAllRead } = useApp();
+  const {
+    state, theme, toggleTheme, role, setRole,
+    language, setLanguage, t, activeFarm,
+    markNotificationRead, markAllRead, refetch
+  } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const notifRef = useRef(null);
+  const roleRef = useRef(null);
+  const langRef = useRef(null);
 
   const unreadCount = state.notifications.filter(n => !n.read).length;
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifications(false);
+      }
+      if (roleRef.current && !roleRef.current.contains(e.target)) {
+        setShowRoleMenu(false);
+      }
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setShowLangMenu(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+    if (refetch) await refetch();
+    setTimeout(() => setRefreshing(false), 800);
   };
 
   const getNotifIcon = (type) => {
@@ -50,11 +65,87 @@ export default function Topbar({ pageTitle }) {
           />
         </div>
 
+        {/* Role Switcher (Panchayat vs Farmer) */}
+        <div className="role-switch-wrap" ref={roleRef}>
+          <button
+            className={`role-badge-btn ${role === 'panchayat' ? 'panchayat' : 'farmer'}`}
+            onClick={() => setShowRoleMenu(!showRoleMenu)}
+            title="Switch View Mode"
+          >
+            {role === 'panchayat' ? <Shield size={14} /> : <User size={14} />}
+            <span className="role-btn-text">
+              {role === 'panchayat' ? t('rolePanchayat') : `${t('roleFarmer')}${activeFarm ? `: ${activeFarm.farmerName || activeFarm.name}` : ''}`}
+            </span>
+            <ChevronDown size={12} />
+          </button>
+
+          {showRoleMenu && (
+            <div className="dropdown-menu-box role-dropdown">
+              <div className="dropdown-header-title">{t('roleLabel')}</div>
+              <button
+                className={`dropdown-item-btn ${role === 'panchayat' ? 'active' : ''}`}
+                onClick={() => { setRole('panchayat'); setShowRoleMenu(false); }}
+              >
+                <Shield size={15} className="text-primary" />
+                <div className="dropdown-item-text">
+                  <strong>{t('rolePanchayat')}</strong>
+                  <span className="dropdown-item-desc">{t('allPlots')}</span>
+                </div>
+              </button>
+              <button
+                className={`dropdown-item-btn ${role === 'farmer' ? 'active' : ''}`}
+                onClick={() => { setRole('farmer'); setShowRoleMenu(false); }}
+              >
+                <User size={15} className="text-secondary" />
+                <div className="dropdown-item-text">
+                  <strong>{t('roleFarmer')}</strong>
+                  <span className="dropdown-item-desc">{activeFarm ? `${activeFarm.farmerName} (${activeFarm.name})` : t('myPlot')}</span>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Language Selector (EN, HI, PA) */}
+        <div className="lang-switch-wrap" ref={langRef}>
+          <button
+            className="icon-btn lang-btn"
+            onClick={() => setShowLangMenu(!showLangMenu)}
+            title="Language / भाषा / ਭਾਸ਼ਾ"
+          >
+            <Globe size={15} />
+            <span className="lang-code-tag">{language.toUpperCase()}</span>
+          </button>
+
+          {showLangMenu && (
+            <div className="dropdown-menu-box lang-dropdown">
+              <button
+                className={`dropdown-item-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => { setLanguage('en'); setShowLangMenu(false); }}
+              >
+                <span>🇬🇧 English</span>
+              </button>
+              <button
+                className={`dropdown-item-btn ${language === 'hi' ? 'active' : ''}`}
+                onClick={() => { setLanguage('hi'); setShowLangMenu(false); }}
+              >
+                <span>🇮🇳 हिन्दी (Hindi)</span>
+              </button>
+              <button
+                className={`dropdown-item-btn ${language === 'pa' ? 'active' : ''}`}
+                onClick={() => { setLanguage('pa'); setShowLangMenu(false); }}
+              >
+                <span>🌾 ਪੰਜਾਬੀ (Punjabi)</span>
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Theme Switcher: tweakcn Supabase Light / Dark */}
         <button
           className="icon-btn theme-toggle-btn"
           onClick={toggleTheme}
-          title={theme === 'dark' ? 'Switch to Supabase Light Mode' : 'Switch to Supabase Dark Mode'}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           id="theme-toggle-btn"
           aria-label="Toggle theme"
         >
@@ -113,16 +204,6 @@ export default function Topbar({ pageTitle }) {
               </div>
             </div>
           )}
-        </div>
-
-        {/* User */}
-        <div className="user-chip">
-          <div className="user-avatar">A</div>
-          <div className="user-info">
-            <span className="user-name">Agri Officer</span>
-            <span className="user-role">Punjab Region</span>
-          </div>
-          <ChevronDown size={13} className="text-muted" />
         </div>
       </div>
     </header>

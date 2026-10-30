@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  Settings as SettingsIcon, Cpu, Bell, Database,
+  Cpu, Bell, Database,
   User, Map, Plus, Trash2, Edit3, Wifi, WifiOff,
-  CheckCircle, AlertTriangle, Save, RefreshCw
+  CheckCircle, AlertTriangle, Save
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Settings.css';

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  X, MapPin, Cloud, Droplets, Wind,
-  Check, AlertTriangle, ArrowRight, Loader2, Compass, Navigation
+  X, MapPin, Cloud,
+  AlertTriangle, ArrowRight, Loader2, Compass, Navigation
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getApiUrl } from '../../utils/api';
@@ -85,7 +85,7 @@ export default function PinDropModal() {
   const [notes, setNotes] = useState('');
 
   // Fetch weather when coordinates change
-  const fetchWeather = async (lat, lon) => {
+  const fetchWeather = useCallback(async (lat, lon) => {
     setWeatherLoading(true);
     try {
       const res = await fetch(getApiUrl(`/api/weather/coords?lat=${lat}&lon=${lon}`));
@@ -98,13 +98,28 @@ export default function PinDropModal() {
     } finally {
       setWeatherLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (state.isPinDropModalOpen) {
-      fetchWeather(coords.lat, coords.lng);
-    }
-  }, [state.isPinDropModalOpen]);
+    if (!state.isPinDropModalOpen) return;
+    let ignore = false;
+    const loadInitWeather = async () => {
+      setWeatherLoading(true);
+      try {
+        const res = await fetch(getApiUrl(`/api/weather/coords?lat=${coords.lat}&lon=${coords.lng}`));
+        if (res.ok && !ignore) {
+          const data = await res.json();
+          setWeather(data);
+        }
+      } catch (err) {
+        console.warn('Weather fetch error:', err);
+      } finally {
+        if (!ignore) setWeatherLoading(false);
+      }
+    };
+    loadInitWeather();
+    return () => { ignore = true; };
+  }, [state.isPinDropModalOpen, coords.lat, coords.lng]);
 
   const handleLocationSelect = (lat, lng) => {
     const roundedLat = parseFloat(Number(lat).toFixed(5));
@@ -124,7 +139,7 @@ export default function PinDropModal() {
         setLocatingGPS(false);
         handleLocationSelect(pos.coords.latitude, pos.coords.longitude);
       },
-      (err) => {
+      () => {
         setLocatingGPS(false);
         setErrorMsg('Could not detect GPS location. Please click on the map.');
       },

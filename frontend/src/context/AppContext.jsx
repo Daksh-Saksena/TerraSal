@@ -1,12 +1,20 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import { getApiUrl } from '../utils/api';
+import { getTranslation } from '../utils/i18n';
 
-const AppContext = createContext(null);
+export const AppContext = createContext(null);
+
+const savedRole = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_role') || 'panchayat') : 'panchayat';
+const savedLang = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_lang') || 'en') : 'en';
+const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_theme') || 'light') : 'light';
 
 const initialState = {
   loading: true,
   error: null,
-  theme: typeof window !== 'undefined' ? (localStorage.getItem('terrasal_theme') || 'light') : 'light',
+  theme: savedTheme,
+  role: savedRole, // 'panchayat' or 'farmer'
+  language: savedLang, // 'en' | 'hi' | 'pa'
   fields: [],
   activeFarmId: null,
   isPinDropModalOpen: false,
@@ -92,6 +100,10 @@ const reducer = (state, action) => {
       return { ...state, loading: false, error: action.payload };
     case 'SET_ACTIVE_FARM':
       return { ...state, activeFarmId: action.payload, selectedFieldId: action.payload };
+    case 'SET_ROLE':
+      return { ...state, role: action.payload };
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.payload };
     case 'OPEN_PIN_DROP_MODAL':
       return { ...state, isPinDropModalOpen: true };
     case 'CLOSE_PIN_DROP_MODAL':
@@ -136,6 +148,15 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('terrasal_theme', state.theme);
   }, [state.theme]);
 
+  // Sync role and language
+  useEffect(() => {
+    localStorage.setItem('terrasal_role', state.role);
+  }, [state.role]);
+
+  useEffect(() => {
+    localStorage.setItem('terrasal_lang', state.language);
+  }, [state.language]);
+
   const loadData = async (targetActiveId = null) => {
     dispatch({ type: 'FETCH_START' });
     try {
@@ -170,6 +191,8 @@ export const AppProvider = ({ children }) => {
 
   const toggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
   const setTheme = (t) => dispatch({ type: 'SET_THEME', payload: t });
+  const setRole = (role) => dispatch({ type: 'SET_ROLE', payload: role });
+  const setLanguage = (lang) => dispatch({ type: 'SET_LANGUAGE', payload: lang });
   const setActiveFarmId = (id) => dispatch({ type: 'SET_ACTIVE_FARM', payload: id });
   const openPinDropModal = () => dispatch({ type: 'OPEN_PIN_DROP_MODAL' });
   const closePinDropModal = () => dispatch({ type: 'CLOSE_PIN_DROP_MODAL' });
@@ -213,10 +236,18 @@ export const AppProvider = ({ children }) => {
 
   const activeFarm = state.fields.find(f => f.id === state.activeFarmId) || state.fields[0] || null;
 
+  // Localized string helper
+  const t = (key) => getTranslation(state.language, key);
+
   return (
     <AppContext.Provider value={{
       state,
       theme: state.theme,
+      role: state.role,
+      language: state.language,
+      setRole,
+      setLanguage,
+      t,
       toggleTheme,
       setTheme,
       activeFarm,

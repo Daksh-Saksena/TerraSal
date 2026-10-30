@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   Users, Activity, Droplets, ShieldCheck,
-  AlertTriangle, ArrowUpRight, TrendingUp, Layers,
+  AlertTriangle, TrendingUp, Layers,
   Compass, MapPin, BookOpen, CheckCircle2, ChevronRight,
-  RefreshCw, X, Check
+  RefreshCw, Download
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +16,7 @@ import './VillageOverview.css';
 // Fixes gray-tile bug in modal/conditionally-rendered maps
 function MapResizeController() {
   const map = useMap();
-  React.useEffect(() => {
+  useEffect(() => {
     const t1 = setTimeout(() => map.invalidateSize(), 100);
     const t2 = setTimeout(() => map.invalidateSize(), 400);
     return () => { clearTimeout(t1); clearTimeout(t2); };
@@ -33,29 +33,31 @@ const createVillageIcon = (zoneColor) => new L.DivIcon({
 });
 
 export default function VillageOverview() {
-  const { state, setActiveFarmId, openPinDropModal, loadData } = useApp();
+  const { state, setActiveFarmId, openPinDropModal, t } = useApp();
   const navigate = useNavigate();
   const [benchmarkData, setBenchmarkData] = useState(null);
   const [filterZone, setFilterZone] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
 
-  const fetchBenchmarks = async () => {
-    try {
-      const res = await fetch(getApiUrl('/api/village/benchmarks'));
-      if (res.ok) {
-        const data = await res.json();
-        setBenchmarkData(data);
-      }
-    } catch (err) {
-      console.warn('Failed to load village benchmarks:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isSubscribed = true;
+    const fetchBenchmarks = async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/village/benchmarks'));
+        if (res.ok && isSubscribed) {
+          const data = await res.json();
+          setBenchmarkData(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load village benchmarks:', err);
+      } finally {
+        if (isSubscribed) setLoading(false);
+      }
+    };
+
     fetchBenchmarks();
+    return () => { isSubscribed = false; };
   }, [state.fields]);
 
   const handleRefreshAdvisories = async () => {
@@ -101,6 +103,31 @@ export default function VillageOverview() {
     navigate('/');
   };
 
+  const handleExportCSV = () => {
+    const headers = ['Plot ID', 'Farm Name', 'Farmer', 'Crop', 'Soil Type', 'Area (ac)', 'EC (dS/m)', 'Water Table (m)', 'Soil Strain', 'Soil Recovery (%)', 'Risk Level'];
+    const rows = fields.map(f => [
+      f.id,
+      `"${f.name || ''}"`,
+      `"${f.farmerName || ''}"`,
+      f.cropType || '',
+      f.soilType || '',
+      f.area || 0,
+      f.groundwaterEC ?? f.metrics?.ec ?? 0,
+      f.waterTableDepth ?? f.metrics?.waterTable ?? 0,
+      f.soilStrain ?? 0,
+      f.soilRecovery ?? 0,
+      f.riskLevel || 'MODERATE'
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Village_Panchayat_Soil_Salinity_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const advisories = benchmarkData?.advisories || [];
 
   return (
@@ -108,16 +135,26 @@ export default function VillageOverview() {
       {/* Header */}
       <div className="village-header-bar">
         <div>
-          <h1>Village Panchayat Soil Health Hub</h1>
-          <p>Collective monitoring and cross-field salinity intelligence across all village plots</p>
+          <h1>{t('navVillage')} - Panchayat Soil Health Hub</h1>
+          <p>{t('panchayatPortal')}</p>
         </div>
-        <div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="village-add-farm-btn" onClick={handleExportCSV} title="Export CSV for Agriculture Department">
+            <Download size={15} />
+            <span>{t('exportCSV')}</span>
+          </button>
           <button className="village-add-farm-btn" onClick={openPinDropModal}>
             <MapPin size={15} />
-            <span>Add Field Plot</span>
+            <span>{t('pinDropTitle')}</span>
           </button>
         </div>
       </div>
+
+      {loading && !benchmarkData && (
+        <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          {t('loading')}
+        </div>
+      )}
 
       {/* Village KPI Strip */}
       <div className="grid-4 village-kpi-row">

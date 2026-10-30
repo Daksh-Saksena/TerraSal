@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle, RefreshCw, Terminal } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import './ErrorBanner.css';

@@ -1,127 +1,105 @@
-# TerraSal — Root Zone Salinity Intelligence Platform
+# TerraSal
 
-TerraSal is an open-source root-zone salinity tracking and prediction platform tailored for agricultural regions affected by waterlogging and secondary salinization (e.g., Punjab, Haryana, Rajasthan).
+Soil salinity tracking and crop advisory tool for farmers, panchayats, and agricultural extension workers.
 
-It bridges IoT groundwater telemetry, satellite weather forecasting, FAO Maas-Hoffman agronomic models, and localized multi-language advisories for village panchayats and individual farmers.
+## Overview
 
----
+Agricultural areas in parts of Punjab, Haryana, and Rajasthan frequently struggle with shallow water tables and soil salinization. When saline groundwater rises or irrigation water evaporates without adequate drainage, salts build up in the root zone and damage crop yields.
 
-## 🌾 Key Features
+TerraSal was built to give farmers and field officers an easy way to monitor root zone salinity, time irrigation around the weather, and make practical decisions about crops and soil treatments.
 
-1. **Dual Role Modes (Topbar Switcher):**
-   - **Panchayat / Extension Officer Mode:** Village-wide macro analytics, all plot pins on GIS maps, benchmark cross-field comparisons, and bulk CSV report exports for the Agriculture Department.
-   - **Individual Farmer Mode:** Focused personal plot view, simple soil health dial, immediate irrigation guidance, and printable farm advisory sheets.
+## What it does
 
-2. **Multi-Language Support (EN, HI, PA):**
-   - Seamless one-click switching between **English**, **हिन्दी (Hindi)**, and **ਪੰਜਾਬੀ (Punjabi)** across all metrics, action cards, and navigation.
+- **Two viewing modes**: A focused plot view for individual farmers with straightforward guidance, and a village overview for panchayats and extension workers to compare plots, track village-wide metrics, and export reports.
+- **Languages**: Supports English, Hindi, and Punjabi so local farmers and field workers can read reports and alerts in their preferred language.
+- **7-day weather and leaching advice**: Checks upcoming weather to help plan irrigation. For example, if heavy rain is due in 48 hours, it advises delaying canal irrigation so natural rainwater can leach salts away without wasting water.
+- **Crop switch simulation**: Implements the standard FAO Maas-Hoffman equation to calculate expected yield loss at a given soil electrical conductivity (ECe) and show potential yield improvements from switching to more salt-tolerant crops like barley, mustard, or cotton.
+- **Soil lab calibration and gypsum dosing**: Takes measured ECe, pH, and Sodium Adsorption Ratio (SAR) from a laboratory soil test, determines whether the soil is saline, sodic, or saline-sodic, and calculates how many tons of agricultural gypsum per acre are needed to restore soil structure.
+- **Field map**: Displays registered farm plots on an interactive map with salinity risk levels, regional aquifer context, and CSV export.
+- **Telemetry ingestion**: Includes an API endpoint to receive periodic soil EC and moisture readings from field sensor probes.
 
-3. **7-Day Meteorological Leaching Forecast:**
-   - In-memory cached weather forecast with smart agro-climatic advice:
-     - *Rain anticipated in 48h*: Advises farmers to delay canal flood irrigation to harness natural rainwater for salt flushing.
-     - *Prolonged dry spell*: Advises light, frequent irrigations with calculated leaching fraction to prevent capillary salt rise.
-
-4. **What-If Crop Switch & Leaching Simulator (`/analyze`):**
-   - Interactive simulator implementing the **FAO Maas-Hoffman equation**:
-     $$Y = 100 - b \times (EC_e - a)$$
-   - Computes expected yield loss, yield advantage recovered by switching crops (e.g. Rice to Barley or Cotton), and required leaching fraction ($LF$).
-
-5. **Soil Lab Calibration & Gypsum Dosing (`/analyze`):**
-   - Enter measured Soil ECe (dS/m), Soil pH, and Sodium Adsorption Ratio (SAR).
-   - Computes Exchangeable Sodium Percentage (ESP), classifies soil (*Normal*, *Saline*, *Sodic / Alkali*, *Saline-Sodic*), and calculates exact Agricultural Gypsum requirement in tons/acre.
-
-6. **Geospatial Salinity Risk Map (`/map`):**
-   - District-level aquifer monitoring across Punjab, Haryana, and Rajasthan.
-   - Toggleable **Salinity Plume Heatmap** layer and individual village farm markers with live sensor telemetry status.
-   - One-click dataset export to CSV.
-
-7. **Telemetry API with Optional Sensor Key:**
-   - Real-time IoT sensor endpoint (`POST /api/telemetry`) with historical `readings` storage and alert deduplication.
-
----
-
-## 🛠️ Project Structure
+## Project structure
 
 ```
 TerraSal/
 ├── backend/
-│   ├── app.js               # Express application configuration & CORS
-│   ├── server.js            # Server entry point
+│   ├── app.js               Express application and middleware
+│   ├── server.js            Server entry point
 │   ├── routes/
-│   │   ├── api.js           # Fields, benchmarks, weather forecast, simulator & lab routes
-│   │   └── telemetry.js     # Live IoT sensor telemetry ingestion
+│   │   ├── api.js           Fields, benchmarks, weather, and calculation routes
+│   │   └── telemetry.js     Sensor telemetry ingestion endpoint
 │   ├── services/
-│   │   ├── salinityEngine.js# Salinity prediction, FAO Maas-Hoffman & Soil Lab logic
-│   │   ├── weatherService.js# OpenWeatherMap & 7-day forecast generator with caching
-│   │   ├── cropDatabase.js  # Crop tolerance thresholds
-│   │   └── aiService.js     # Field advisory generation
+│   │   ├── salinityEngine.js Salinity risk models and Maas-Hoffman calculations
+│   │   ├── weatherService.js Weather forecasts and caching
+│   │   ├── cropDatabase.js  Crop salinity threshold database
+│   │   └── aiService.js     Agronomic advisory text generator
 │   ├── db/
-│   │   ├── index.js         # libSQL/Turso & local SQLite client with auto-migrations
-│   │   └── database.sqlite  # Local SQLite database (git-ignored)
-│   └── test/                # Node.js built-in test runner test suite
+│   │   ├── index.js         Database connection (Turso and local SQLite)
+│   │   └── database.sqlite  Local database file
+│   └── test/                Node.js native test runner test suite
 └── frontend/
     ├── src/
-    │   ├── context/AppContext.jsx # Global app context, role & i18n state
-    │   ├── utils/i18n.js          # Multi-language dictionary (English, Hindi, Punjabi)
+    │   ├── context/AppContext.jsx Global state, role switcher, language switcher
+    │   ├── utils/i18n.js          English, Hindi, and Punjabi dictionaries
     │   ├── pages/
-    │   │   ├── Dashboard.jsx      # Farmer & Panchayat overview + 7-Day weather forecast
-    │   │   ├── VillageOverview.jsx# Village-wide benchmarks & CSV export
-    │   │   ├── Analyzer.jsx       # Diagnostic, What-If simulator & Soil Lab calibration
-    │   │   ├── MapView.jsx        # Multi-layer GIS map & district dataset export
-    │   │   ├── Recommendations.jsx# Agronomic practices & printable PDF guide
-    │   │   └── Trends.jsx         # Historical sensor telemetry trends
-    │   └── components/            # UI components, charts, and modal dialogs
+    │   │   ├── Dashboard.jsx      Farmer overview, risk cards, and 7-day weather
+    │   │   ├── VillageOverview.jsx Village benchmarks and plot comparisons
+    │   │   ├── Analyzer.jsx       Diagnostic tool, crop switch simulator, and lab calculator
+    │   │   ├── MapView.jsx        Plot map with district data
+    │   │   ├── Recommendations.jsx Agronomic advice and printable guide
+    │   │   └── Trends.jsx         Historical sensor readings
+    │   └── components/            UI elements, modal dialogs, and charts
     ├── package.json
     └── vite.config.js
 ```
 
----
+## Getting started
 
-## 🚀 Quick Start
+### Requirements
 
-### 1. Prerequisites
-- **Node.js**: v20+ or v24+
-- **npm**: v10+
+- Node.js 20 or higher
+- npm 10 or higher
 
-### 2. Backend Setup
+### Backend
+
 ```bash
 cd backend
 npm install
-npm test            # Runs backend tests (13 tests across API, DB & Salinity Engine)
-npm start           # Starts backend API on http://localhost:3000
+npm test
+npm start
 ```
 
-### 3. Frontend Setup
+The backend server runs on `http://localhost:3000`.
+
+### Frontend
+
 ```bash
 cd frontend
 npm install
-npm run lint        # Verifies ESLint rules (0 errors)
-npm run build       # Production build
-npm run dev         # Starts Vite dev server on http://localhost:5173
+npm run build
+npm run dev
 ```
 
----
+The frontend development server runs on `http://localhost:5173`.
 
-## 📡 API Overview
+## API endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | Service health status & DB check |
-| `GET` | `/api/fields` | Batch-optimized query of all registered plots |
-| `POST` | `/api/fields` | Register a new farm plot (pin-drop or manual) |
-| `DELETE` | `/api/fields/:id` | Remove a farm plot |
-| `GET` | `/api/weather/coords?lat=&lon=` | Current weather for given coordinates |
-| `GET` | `/api/weather/forecast?lat=&lon=` | 7-day rain forecast & leaching advice |
-| `POST` | `/api/analyze` | Multi-factor soil salinity risk diagnostic |
-| `POST` | `/api/simulate-crop` | What-If crop switch & leaching simulation |
-| `POST` | `/api/lab-calibrate` | Soil testing lab evaluation & gypsum dosage |
-| `POST` | `/api/telemetry` | Ingest IoT sensor reading (`x-sensor-key` optional) |
-| `GET` | `/api/village/benchmarks` | Village-wide recovery, strain & stats |
+| GET | `/api/health` | Backend status and database health check |
+| GET | `/api/fields` | List of all registered farm plots |
+| POST | `/api/fields` | Register a new farm plot |
+| DELETE | `/api/fields/:id` | Remove a registered farm plot |
+| GET | `/api/weather/coords?lat=&lon=` | Current weather for given coordinates |
+| GET | `/api/weather/forecast?lat=&lon=` | 7-day rainfall forecast and leaching guidance |
+| POST | `/api/analyze` | Multi-factor soil salinity risk evaluation |
+| POST | `/api/simulate-crop` | Crop yield impact and crop switch comparison |
+| POST | `/api/lab-calibrate` | Soil classification and gypsum dosage calculation |
+| POST | `/api/telemetry` | Record incoming sensor telemetry |
+| GET | `/api/village/benchmarks` | Village-level averages and soil health summary |
 
----
+## References
 
-## 📜 Scientific Foundations
-
-- **FAO Irrigation and Drainage Paper 29**: Water quality for agriculture (Ayers & Westcot).
-- **US Salinity Laboratory Staff (Handbook 60)**: Diagnosis and Improvement of Saline and Alkali Soils.
-- **Maas & Hoffman (1977)**: Crop salt tolerance: current assessment.
-
+- Ayers, R. S. and Westcot, D. W. (1985). *Water quality for agriculture*. FAO Irrigation and Drainage Paper 29.
+- US Salinity Laboratory Staff (1954). *Diagnosis and Improvement of Saline and Alkali Soils*. Agriculture Handbook No. 60.
+- Maas, E. V. and Hoffman, G. J. (1977). *Crop salt tolerance - current assessment*. Journal of the Irrigation and Drainage Division, ASCE, 103(IR2), 115-134.

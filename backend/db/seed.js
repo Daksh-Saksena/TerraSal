@@ -1,5 +1,4 @@
 import { initializeDB, queryAll } from './index.js';
-
 async function seed() {
   console.log('[Seed] Initializing database and checking baseline datasets...');
   try {
@@ -11,5 +10,4 @@ async function seed() {
     process.exit(1);
   }
 }
-
 seed();

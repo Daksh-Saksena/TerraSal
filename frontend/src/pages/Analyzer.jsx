@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getApiUrl } from '../utils/api';
-
 import RiskGauge from '../components/ui/RiskGauge';
 import RiskBadge from '../components/ui/RiskBadge';
 import FactorBreakdownChart from '../components/charts/FactorBreakdownChart';
@@ -17,7 +16,6 @@ import {
   DRAINAGE_QUALITIES, TERRAIN_TYPES
 } from '../utils/constants';
 import './Analyzer.css';
-
 const DEFAULT_INPUTS = {
   groundwaterEC: 3.5,
   waterTableDepth: 2.5,
@@ -28,25 +26,21 @@ const DEFAULT_INPUTS = {
   cropType: 'wheat',
   terrain: 'flat',
 };
-
 const PRESETS = [
   { name: 'Punjab Wheat Farm', inputs: { groundwaterEC: 4.2, waterTableDepth: 1.8, soilType: 'loamy', drainageQuality: 'poor', rainfallLast30Days: 12, irrigationMethod: 'flood', cropType: 'wheat', terrain: 'flat' } },
   { name: 'Rajasthan Cotton', inputs: { groundwaterEC: 6.8, waterTableDepth: 1.2, soilType: 'clay', drainageQuality: 'very-poor', rainfallLast30Days: 3, irrigationMethod: 'canal', cropType: 'cotton', terrain: 'flat' } },
   { name: 'Haryana Drip Farm', inputs: { groundwaterEC: 2.8, waterTableDepth: 3.1, soilType: 'sandy-loam', drainageQuality: 'moderate', rainfallLast30Days: 8, irrigationMethod: 'drip', cropType: 'cotton', terrain: 'gentle-slope' } },
   { name: 'Low Risk Amritsar', inputs: { groundwaterEC: 1.4, waterTableDepth: 4.5, soilType: 'sandy', drainageQuality: 'good', rainfallLast30Days: 45, irrigationMethod: 'sprinkler', cropType: 'rice', terrain: 'gentle-slope' } },
 ];
-
 export default function Analyzer() {
   const { state, role, activeFarm, openPinDropModal, setAnalyzerResult, t } = useApp();
-  const [activeTool, setActiveTool] = useState('diagnostic'); // 'diagnostic' | 'whatif' | 'lab'
-  const [viewMode, setViewMode] = useState('kisan'); // 'kisan' | 'technical'
+  const [activeTool, setActiveTool] = useState('diagnostic');
+  const [viewMode, setViewMode] = useState('kisan');
   const [inputs, setInputs] = useState(state.analyzerInputs ?? DEFAULT_INPUTS);
   const [result, setResult] = useState(state.analyzerResult ?? null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('vitals');
   const [isSpeaking, setIsSpeaking] = useState(false);
-
-  // Auto-sync real active farm parameters on mount or when activeFarm changes
   useEffect(() => {
     if (activeFarm) {
       const realInputs = {
@@ -63,8 +57,6 @@ export default function Analyzer() {
       executeAnalysis(realInputs);
     }
   }, [activeFarm?.id]);
-
-  // Clean up speech synthesis on unmount
   useEffect(() => {
     return () => {
       if ('speechSynthesis' in window) {
@@ -72,23 +64,18 @@ export default function Analyzer() {
       }
     };
   }, []);
-
-  // What-If Simulator State
   const [simCurrentCrop, setSimCurrentCrop] = useState(activeFarm?.cropType || 'wheat');
   const [simProposedCrop, setSimProposedCrop] = useState('barley');
   const [simEC, setSimEC] = useState(activeFarm?.groundwaterEC || 4.2);
   const [simLF, setSimLF] = useState(0.15);
   const [simResult, setSimResult] = useState(null);
   const [simLoading, setSimLoading] = useState(false);
-
-  // Lab Calibration State
   const [labEC, setLabEC] = useState(3.5);
   const [labPH, setLabPH] = useState(8.3);
   const [labSAR, setLabSAR] = useState(12.0);
   const [labSoilType, setLabSoilType] = useState('loamy');
   const [labResult, setLabResult] = useState(null);
   const [labLoading, setLabLoading] = useState(false);
-
   const executeAnalysis = async (targetInputs) => {
     setLoading(true);
     try {
@@ -108,7 +95,6 @@ export default function Analyzer() {
       setLoading(false);
     }
   };
-
   const handleSimulateCrop = async () => {
     setSimLoading(true);
     try {
@@ -132,7 +118,6 @@ export default function Analyzer() {
       setSimLoading(false);
     }
   };
-
   const handleLabCalibrate = async () => {
     setLabLoading(true);
     try {
@@ -156,7 +141,6 @@ export default function Analyzer() {
       setLabLoading(false);
     }
   };
-
   const loadActiveFarm = () => {
     if (!activeFarm) return;
     const farmData = {
@@ -172,20 +156,16 @@ export default function Analyzer() {
     setInputs(farmData);
     executeAnalysis(farmData);
   };
-
   const handleChange = (key, value) => {
     const updated = { ...inputs, [key]: value };
     setInputs(updated);
-    // If in Kisan Mode, execute analysis seamlessly
     if (viewMode === 'kisan') {
       executeAnalysis(updated);
     }
   };
-
   const handleAnalyze = async () => {
     await executeAnalysis(inputs);
   };
-
   const toggleSpeech = () => {
     if (!('speechSynthesis' in window)) {
       alert('Speech synthesis audio is not supported in this browser.');
@@ -196,14 +176,12 @@ export default function Analyzer() {
       setIsSpeaking(false);
       return;
     }
-
     const farmerName = activeFarm?.farmerName || activeFarm?.name || 'Farmer';
     const ec = inputs.groundwaterEC;
     const wt = inputs.waterTableDepth;
     const crop = inputs.cropType || 'wheat';
     const isDangerous = (result?.riskLevel === 'critical' || ec >= 5.0 || wt < 2.0);
     const isModerate = (result?.riskLevel === 'high' || result?.riskLevel === 'moderate' || ec >= 3.5);
-
     let script = `Hello Farmer ${farmerName}. Here is your soil diagnostic for ${crop}. `;
     if (isDangerous) {
       script += `Warning: High salt danger. Groundwater salt is ${ec} dS per meter, and water table is very shallow at only ${wt} meters. Rising salt is reaching your crop roots. `;
@@ -212,9 +190,7 @@ export default function Analyzer() {
     } else {
       script += `Good news: Your soil and water are safe. Water salt is ${ec} dS per meter, which is healthy. `;
     }
-
     script += `Here is your three-step action plan. Number one: Apply 2 trolleys of agricultural gypsum per acre before sowing. Number two: Never water in the hot afternoon; irrigate only in early morning between 5:00 and 8:30 AM. Number three: Dig a shallow border trench to drain standing salty water away.`;
-
     const utterance = new SpeechSynthesisUtterance(script);
     utterance.rate = 0.92;
     utterance.pitch = 1.0;
@@ -223,27 +199,22 @@ export default function Analyzer() {
     setIsSpeaking(true);
     window.speechSynthesis.speak(utterance);
   };
-
   const applyPreset = (preset) => {
     setInputs(preset.inputs);
     executeAnalysis(preset.inputs);
   };
-
   const getSeverityIcon = (severity) => {
     if (severity === 'critical') return <ShieldAlert size={14} style={{ color: '#dc2626' }} />;
     if (severity === 'high') return <AlertTriangle size={14} style={{ color: '#ea580c' }} />;
     if (severity === 'moderate') return <AlertTriangle size={14} style={{ color: '#d97706' }} />;
     return <CheckCircle size={14} style={{ color: '#16a34a' }} />;
   };
-
   return (
     <div className="page-container fade-in">
       <div className="page-header">
         <h1>Salinity Risk Analyzer</h1>
         <p>Enter field parameters to generate a full soil salinity risk assessment and crop advisory</p>
       </div>
-
-        {/* Tool Navigation Bar */}
         <div className="analyzer-tool-tabs">
           <button
             className={`tool-tab-btn ${activeTool === 'diagnostic' ? 'active' : ''}`}
@@ -273,8 +244,6 @@ export default function Analyzer() {
             <span>{t('labCalibration')}</span>
           </button>
         </div>
-
-        {/* Tool 1: What-If Crop & Leaching Simulator */}
         {activeTool === 'whatif' && (
           <div className="simulator-container fade-in">
             <div className="simulator-grid">
@@ -285,7 +254,6 @@ export default function Analyzer() {
                     Simulation Parameters (FAO Model)
                   </div>
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Current Crop</label>
                   <select
@@ -298,7 +266,6 @@ export default function Analyzer() {
                     ))}
                   </select>
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Proposed Alternative Crop</label>
                   <select
@@ -311,7 +278,6 @@ export default function Analyzer() {
                     ))}
                   </select>
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">
                     <Droplets size={12} /> Groundwater Salinity ECw: {simEC} dS/m
@@ -326,7 +292,6 @@ export default function Analyzer() {
                     className="form-range"
                   />
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">
                     <Waves size={12} /> Target Leaching Fraction (LF): {(simLF * 100).toFixed(0)}%
@@ -342,7 +307,6 @@ export default function Analyzer() {
                   />
                   <span className="form-hint">Fraction of applied water drained below root-zone to carry salts away</span>
                 </div>
-
                 <button
                   className="btn btn-primary btn-block"
                   onClick={handleSimulateCrop}
@@ -352,7 +316,6 @@ export default function Analyzer() {
                   <span>Calculate Yield Advantage</span>
                 </button>
               </div>
-
               <div className="card simulator-results">
                 <div className="card-header">
                   <div className="section-title">
@@ -363,11 +326,9 @@ export default function Analyzer() {
                     <span className="chip">ECe ~ {simResult.effectiveECe} dS/m</span>
                   )}
                 </div>
-
                 {simResult ? (
                   <div className="sim-output-body">
                     <div className="sim-comparison-bars">
-                      {/* Current Crop */}
                       <div className="sim-crop-row">
                         <div className="sim-crop-meta">
                           <strong>Current: {simResult.currentCrop.name}</strong>
@@ -384,8 +345,6 @@ export default function Analyzer() {
                         </div>
                         <span className="sim-bar-sub">Required Leaching: {simResult.currentCrop.leachingRequirement}%</span>
                       </div>
-
-                      {/* Proposed Crop */}
                       <div className="sim-crop-row">
                         <div className="sim-crop-meta">
                           <strong>Proposed: {simResult.proposedCrop.name}</strong>
@@ -403,8 +362,6 @@ export default function Analyzer() {
                         <span className="sim-bar-sub">Required Leaching: {simResult.proposedCrop.leachingRequirement}%</span>
                       </div>
                     </div>
-
-                    {/* Net Gain Card */}
                     <div className="sim-gain-callout">
                       <div className="sim-gain-score">
                         <span className="gain-number">+{simResult.yieldAdvantagePercent}%</span>
@@ -424,8 +381,6 @@ export default function Analyzer() {
             </div>
           </div>
         )}
-
-        {/* Tool 2: Soil Lab Calibration & Gypsum Requirement */}
         {activeTool === 'lab' && (
           <div className="lab-calib-container fade-in">
             <div className="simulator-grid">
@@ -436,7 +391,6 @@ export default function Analyzer() {
                     Soil Testing Laboratory (KVK / ICAR) Report
                   </div>
                 </div>
-
                 <div className="input-grid">
                   <div className="form-group">
                     <label className="form-label">Measured Soil ECe (dS/m)</label>
@@ -451,7 +405,6 @@ export default function Analyzer() {
                     />
                     <span className="form-hint">Saturated soil paste extract EC</span>
                   </div>
-
                   <div className="form-group">
                     <label className="form-label">Soil pH (1:2 extract)</label>
                     <input
@@ -465,7 +418,6 @@ export default function Analyzer() {
                     />
                     <span className="form-hint">Normal: 6.5-7.8, Alkaline/Sodic: &gt;8.5</span>
                   </div>
-
                   <div className="form-group">
                     <label className="form-label">Sodium Adsorption Ratio (SAR)</label>
                     <input
@@ -479,7 +431,6 @@ export default function Analyzer() {
                     />
                     <span className="form-hint">Ratio of Na to Ca+Mg (&gt;13 indicates sodicity)</span>
                   </div>
-
                   <div className="form-group">
                     <label className="form-label">Soil Texture</label>
                     <select
@@ -493,7 +444,6 @@ export default function Analyzer() {
                     </select>
                   </div>
                 </div>
-
                 <button
                   className="btn btn-primary btn-block"
                   onClick={handleLabCalibrate}
@@ -503,7 +453,6 @@ export default function Analyzer() {
                   <span>Evaluate Lab Chemistry & Gypsum Dose</span>
                 </button>
               </div>
-
               <div className="card lab-results">
                 <div className="card-header">
                   <div className="section-title">
@@ -511,7 +460,6 @@ export default function Analyzer() {
                     Soil Diagnostic & Amendment Protocol
                   </div>
                 </div>
-
                 {labResult ? (
                   <div className="lab-result-body">
                     <div className="lab-stat-grid">
@@ -532,7 +480,6 @@ export default function Analyzer() {
                         </span>
                       </div>
                     </div>
-
                     <div className="lab-protocol-box">
                       <strong>Recommended Protocol:</strong>
                       <p>{labResult.primaryRemedy}</p>
@@ -547,11 +494,8 @@ export default function Analyzer() {
             </div>
           </div>
         )}
-
-        {/* Tool 0: Salinity Diagnostic Engine (Kisan Easy Mode vs Technical Agronomist Mode) */}
         {activeTool === 'diagnostic' && (
           <div className="diagnostic-view-wrapper">
-            {/* Top Navigation & Mode Switcher */}
             <div className="kisan-top-nav">
               <div className="kisan-active-badge">
                 <div className="badge-icon"><Sprout size={18} /></div>
@@ -560,7 +504,6 @@ export default function Analyzer() {
                   <span>{activeFarm ? `${activeFarm.name} • ${activeFarm.farmerName || activeFarm.farmer} (${activeFarm.area} Acres, ${activeFarm.cropType})` : 'Active Field Data'}</span>
                 </div>
               </div>
-
               <div className="kisan-mode-toggle">
                 <button
                   className={`kisan-mode-btn ${viewMode === 'kisan' ? 'active' : ''}`}
@@ -578,8 +521,6 @@ export default function Analyzer() {
                 </button>
               </div>
             </div>
-
-            {/* View Mode 1: Simplified Farmer View */}
             {viewMode === 'kisan' && (() => {
               const ec = inputs.groundwaterEC ?? 3.5;
               const wt = inputs.waterTableDepth ?? 2.5;
@@ -588,10 +529,8 @@ export default function Analyzer() {
               const isCaution = !isDanger && (result?.riskLevel === 'high' || result?.riskLevel === 'moderate' || ec >= 3.5);
               const stressPct = result?.stressProbability ?? (isDanger ? 75 : isCaution ? 45 : 15);
               const cropThreshold = (crop === 'barley' ? 8.0 : crop === 'cotton' ? 7.7 : crop === 'rice' ? 3.0 : 6.0);
-
               return (
                 <div className="kisan-view-container fade-in" style={{ marginTop: 20 }}>
-                  {/* Big Hero Status Card (Softer Pastel Banner) */}
                   <div className={`kisan-status-hero ${isDanger ? 'red' : isCaution ? 'yellow' : 'green'}`}>
                     <div className="kisan-hero-main">
                       <div className={`kisan-traffic-badge ${isDanger ? 'red' : isCaution ? 'yellow' : 'green'}`}>
@@ -614,8 +553,6 @@ export default function Analyzer() {
                         </p>
                       </div>
                     </div>
-
-                    {/* Audio Readout Bar */}
                     <div className="kisan-audio-bar">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Volume2 size={18} color="#008a50" />
@@ -635,10 +572,7 @@ export default function Analyzer() {
                       </button>
                     </div>
                   </div>
-
-                  {/* 3 Big Metric Cards */}
                   <div className="kisan-vitals-grid">
-                    {/* Water Saltiness */}
                     <div className="kisan-vital-card">
                       <div className="kisan-vital-top">
                         <span className="kisan-vital-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -667,8 +601,6 @@ export default function Analyzer() {
                           : 'Water salinity is within acceptable bounds for leaching and normal watering.'}
                       </p>
                     </div>
-
-                    {/* Groundwater Depth */}
                     <div className="kisan-vital-card">
                       <div className="kisan-vital-top">
                         <span className="kisan-vital-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -697,8 +629,6 @@ export default function Analyzer() {
                           : 'Water table is deep enough so that capillary suction does not choke root oxygen.'}
                       </p>
                     </div>
-
-                    {/* Crop Threat & Yield Risk */}
                     <div className="kisan-vital-card">
                       <div className="kisan-vital-top">
                         <span className="kisan-vital-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -728,15 +658,12 @@ export default function Analyzer() {
                       </p>
                     </div>
                   </div>
-
-                  {/* 3 Direct Farmer Action Steps */}
                   <div className="kisan-actions-card">
                     <h3>
                       <Sprout size={18} color="#008a50" />
                       Farmer's 3-Step Action Plan (What to do on your field)
                     </h3>
                     <div className="kisan-steps-grid">
-                      {/* Step 1 */}
                       <div className="kisan-step-card">
                         <span className="kisan-step-badge">Step 1 • Soil Amendment</span>
                         <h4>Apply Agricultural Gypsum (2-2.5 Trolleys/Acre)</h4>
@@ -749,8 +676,6 @@ export default function Analyzer() {
                           <span>50% Subsidy available at your local Block Agriculture / KVK office.</span>
                         </div>
                       </div>
-
-                      {/* Step 2 */}
                       <div className="kisan-step-card">
                         <span className="kisan-step-badge">Step 2 • Irrigation Window</span>
                         <h4>Irrigate Only Between 5:00 AM to 8:30 AM</h4>
@@ -762,8 +687,6 @@ export default function Analyzer() {
                           <span>Reduces daytime evaporative salt accumulation by up to 40%.</span>
                         </div>
                       </div>
-
-                      {/* Step 3 */}
                       <div className="kisan-step-card">
                         <span className="kisan-step-badge">Step 3 • Perimeter Drainage</span>
                         <h4>Dig a 1.5 ft Boundary Drain Trench</h4>
@@ -778,8 +701,6 @@ export default function Analyzer() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Interactive Live Adjustment Sliders */}
                   <div className="kisan-simulator-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                       <div>
@@ -799,7 +720,6 @@ export default function Analyzer() {
                         Reset to Farm Data
                       </button>
                     </div>
-
                     <div className="kisan-slider-row">
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -817,7 +737,6 @@ export default function Analyzer() {
                         />
                         <span className="form-hint">Drag left to test mixing with sweet canal water or rainwater</span>
                       </div>
-
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span><ArrowDownUp size={13} /> Water Table Depth:</span>
@@ -836,8 +755,6 @@ export default function Analyzer() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Toggle to Technical Agronomist View */}
                   <div style={{ textAlign: 'center', marginTop: 10, padding: 12 }}>
                     <button
                       className="btn btn-secondary"
@@ -851,11 +768,8 @@ export default function Analyzer() {
                 </div>
               );
             })()}
-
-            {/* View Mode 2: Technical Agronomist View */}
             {viewMode === 'technical' && (
               <div className="fade-in" style={{ marginTop: 20 }}>
-                {/* Presets & Active Farm */}
                 <div className="analyzer-presets">
                   <span className="preset-label"><Layers size={13} /> Quick Load:</span>
                   {activeFarm && (
@@ -884,9 +798,7 @@ export default function Analyzer() {
                     </button>
                   ))}
                 </div>
-
                 <div className="analyzer-layout">
-              {/* Input Panel */}
               <div className="analyzer-inputs card">
                 <div className="card-header">
                   <div className="section-title">
@@ -894,9 +806,7 @@ export default function Analyzer() {
                     Field Parameters
                   </div>
                 </div>
-
                 <div className="input-grid">
-                  {/* Groundwater EC */}
                   <div className="form-group">
                     <label className="form-label">
                       <Droplets size={12} /> Groundwater EC (dS/m)
@@ -910,8 +820,6 @@ export default function Analyzer() {
                     />
                     <span className="form-hint">Electrical conductivity of irrigation water (0 to 15 dS/m)</span>
                   </div>
-
-                  {/* Water Table Depth */}
                   <div className="form-group">
                     <label className="form-label">
                       <ArrowDownUp size={12} /> Water Table Depth (m)
@@ -925,8 +833,6 @@ export default function Analyzer() {
                     />
                     <span className="form-hint">Depth to groundwater table in meters</span>
                   </div>
-
-                  {/* Soil Type */}
                   <div className="form-group">
                     <label className="form-label"><Layers size={12} /> Soil Type</label>
                     <select
@@ -937,8 +843,6 @@ export default function Analyzer() {
                       {SOIL_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </select>
                   </div>
-
-                  {/* Drainage Quality */}
                   <div className="form-group">
                     <label className="form-label"><Waves size={12} /> Drainage Quality</label>
                     <select
@@ -949,8 +853,6 @@ export default function Analyzer() {
                       {DRAINAGE_QUALITIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                     </select>
                   </div>
-
-                  {/* Rainfall */}
                   <div className="form-group">
                     <label className="form-label"><CloudRain size={12} /> Rainfall Last 30 Days (mm)</label>
                     <input
@@ -962,8 +864,6 @@ export default function Analyzer() {
                     />
                     <span className="form-hint">Total precipitation in last 30 days</span>
                   </div>
-
-                  {/* Irrigation Method */}
                   <div className="form-group">
                     <label className="form-label"><Droplets size={12} /> Irrigation Method</label>
                     <select
@@ -974,8 +874,6 @@ export default function Analyzer() {
                       {IRRIGATION_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                     </select>
                   </div>
-
-                  {/* Crop Type */}
                   <div className="form-group">
                     <label className="form-label"><Sprout size={12} /> Crop Type</label>
                     <select
@@ -986,8 +884,6 @@ export default function Analyzer() {
                       {CROP_TYPES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                   </div>
-
-                  {/* Terrain */}
                   <div className="form-group">
                     <label className="form-label">Terrain / Slope</label>
                     <select
@@ -999,7 +895,6 @@ export default function Analyzer() {
                     </select>
                   </div>
                 </div>
-
                 <button
                   className="btn btn-primary btn-lg w-full analyze-btn"
                   onClick={handleAnalyze}
@@ -1019,8 +914,6 @@ export default function Analyzer() {
                   )}
                 </button>
               </div>
-
-              {/* Results Panel */}
               <div className="analyzer-results">
                 {!result && !loading && (
                   <div className="results-placeholder card">
@@ -1037,7 +930,6 @@ export default function Analyzer() {
                     </div>
                   </div>
                 )}
-
                 {loading && (
                   <div className="results-placeholder card analyzing">
                     <div className="analyzing-animation">
@@ -1048,10 +940,8 @@ export default function Analyzer() {
                     <p>Computing weighted risk scores across 8 environmental factors</p>
                   </div>
                 )}
-
                 {result && !loading && (
                   <div className="results-content fade-in">
-                    {/* Score Summary */}
                     <div className="card result-summary">
                       <div className="result-summary-grid">
                         <div className="result-gauge">
@@ -1090,8 +980,6 @@ export default function Analyzer() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Tabs */}
                     <div className="result-tabs">
                       {[
                         { key: 'vitals', label: 'Soil & Root Vitals' },
@@ -1109,8 +997,6 @@ export default function Analyzer() {
                         </button>
                       ))}
                     </div>
-
-                    {/* Soil & Root Vitals Tab */}
                     {activeTab === 'vitals' && result.whoopMetrics && (
                       <div className="card fade-in whoop-tab-card">
                         <div className="card-header">
@@ -1126,7 +1012,6 @@ export default function Analyzer() {
                             {result.whoopMetrics.recoveryZone} RECOVERY ({result.whoopMetrics.soilRecovery}%)
                           </span>
                         </div>
-
                         <div className="whoop-tab-grid">
                           <div className="whoop-tab-item">
                             <span className="whoop-tab-lbl">Root Osmotic Load</span>
@@ -1135,7 +1020,6 @@ export default function Analyzer() {
                             </div>
                             <div className="whoop-tab-sub">{result.whoopMetrics.strainCategory}</div>
                           </div>
-
                           <div className="whoop-tab-item">
                             <span className="whoop-tab-lbl">Soil Resilience Index</span>
                             <div className="whoop-tab-val" style={{ color: '#008a50' }}>
@@ -1143,20 +1027,17 @@ export default function Analyzer() {
                             </div>
                             <div className="whoop-tab-sub">Natural buffering and flushing capacity</div>
                           </div>
-
                           <div className="whoop-tab-item">
                             <span className="whoop-tab-lbl">Osmotic Root Suction</span>
                             <div className="whoop-tab-val">{result.whoopMetrics.vitals.osmoticPressure} <span style={{ fontSize: '12px', color: '#94a3b8' }}>atm</span></div>
                             <div className="whoop-tab-sub">{result.whoopMetrics.vitals.osmoticStatus}</div>
                           </div>
-
                           <div className="whoop-tab-item">
                             <span className="whoop-tab-lbl">Capillary Salt Influx</span>
                             <div className="whoop-tab-val">{result.whoopMetrics.vitals.capillaryFlux} <span style={{ fontSize: '12px', color: '#94a3b8' }}>mm/day</span></div>
                             <div className="whoop-tab-sub">{result.whoopMetrics.vitals.capillaryStatus}</div>
                           </div>
                         </div>
-
                         <div className="whoop-tab-window">
                           <div className="whoop-tab-window-title">
                             Optimal Irrigation Window: <strong>{result.whoopMetrics.irrigationWindow.optimalTime}</strong>
@@ -1168,8 +1049,6 @@ export default function Analyzer() {
                         </div>
                       </div>
                     )}
-
-                    {/* Factor Breakdown Tab */}
                     {activeTab === 'factors' && (
                       <div className="card fade-in">
                         <div className="card-header">
@@ -1194,8 +1073,6 @@ export default function Analyzer() {
                         </div>
                       </div>
                     )}
-
-                    {/* Recommendations Tab */}
                     {activeTab === 'recommendations' && (
                       <div className="recommendations-content fade-in">
                         {result.recommendations.immediate.length > 0 && (
@@ -1273,8 +1150,6 @@ export default function Analyzer() {
                         )}
                       </div>
                     )}
-
-                    {/* Crop Advisory Tab */}
                     {activeTab === 'crops' && (
                       <div className="card fade-in">
                         <div className="card-header">
@@ -1297,8 +1172,6 @@ export default function Analyzer() {
                         </div>
                       </div>
                     )}
-
-                    {/* Soil Treatment Tab */}
                     {activeTab === 'treatment' && (
                       <div className="fade-in">
                         {result.recommendations.soilTreatment.map((t, i) => (

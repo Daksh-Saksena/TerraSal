@@ -12,16 +12,12 @@ import {
   SOIL_TYPES, CROP_TYPES, IRRIGATION_METHODS, DRAINAGE_QUALITIES
 } from '../../utils/constants';
 import './PinDropModal.css';
-
-// Custom Pin Icon
 const pinIcon = new L.DivIcon({
   className: 'custom-pin-icon',
   html: `<div class="pin-marker-wrap"><div class="pin-marker-dot"></div></div>`,
   iconSize: [28, 28],
   iconAnchor: [14, 14]
 });
-
-// District Quick Presets for North India farmers
 const DISTRICT_PRESETS = [
   { name: 'Ludhiana', lat: 30.9010, lng: 75.8573, state: 'Punjab' },
   { name: 'Hisar', lat: 29.1492, lng: 75.7217, state: 'Haryana' },
@@ -30,13 +26,9 @@ const DISTRICT_PRESETS = [
   { name: 'Amritsar', lat: 31.6340, lng: 74.8723, state: 'Punjab' },
   { name: 'Sirsa', lat: 29.5334, lng: 75.0177, state: 'Haryana' },
 ];
-
-// Handles map sizing, auto-panning, and click events
 function MapController({ coords, onLocationSelect }) {
   const map = useMap();
-
   useEffect(() => {
-    // Critical: Invalidate size after modal animation finishes to prevent gray tiles
     const t1 = setTimeout(() => map.invalidateSize(), 100);
     const t2 = setTimeout(() => map.invalidateSize(), 300);
     const t3 = setTimeout(() => map.invalidateSize(), 600);
@@ -46,33 +38,26 @@ function MapController({ coords, onLocationSelect }) {
       clearTimeout(t3);
     };
   }, [map]);
-
   useEffect(() => {
     if (coords?.lat && coords?.lng) {
       map.panTo([coords.lat, coords.lng], { animate: true });
     }
   }, [coords.lat, coords.lng, map]);
-
   useMapEvents({
     click(e) {
       onLocationSelect(e.latlng.lat, e.latlng.lng);
     },
   });
-
   return null;
 }
-
 export default function PinDropModal() {
   const { state, closePinDropModal, addFarm } = useApp();
-
   const [coords, setCoords] = useState({ lat: 30.4500, lng: 74.8000 });
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [locatingGPS, setLocatingGPS] = useState(false);
-
-  // Form Fields
   const [farmerName, setFarmerName] = useState('');
   const [farmName, setFarmName] = useState('');
   const [area, setArea] = useState(25);
@@ -83,8 +68,6 @@ export default function PinDropModal() {
   const [groundwaterEC, setGroundwaterEC] = useState(3.5);
   const [waterTableDepth, setWaterTableDepth] = useState(2.2);
   const [notes, setNotes] = useState('');
-
-  // Fetch weather when coordinates change
   const fetchWeather = useCallback(async (lat, lon) => {
     setWeatherLoading(true);
     try {
@@ -99,7 +82,6 @@ export default function PinDropModal() {
       setWeatherLoading(false);
     }
   }, []);
-
   useEffect(() => {
     if (!state.isPinDropModalOpen) return;
     let ignore = false;
@@ -120,14 +102,12 @@ export default function PinDropModal() {
     loadInitWeather();
     return () => { ignore = true; };
   }, [state.isPinDropModalOpen, coords.lat, coords.lng]);
-
   const handleLocationSelect = (lat, lng) => {
     const roundedLat = parseFloat(Number(lat).toFixed(5));
     const roundedLng = parseFloat(Number(lng).toFixed(5));
     setCoords({ lat: roundedLat, lng: roundedLng });
     fetchWeather(roundedLat, roundedLng);
   };
-
   const handleGPSLocation = () => {
     if (!navigator.geolocation) {
       setErrorMsg('Geolocation is not supported by your browser');
@@ -146,7 +126,6 @@ export default function PinDropModal() {
       { timeout: 8000 }
     );
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!farmName.trim()) {
@@ -178,13 +157,10 @@ export default function PinDropModal() {
       setSubmitting(false);
     }
   };
-
   if (!state.isPinDropModalOpen) return null;
-
   return (
     <div className="modal-overlay fade-in">
       <div className="pindrop-modal card">
-        {/* Modal Header */}
         <div className="pindrop-header">
           <div className="pindrop-title-group">
             <div className="pindrop-icon-box">
@@ -199,16 +175,13 @@ export default function PinDropModal() {
             <X size={18} />
           </button>
         </div>
-
         {errorMsg && (
           <div className="pindrop-error-banner">
             <AlertTriangle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="pindrop-body">
-          {/* Left Column: Interactive Map */}
           <div className="pindrop-map-pane">
             <div className="pindrop-map-header">
               <span className="pindrop-map-instruction">
@@ -218,8 +191,6 @@ export default function PinDropModal() {
                 {coords.lat.toFixed(4)}°N, {coords.lng.toFixed(4)}°E
               </span>
             </div>
-
-            {/* Quick District Presets */}
             <div className="pindrop-quick-presets">
               <button
                 type="button"
@@ -241,8 +212,6 @@ export default function PinDropModal() {
                 </button>
               ))}
             </div>
-
-            {/* The Map */}
             <div className="pindrop-leaflet-wrapper">
               <MapContainer
                 center={[coords.lat, coords.lng]}
@@ -269,8 +238,6 @@ export default function PinDropModal() {
                 />
               </MapContainer>
             </div>
-
-            {/* Live Weather Box for Selected Pin */}
             <div className="pindrop-weather-box">
               <div className="weather-box-title">
                 <Cloud size={14} />
@@ -301,8 +268,6 @@ export default function PinDropModal() {
               )}
             </div>
           </div>
-
-          {/* Right Column: Farmer & Field Details */}
           <div className="pindrop-form-pane">
             <div className="form-group">
               <label>Farmer's Name</label>
@@ -314,7 +279,6 @@ export default function PinDropModal() {
                 required
               />
             </div>
-
             <div className="form-group">
               <label>Farm / Plot Name</label>
               <input
@@ -325,7 +289,6 @@ export default function PinDropModal() {
                 required
               />
             </div>
-
             <div className="form-row-2">
               <div className="form-group">
                 <label>Plot Area (Acres)</label>
@@ -338,7 +301,6 @@ export default function PinDropModal() {
                   required
                 />
               </div>
-
               <div className="form-group">
                 <label>Primary Crop</label>
                 <select value={cropType} onChange={(e) => setCropType(e.target.value)}>
@@ -348,7 +310,6 @@ export default function PinDropModal() {
                 </select>
               </div>
             </div>
-
             <div className="form-row-2">
               <div className="form-group">
                 <label>Soil Texture</label>
@@ -358,7 +319,6 @@ export default function PinDropModal() {
                   ))}
                 </select>
               </div>
-
               <div className="form-group">
                 <label>Irrigation Type</label>
                 <select value={irrigationMethod} onChange={(e) => setIrrigationMethod(e.target.value)}>
@@ -368,7 +328,6 @@ export default function PinDropModal() {
                 </select>
               </div>
             </div>
-
             <div className="form-row-2">
               <div className="form-group">
                 <label>Drainage Quality</label>
@@ -378,7 +337,6 @@ export default function PinDropModal() {
                   ))}
                 </select>
               </div>
-
               <div className="form-group">
                 <label>Water Table Depth: <strong>{waterTableDepth} m</strong></label>
                 <input
@@ -391,7 +349,6 @@ export default function PinDropModal() {
                 />
               </div>
             </div>
-
             <div className="form-group">
               <div className="slider-label-row">
                 <label>Groundwater EC (Salinity): <strong>{groundwaterEC} dS/m</strong></label>
@@ -408,7 +365,6 @@ export default function PinDropModal() {
                 onChange={(e) => setGroundwaterEC(e.target.value)}
               />
             </div>
-
             <div className="form-group">
               <label>Farmer Notes / Field Observation</label>
               <textarea
@@ -418,7 +374,6 @@ export default function PinDropModal() {
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
-
             <div className="pindrop-actions">
               <button type="button" className="btn-cancel" onClick={closePinDropModal}>
                 Cancel

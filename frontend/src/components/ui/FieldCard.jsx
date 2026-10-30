@@ -3,17 +3,14 @@ import { MapPin, Droplets, ArrowDownUp, CloudRain, ChevronRight, Wifi, WifiOff }
 import RiskBadge from './RiskBadge';
 import { formatEC, formatDepth, formatRainfall, getScoreGradient } from '../../utils/formatters';
 import './FieldCard.css';
-
 export default function FieldCard({ field }) {
   const {
     name, location, area, cropType, riskScore, riskLevel,
     groundwaterEC, waterTableDepth, rainfallLast30Days,
     alerts, lastUpdated, sensorConnected, stressProbability,
   } = field;
-
   return (
     <div className={`field-card card ${riskLevel.toLowerCase()}-border fade-in`}>
-      {/* Header */}
       <div className="field-card-header">
         <div className="field-card-meta">
           <h3 className="field-name">{name}</h3>
@@ -24,8 +21,6 @@ export default function FieldCard({ field }) {
         </div>
         <RiskBadge level={riskLevel} />
       </div>
-
-      {/* Score bar */}
       <div className="field-score-section">
         <div className="field-score-row">
           <span className="field-score-label">Risk Score</span>
@@ -47,8 +42,6 @@ export default function FieldCard({ field }) {
           Crop Stress Probability: <strong style={{ color: getScoreGradient(stressProbability) }}>{stressProbability}%</strong>
         </div>
       </div>
-
-      {/* Metrics Row */}
       <div className="field-metrics">
         <div className="field-metric">
           <div className="field-metric-icon ec"><Droplets size={14} /></div>
@@ -72,8 +65,6 @@ export default function FieldCard({ field }) {
           </div>
         </div>
       </div>
-
-      {/* Alerts */}
       {alerts.length > 0 && (
         <div className="field-alerts">
           {alerts.slice(0, 2).map((alert, i) => (
@@ -87,8 +78,6 @@ export default function FieldCard({ field }) {
           ))}
         </div>
       )}
-
-      {/* Footer */}
       <div className="field-card-footer">
         <div className="field-footer-left">
           <span className="field-area">{area} ac · {cropType} · {lastUpdated || 'Active'}</span>

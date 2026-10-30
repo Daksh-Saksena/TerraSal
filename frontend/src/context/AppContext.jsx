@@ -1,23 +1,19 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import { getApiUrl } from '../utils/api';
 import { getTranslation } from '../utils/i18n';
-
 export const AppContext = createContext(null);
-
 const savedRole = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_role') || 'panchayat') : 'panchayat';
 const savedFarmerId = typeof window !== 'undefined' ? localStorage.getItem('terrasal_farmer_id') : null;
 const savedLang = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_lang') || 'en') : 'en';
 const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_theme') || 'light') : 'light';
-
 const initialState = {
   loading: true,
   error: null,
   theme: savedTheme,
-  role: savedRole, // 'panchayat' or 'farmer'
-  farmerId: savedFarmerId, // strictly isolate to this farmer when role === 'farmer'
+  role: savedRole,
+  farmerId: savedFarmerId,
   isLoginModalOpen: false,
-  language: savedLang, // 'en' | 'hi' | 'pa'
+  language: savedLang,
   fields: [],
   activeFarmId: savedFarmerId,
   isPinDropModalOpen: false,
@@ -65,7 +61,6 @@ const initialState = {
     },
   ],
 };
-
 const calculateSummaryStats = (fields) => {
   if (!fields.length) return initialState.summaryStats;
   return {
@@ -79,7 +74,6 @@ const calculateSummaryStats = (fields) => {
     connectedSensors: fields.filter(f => f.sensorConnected).length,
   };
 };
-
 const reducer = (state, action) => {
   switch (action.type) {
     case 'FETCH_START':
@@ -88,9 +82,9 @@ const reducer = (state, action) => {
       const fields = action.payload.fields || [];
       const currentActiveStillExists = fields.some(f => f.id === state.activeFarmId);
       const newActiveId = currentActiveStillExists ? state.activeFarmId : (fields[0]?.id || null);
-      return { 
-        ...state, 
-        loading: false, 
+      return {
+        ...state,
+        loading: false,
         fields,
         activeFarmId: newActiveId,
         summaryStats: calculateSummaryStats(fields),
@@ -156,28 +150,21 @@ const reducer = (state, action) => {
       return state;
   }
 };
-
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-
-  // Sync theme attribute on <html> element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme);
     localStorage.setItem('terrasal_theme', state.theme);
   }, [state.theme]);
-
-  // Sync role and language
   useEffect(() => {
     localStorage.setItem('terrasal_role', state.role);
     if (state.farmerId) {
       localStorage.setItem('terrasal_farmer_id', state.farmerId);
     }
   }, [state.role, state.farmerId]);
-
   useEffect(() => {
     localStorage.setItem('terrasal_lang', state.language);
   }, [state.language]);
-
   const loadData = async (targetActiveId = null) => {
     dispatch({ type: 'FETCH_START' });
     try {
@@ -187,16 +174,13 @@ export const AppProvider = ({ children }) => {
         fetch(getApiUrl('/api/trends')),
         fetch(getApiUrl('/api/crops'))
       ]);
-      
       if (!fieldsRes.ok || !regionsRes.ok || !trendsRes.ok || !cropsRes.ok) {
         throw new Error('Unable to connect to TerraSal backend API. Please ensure the backend is running and reachable.');
       }
-
       const fields = await fieldsRes.json();
       const regions = await regionsRes.json();
       const trends = await trendsRes.json();
       const crops = await cropsRes.json();
-      
       dispatch({ type: 'FETCH_SUCCESS', payload: { fields, regions, trends, crops } });
       if (targetActiveId) {
         dispatch({ type: 'SET_ACTIVE_FARM', payload: targetActiveId });
@@ -205,11 +189,9 @@ export const AppProvider = ({ children }) => {
       dispatch({ type: 'FETCH_ERROR', payload: err.message || 'Connection to backend API failed' });
     }
   };
-
   useEffect(() => {
     loadData();
   }, []);
-
   const toggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
   const setTheme = (t) => dispatch({ type: 'SET_THEME', payload: t });
   const setRole = (role) => dispatch({ type: 'SET_ROLE', payload: role });
@@ -220,18 +202,15 @@ export const AppProvider = ({ children }) => {
   const openLoginModal = () => dispatch({ type: 'OPEN_LOGIN_MODAL' });
   const closeLoginModal = () => dispatch({ type: 'CLOSE_LOGIN_MODAL' });
   const selectField = (id) => dispatch({ type: 'SELECT_FIELD', payload: id });
-
   const loginAsPanchayat = () => {
     dispatch({ type: 'LOGIN_PANCHAYAT' });
     localStorage.setItem('terrasal_role', 'panchayat');
   };
-
   const loginAsFarmer = (farmerId) => {
     dispatch({ type: 'LOGIN_FARMER', payload: farmerId });
     localStorage.setItem('terrasal_role', 'farmer');
     localStorage.setItem('terrasal_farmer_id', farmerId);
   };
-
   const addFarm = async (farmData) => {
     try {
       const res = await fetch(getApiUrl('/api/fields'), {
@@ -249,7 +228,6 @@ export const AppProvider = ({ children }) => {
       throw err;
     }
   };
-
   const deleteFarm = async (id) => {
     try {
       const res = await fetch(getApiUrl(`/api/fields/${id}`), { method: 'DELETE' });
@@ -260,27 +238,19 @@ export const AppProvider = ({ children }) => {
       throw err;
     }
   };
-
   const setAnalyzerResult = (result, inputs) =>
     dispatch({ type: 'SET_ANALYZER_RESULT', payload: { result, inputs } });
   const toggleSidebar = () => dispatch({ type: 'TOGGLE_SIDEBAR' });
   const markNotificationRead = (id) =>
     dispatch({ type: 'MARK_NOTIFICATION_READ', payload: id });
   const markAllRead = () => dispatch({ type: 'MARK_ALL_READ' });
-
-  // For individual farmer: strictly lock activeFarm to their own field
   const activeFarm = state.role === 'farmer'
     ? (state.fields.find(f => f.id === state.farmerId) || state.fields[0] || null)
     : (state.fields.find(f => f.id === state.activeFarmId) || state.fields[0] || null);
-
-  // In farmer mode, user only has access to their own field
   const userFields = state.role === 'farmer'
     ? (activeFarm ? [activeFarm] : [])
     : state.fields;
-
-  // Localized string helper
   const t = (key) => getTranslation(state.language, key);
-
   return (
     <AppContext.Provider value={{
       state,
@@ -316,7 +286,6 @@ export const AppProvider = ({ children }) => {
     </AppContext.Provider>
   );
 };
-
 export const useApp = () => {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used within AppProvider');

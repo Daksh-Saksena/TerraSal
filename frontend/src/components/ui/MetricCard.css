@@ -2,7 +2,6 @@
   position: relative;
   overflow: hidden;
 }
-
 .metric-card::before {
   content: '';
   position: absolute;
@@ -14,18 +13,15 @@
   opacity: 0;
   transition: opacity var(--transition);
 }
-
 .metric-card:hover::before {
   opacity: 1;
 }
-
 .metric-card-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
-
 .metric-icon {
   width: 34px;
   height: 34px;
@@ -35,20 +31,17 @@
   justify-content: center;
   flex-shrink: 0;
 }
-
 .metric-body {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
 .metric-unit {
   font-size: 1rem;
   font-weight: 400;
   color: var(--text-secondary);
   margin-left: 4px;
 }
-
 .metric-desc {
   font-size: 0.75rem;
   color: var(--text-muted);

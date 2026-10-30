@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Recommendations.css';
-
 const irrigationPractices = [
   {
     id: 'drip',
@@ -53,7 +52,6 @@ const irrigationPractices = [
     rating: 4,
   },
 ];
-
 const soilTreatments = [
   {
     title: 'Gypsum Application (CaSO₄)',
@@ -120,7 +118,6 @@ const soilTreatments = [
     effectiveness: 'Moderate: long-term improvement in soil health',
   },
 ];
-
 const govtSchemes = [
   {
     name: 'PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)',
@@ -155,27 +152,21 @@ const govtSchemes = [
     link: 'https://nmsa.dac.gov.in/',
   },
 ];
-
 export default function Recommendations() {
   const { state } = useApp();
   const cropDatabase = state.crops || [];
-
   const [activePage, setActivePage] = useState('crops');
   const [expandedTreatment, setExpandedTreatment] = useState(null);
   const [toleranceFilter, setToleranceFilter] = useState('all');
-
   const filteredCrops = toleranceFilter === 'all'
     ? cropDatabase
     : cropDatabase.filter(c => c.toleranceLevel === toleranceFilter);
-
   return (
     <div className="page-container fade-in">
       <div className="page-header">
         <h1>Advisory Center</h1>
         <p>Science-based recommendations for salinity management and crop selection</p>
       </div>
-
-      {/* Navigation Tabs */}
       <div className="rec-nav">
         {[
           { key: 'crops', icon: Sprout, label: 'Crop Guide' },
@@ -202,8 +193,6 @@ export default function Recommendations() {
             <span>Export / Print Advisory</span>
           </button>
       </div>
-
-      {/* Crop Guide */}
       {activePage === 'crops' && (
         <div className="fade-in">
           <div className="rec-section-header">
@@ -223,7 +212,6 @@ export default function Recommendations() {
               ))}
             </div>
           </div>
-
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="crop-table-wrap">
               <table className="data-table crop-table">
@@ -289,15 +277,12 @@ export default function Recommendations() {
               </table>
             </div>
           </div>
-
           <div className="data-source-note">
             <BookOpen size={13} />
             Source: FAO Irrigation and Drainage Paper No. 29: "Water quality for agriculture" (Ayers & Westcot, 1985). Data is indicative. Consult local KVK for region-specific recommendations.
           </div>
         </div>
       )}
-
-      {/* Irrigation Practices */}
       {activePage === 'irrigation' && (
         <div className="irrigation-grid fade-in">
           {irrigationPractices.map(practice => (
@@ -323,9 +308,7 @@ export default function Recommendations() {
                   ))}
                 </div>
               </div>
-
               <p style={{ fontSize: '0.875rem' }}>{practice.description}</p>
-
               <div className="irr-details">
                 <div className="irr-detail-col">
                   <div className="irr-detail-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -346,7 +329,6 @@ export default function Recommendations() {
                   ))}
                 </div>
               </div>
-
               {practice.subsidy && (
                 <div className="irr-subsidy-banner" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Zap size={14} style={{ color: '#d97706', flexShrink: 0 }} />
@@ -357,8 +339,6 @@ export default function Recommendations() {
           ))}
         </div>
       )}
-
-      {/* Soil Treatment */}
       {activePage === 'treatment' && (
         <div className="treatment-list fade-in">
           {soilTreatments.map((treatment, i) => (
@@ -380,7 +360,6 @@ export default function Recommendations() {
                 </div>
                 {expandedTreatment === i ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
-
               {expandedTreatment === i && (
                 <div className="treatment-details fade-in">
                   <div className="divider" />
@@ -409,8 +388,6 @@ export default function Recommendations() {
           ))}
         </div>
       )}
-
-      {/* Govt Schemes */}
       {activePage === 'schemes' && (
         <div className="schemes-grid fade-in">
           {govtSchemes.map((scheme, i) => (

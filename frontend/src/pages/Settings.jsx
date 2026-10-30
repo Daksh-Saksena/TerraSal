@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Settings.css';
-
 const sensorDevices = [
   { id: 'sensor-001', name: 'TS-Node-LDH-01', type: 'EC + Water Table', fieldId: 'field-001', status: 'online', lastPing: '2 min ago', battery: 87 },
   { id: 'sensor-002', name: 'TS-Node-HSR-01', type: 'EC + Soil Moisture', fieldId: 'field-002', status: 'online', lastPing: '5 min ago', battery: 62 },
@@ -14,18 +13,15 @@ const sensorDevices = [
   { id: 'sensor-004', name: 'TS-Node-BTH-01', type: 'EC + Humidity', fieldId: 'field-005', status: 'online', lastPing: '8 min ago', battery: 91 },
   { id: 'sensor-005', name: 'TS-Node-AMR-01', type: 'EC + Water Table', fieldId: 'field-004', status: 'offline', lastPing: '3 hours ago', battery: 15 },
 ];
-
 const apiSources = [
   { name: 'IMD Weather API', description: 'India Meteorological Department rainfall and forecast data', status: 'not-configured', key: '' },
   { name: 'CGWB Groundwater API', description: 'Central Ground Water Board: water table depth data', status: 'not-configured', key: '' },
   { name: 'ICAR Soil Database', description: 'Indian Council of Agricultural Research soil classification', status: 'not-configured', key: '' },
   { name: 'PM-KISAN Farmer Registry', description: 'Government farmer identification and location data', status: 'not-configured', key: '' },
 ];
-
 export default function Settings() {
   const { state } = useApp();
   const mockFields = state.fields || [];
-
   const [activeSection, setActiveSection] = useState('fields');
   const [saved, setSaved] = useState(false);
   const [alertSettings, setAlertSettings] = useState({
@@ -36,25 +32,20 @@ export default function Settings() {
     emailAlerts: true,
     smsAlerts: false,
   });
-
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
-
   const handleAlertToggle = (key) => {
     setAlertSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
-
   return (
     <div className="page-container fade-in">
       <div className="page-header">
         <h1>Settings & Configuration</h1>
         <p>Manage fields, sensors, data sources, and notification preferences</p>
       </div>
-
       <div className="settings-layout">
-        {/* Settings Nav */}
         <div className="settings-nav card">
           {[
             { key: 'fields', icon: Map, label: 'Field Management' },
@@ -73,11 +64,7 @@ export default function Settings() {
             </button>
           ))}
         </div>
-
-        {/* Settings Content */}
         <div className="settings-content">
-
-          {/* Field Management */}
           {activeSection === 'fields' && (
             <div className="settings-section fade-in">
               <div className="settings-section-header">
@@ -90,7 +77,6 @@ export default function Settings() {
                   Add Field
                 </button>
               </div>
-
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <table className="data-table">
                   <thead>
@@ -144,8 +130,6 @@ export default function Settings() {
               </div>
             </div>
           )}
-
-          {/* Sensor Devices */}
           {activeSection === 'sensors' && (
             <div className="settings-section fade-in">
               <div className="settings-section-header">
@@ -158,7 +142,6 @@ export default function Settings() {
                   Add Sensor
                 </button>
               </div>
-
               <div className="sensor-grid">
                 {sensorDevices.map(sensor => {
                   const field = mockFields.find(f => f.id === sensor.fieldId);
@@ -211,8 +194,6 @@ export default function Settings() {
               </div>
             </div>
           )}
-
-          {/* Data Sources */}
           {activeSection === 'datasources' && (
             <div className="settings-section fade-in">
               <div className="settings-section-header">
@@ -221,7 +202,6 @@ export default function Settings() {
                   <p>Connect to government and third-party APIs to enrich salinity predictions</p>
                 </div>
               </div>
-
               <div className="api-sources-list">
                 {apiSources.map((api, i) => (
                   <div key={i} className="card api-source-card">
@@ -253,8 +233,6 @@ export default function Settings() {
               </div>
             </div>
           )}
-
-          {/* Notifications */}
           {activeSection === 'notifications' && (
             <div className="settings-section fade-in">
               <div className="settings-section-header">
@@ -266,7 +244,6 @@ export default function Settings() {
                   {saved ? <><CheckCircle size={14} /> Saved!</> : <><Save size={14} /> Save Changes</>}
                 </button>
               </div>
-
               <div className="card">
                 <div className="notif-settings-section">
                   <h3 className="notif-group-title">Alert Triggers</h3>
@@ -291,9 +268,7 @@ export default function Settings() {
                     </div>
                   ))}
                 </div>
-
                 <div className="divider" />
-
                 <div className="notif-settings-section">
                   <h3 className="notif-group-title">Reports</h3>
                   {[
@@ -315,9 +290,7 @@ export default function Settings() {
                     </div>
                   ))}
                 </div>
-
                 <div className="divider" />
-
                 <div className="notif-settings-section">
                   <h3 className="notif-group-title">Channels</h3>
                   {[
@@ -343,8 +316,6 @@ export default function Settings() {
               </div>
             </div>
           )}
-
-          {/* Account */}
           {activeSection === 'account' && (
             <div className="settings-section fade-in">
               <div className="settings-section-header">
@@ -353,7 +324,6 @@ export default function Settings() {
                   <p>Manage your profile and organization details</p>
                 </div>
               </div>
-
               <div className="card">
                 <div className="account-profile">
                   <div className="account-avatar">A</div>
@@ -363,9 +333,7 @@ export default function Settings() {
                     <span className="chip" style={{ marginTop: 8 }}>Punjab Region · 6 Fields</span>
                   </div>
                 </div>
-
                 <div className="divider" />
-
                 <div className="account-fields">
                   <div className="form-group">
                     <label className="form-label">Full Name</label>
@@ -384,7 +352,6 @@ export default function Settings() {
                     <input className="form-input" defaultValue="Punjab, India" />
                   </div>
                 </div>
-
                 <div className="account-actions">
                   <button className="btn btn-primary" onClick={handleSave}>
                     {saved ? <><CheckCircle size={15} /> Saved!</> : <><Save size={15} /> Save Profile</>}
@@ -392,7 +359,6 @@ export default function Settings() {
                   <button className="btn btn-secondary">Change Password</button>
                 </div>
               </div>
-
               <div className="card platform-info">
                 <div className="card-header">
                   <span className="card-title">Platform Information</span>

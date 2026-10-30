@@ -6,14 +6,12 @@
   margin-top: auto;
   max-height: 280px;
 }
-
 .farm-switcher-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
 }
-
 .farm-switcher-title {
   display: flex;
   align-items: center;
@@ -24,7 +22,6 @@
   letter-spacing: 0.08em;
   color: var(--text-secondary);
 }
-
 .farm-switcher-add-btn {
   display: flex;
   align-items: center;
@@ -39,13 +36,11 @@
   cursor: pointer;
   transition: var(--transition);
 }
-
 .farm-switcher-add-btn:hover {
   background: rgba(0, 138, 80, 0.22);
   border-color: var(--color-primary);
   transform: translateY(-1px);
 }
-
 .farm-switcher-list {
   display: flex;
   flex-direction: column;
@@ -53,8 +48,6 @@
   overflow-y: auto;
   padding-right: 2px;
 }
-
-/* Scrollbar */
 .farm-switcher-list::-webkit-scrollbar {
   width: 4px;
 }
@@ -62,8 +55,6 @@
   background: var(--border-card);
   border-radius: 4px;
 }
-
-/* Farm Item */
 .farm-session-item {
   display: flex;
   align-items: center;
@@ -76,26 +67,22 @@
   cursor: pointer;
   transition: var(--transition);
 }
-
 .farm-session-item:hover {
   background: var(--border-subtle);
   border-color: var(--border-accent);
   transform: translateX(2px);
 }
-
 .farm-session-item.active {
   background: var(--bg-active);
   border-color: var(--color-primary);
   box-shadow: 0 0 10px rgba(0, 138, 80, 0.2);
 }
-
 .farm-session-left {
   display: flex;
   align-items: center;
   gap: 10px;
   overflow: hidden;
 }
-
 .farm-mini-ring {
   width: 32px;
   height: 32px;
@@ -107,26 +94,22 @@
   flex-shrink: 0;
   background: var(--bg-card);
 }
-
 .farm-mini-recovery {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-
 .farm-session-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
 }
-
 .farm-session-title {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 .farm-name-text {
   font-family: var(--font-heading);
   font-size: 12px;
@@ -136,12 +119,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .farm-active-check {
   color: var(--color-primary);
   flex-shrink: 0;
 }
-
 .farm-session-sub {
   display: flex;
   align-items: center;
@@ -149,7 +130,6 @@
   font-size: 11px;
   color: var(--text-muted);
 }
-
 .farmer-sub-name {
   color: var(--text-secondary);
   white-space: nowrap;
@@ -157,25 +137,20 @@
   text-overflow: ellipsis;
   max-width: 70px;
 }
-
 .crop-sub-name {
   text-transform: capitalize;
 }
-
 .strain-sub-val {
   font-weight: 600;
 }
-
 .dot-sep {
   opacity: 0.4;
 }
-
 .farm-session-actions {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-
 .farm-delete-btn {
   background: transparent;
   border: none;
@@ -188,21 +163,17 @@
   justify-content: center;
   transition: var(--transition);
 }
-
 .farm-session-item:hover .farm-delete-btn {
   display: flex;
 }
-
 .farm-delete-btn:hover {
   color: var(--color-critical);
   background: var(--color-critical-bg);
 }
-
 .farm-arrow {
   color: var(--text-muted);
   transition: var(--transition);
 }
-
 .farm-session-item.active .farm-arrow {
   color: var(--color-primary);
   transform: translateX(2px);

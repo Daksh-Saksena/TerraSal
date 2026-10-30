@@ -5,7 +5,6 @@ import ErrorBanner from '../ui/ErrorBanner';
 import PinDropModal from '../farms/PinDropModal';
 import LoginModal from '../auth/LoginModal';
 import { useApp } from '../../context/AppContext';
-
 const pageTitles = {
   '/': 'Dashboard',
   '/village': 'Village Panchayat Hub',
@@ -15,12 +14,10 @@ const pageTitles = {
   '/recommendations': 'Advisory Center',
   '/settings': 'Settings & Configuration',
 };
-
 export default function Layout({ children }) {
   const location = useLocation();
   const { state } = useApp();
   const pageTitle = pageTitles[location.pathname] ?? 'TerraSal';
-
   return (
     <div className="app-layout">
       <Sidebar />

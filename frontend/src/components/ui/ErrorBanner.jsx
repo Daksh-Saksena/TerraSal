@@ -1,12 +1,9 @@
 import { AlertCircle, RefreshCw, Terminal } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import './ErrorBanner.css';
-
 export default function ErrorBanner() {
   const { state, refetch } = useApp();
-
   if (!state.error) return null;
-
   return (
     <div className="error-banner fade-in">
       <div className="error-banner-content">

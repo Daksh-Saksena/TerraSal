@@ -1,5 +1,4 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts';
-
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
@@ -15,7 +14,6 @@ const CustomTooltip = ({ active, payload }) => {
     </div>
   );
 };
-
 const getSeverityColor = (severity) => {
   const colors = {
     critical: '#ef4444',
@@ -25,7 +23,6 @@ const getSeverityColor = (severity) => {
   };
   return colors[severity] ?? '#94a3b8';
 };
-
 export default function FactorBreakdownChart({ factors = [], height = 260 }) {
   const data = factors.map(f => ({
     name: f.name,
@@ -34,7 +31,6 @@ export default function FactorBreakdownChart({ factors = [], height = 260 }) {
     weight: f.weight,
     severity: f.severity,
   }));
-
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart

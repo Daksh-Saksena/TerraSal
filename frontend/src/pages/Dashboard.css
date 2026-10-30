@@ -4,7 +4,6 @@
   padding: 14px 0;
   text-align: center;
 }
-
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -12,27 +11,22 @@
   margin-top: 20px;
   margin-bottom: 28px;
 }
-
 .dashboard-left, .dashboard-right {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
-
-/* Risk Overview */
 .risk-overview {
   display: flex;
   align-items: center;
   gap: 24px;
 }
-
 .risk-gauge-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
 }
-
 .risk-overview-desc {
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -40,14 +34,12 @@
   max-width: 200px;
   line-height: 1.5;
 }
-
 .risk-breakdown {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   flex: 1;
 }
-
 .risk-breakdown-item {
   display: flex;
   align-items: center;
@@ -57,19 +49,16 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
 }
-
 .risk-bd-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-
 .risk-bd-dot.critical { background: var(--color-critical); }
 .risk-bd-dot.high { background: var(--color-high); }
 .risk-bd-dot.moderate { background: var(--color-moderate); }
 .risk-bd-dot.low { background: var(--color-safe); }
-
 .risk-bd-val {
   font-family: var(--font-heading);
   font-size: 1.5rem;
@@ -77,14 +66,11 @@
   color: var(--text-primary);
   line-height: 1;
 }
-
 .risk-bd-label {
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
-
-/* Alerts List */
 .alerts-list {
   display: flex;
   flex-direction: column;
@@ -92,7 +78,6 @@
   max-height: 300px;
   overflow-y: auto;
 }
-
 .alert-row {
   display: flex;
   align-items: center;
@@ -103,46 +88,37 @@
   border: 1px solid var(--border-subtle);
   transition: all var(--transition);
 }
-
 .alert-row:hover {
   background: var(--border-subtle);
   border-color: var(--border-accent);
 }
-
 .alert-level-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-
 .alert-level-dot.critical { background: var(--color-critical); }
 .alert-level-dot.high { background: var(--color-high); }
 .alert-level-dot.moderate { background: var(--color-moderate); }
 .alert-level-dot.low { background: var(--color-safe); }
-
 .alert-content { flex: 1; }
-
 .alert-msg {
   font-size: 0.8125rem;
   color: var(--text-primary);
   font-weight: 500;
   line-height: 1.3;
 }
-
 .alert-field {
   font-size: 0.6875rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
-
-/* Quick Recommendations */
 .quick-rec-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
 .quick-rec-item {
   display: flex;
   gap: 10px;
@@ -152,7 +128,6 @@
   border: 1px solid var(--border-subtle);
   align-items: flex-start;
 }
-
 .rec-priority {
   font-size: 0.625rem;
   font-weight: 700;
@@ -164,29 +139,23 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
-
 .rec-content { flex: 1; }
-
 .rec-action {
   font-size: 0.8125rem;
   color: var(--text-primary);
   font-weight: 500;
   line-height: 1.4;
 }
-
 .rec-field {
   font-size: 0.6875rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
-
-/* Live Metrics */
 .live-metrics-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
-
 .live-metric-item {
   display: flex;
   flex-direction: column;
@@ -197,25 +166,21 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
 }
-
 .live-metric-val {
   font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;
 }
-
 .live-metric-unit {
   font-size: 0.6875rem;
   color: var(--text-muted);
 }
-
 .live-metric-label {
   font-size: 0.6875rem;
   color: var(--text-secondary);
   text-align: center;
 }
-
 @media (max-width: 1100px) {
   .dashboard-main-grid {
     grid-template-columns: 1fr;
@@ -227,8 +192,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
-/* Mode Portal Banner */
 .portal-banner {
   display: flex;
   justify-content: space-between;
@@ -240,17 +203,14 @@
   background: var(--bg-card);
   transition: all var(--transition);
 }
-
 .portal-banner.panchayat-mode {
   border-left: 4px solid var(--color-primary);
   background: linear-gradient(90deg, rgba(0, 138, 80, 0.06) 0%, var(--bg-card) 60%);
 }
-
 .portal-banner.farmer-mode {
   border-left: 3px solid #16a34a;
   background: linear-gradient(90deg, rgba(22, 163, 74, 0.04) 0%, var(--bg-card) 60%);
 }
-
 .portal-mode-badge {
   display: inline-flex;
   align-items: center;
@@ -262,20 +222,17 @@
   margin-bottom: 6px;
   color: var(--text-secondary);
 }
-
 .portal-banner h2 {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0 0 4px 0;
   color: var(--text-primary);
 }
-
 .portal-banner p {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin: 0;
 }
-
 .portal-action-btn {
   display: inline-flex;
   align-items: center;
@@ -290,18 +247,14 @@
   cursor: pointer;
   transition: all var(--transition);
 }
-
 .portal-action-btn:hover {
   background: var(--color-primary);
   color: #fff;
   border-color: var(--color-primary);
 }
-
-/* Weather Forecast Card */
 .weather-forecast-card {
   margin-bottom: 24px;
 }
-
 .weather-forecast-title {
   display: flex;
   align-items: center;
@@ -309,7 +262,6 @@
   font-weight: 700;
   color: var(--text-primary);
 }
-
 .leaching-advice-banner {
   display: flex;
   align-items: flex-start;
@@ -321,48 +273,39 @@
   background: var(--bg-card);
   border: 1px solid var(--border-card);
 }
-
 .leaching-advice-banner.banner-alert {
   background: #fef2f2;
   border: 1px solid #fecaca;
 }
-
 .leaching-advice-banner.banner-safe {
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
 }
-
 [data-theme="dark"] .leaching-advice-banner.banner-alert {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
-
 [data-theme="dark"] .leaching-advice-banner.banner-safe {
   background: rgba(34, 197, 94, 0.12);
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
-
 .advice-icon {
   flex-shrink: 0;
   margin-top: 2px;
 }
-
 .advice-text strong {
   display: block;
   margin-bottom: 2px;
 }
-
 .advice-text p {
   margin: 0;
   line-height: 1.4;
 }
-
 .forecast-days-strip {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 10px;
 }
-
 .forecast-day-item {
   display: flex;
   flex-direction: column;
@@ -375,54 +318,44 @@
   gap: 6px;
   transition: transform var(--transition);
 }
-
 .forecast-day-item:hover {
   transform: translateY(-2px);
 }
-
 .forecast-day-item.rain-expected {
   border-color: rgba(59, 130, 246, 0.4);
   background: rgba(59, 130, 246, 0.05);
 }
-
 .fday-name {
   font-weight: 700;
   font-size: 0.8125rem;
   color: var(--text-primary);
 }
-
 .fday-date {
   font-size: 0.6875rem;
   color: var(--text-muted);
 }
-
 .fday-icon {
   margin: 4px 0;
 }
-
 .fday-temp {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
-
 .fday-rain {
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--text-muted);
 }
-
 .fday-rain.has-rain {
   color: #2563eb;
   font-weight: 700;
 }
-
 @media (max-width: 768px) {
   .forecast-days-strip {
     grid-template-columns: repeat(3, 1fr);
   }
 }
-
 .speech-btn {
   display: flex;
   align-items: center;
@@ -437,28 +370,23 @@
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
 .speech-btn:hover {
   background: rgba(34, 197, 94, 0.22);
 }
-
 .speech-btn.active-speaking {
   background: #22c55e;
   color: #fff;
   border-color: #22c55e;
   animation: pulseSpeech 1.2s infinite ease-in-out;
 }
-
 @keyframes pulseSpeech {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
-
 .speech-btn-label {
   font-family: inherit;
 }
-
 .farmer-action-card {
   padding: 18px;
   display: flex;
@@ -467,8 +395,6 @@
   border-left: 4px solid var(--primary);
   transition: transform 0.2s ease;
 }
-
 .farmer-action-card:hover {
   transform: translateY(-2px);
 }
-

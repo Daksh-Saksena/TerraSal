@@ -3,24 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { initialFields, initialRegions, initialTrends } from './initialData.js';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 let dbClient = null;
-
-/**
- * Get or create the singleton database client.
- * Supports:
- * 1. Hosted Turso / libSQL (TURSO_DATABASE_URL or DATABASE_URL)
- * 2. Local SQLite file for development (file:./database.sqlite)
- */
 export function getDbClient() {
   if (dbClient) return dbClient;
-
   const dbUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN;
-
   if (dbUrl) {
     const sanitizedUrl = dbUrl.replace(/\/\/[^@]*@/, '//***@');
     console.log(`[Database] Connecting to hosted libSQL database: ${sanitizedUrl}`);
@@ -29,31 +18,23 @@ export function getDbClient() {
       authToken: authToken || undefined,
     });
   } else {
-    // In Vercel serverless environment, local SQLite files cannot persist and fail with SQLITE_CANTOPEN
     if (process.env.VERCEL) {
       throw new Error(
         'Missing database configuration: TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be configured in Vercel environment variables.'
       );
     }
-
     const localDbPath = path.resolve(__dirname, 'database.sqlite');
     console.log(`[Database] Using local SQLite file: ${localDbPath}`);
-
-    // Ensure directory exists
     const dbDir = path.dirname(localDbPath);
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
     }
-
     dbClient = createClient({
       url: `file:${localDbPath}`,
     });
   }
-
   return dbClient;
 }
-
-// Direct proxy for backwards compatibility if code imports `db`
 export const db = {
   all: async (sql, params, callback) => {
     try {
@@ -86,29 +67,16 @@ export const db = {
     }
   }
 };
-
-/**
- * Execute a query and return all matching rows as an array of objects.
- */
 export async function queryAll(sql, params = []) {
   const client = getDbClient();
   const res = await client.execute({ sql, args: params });
   return res.rows;
 }
-
-/**
- * Execute a query and return the first matching row or null.
- */
 export async function queryGet(sql, params = []) {
   const client = getDbClient();
   const res = await client.execute({ sql, args: params });
   return res.rows[0] || null;
 }
-
-/**
- * Execute an INSERT, UPDATE, or DELETE query.
- * Returns { rowsAffected, lastInsertRowid }.
- */
 export async function execute(sql, params = []) {
   const client = getDbClient();
   const res = await client.execute({ sql, args: params });
@@ -117,13 +85,7 @@ export async function execute(sql, params = []) {
     lastInsertRowid: res.lastInsertRowid,
   };
 }
-
 let initPromise = null;
-
-/**
- * Initialize database schema, run non-destructive migrations, and seed initial baseline data.
- * Safe to run repeatedly and concurrent-safe.
- */
 export function initializeDB() {
   if (!initPromise) {
     initPromise = runInitialization().catch(err => {
@@ -133,12 +95,9 @@ export function initializeDB() {
   }
   return initPromise;
 }
-
 async function runInitialization() {
   const client = getDbClient();
   console.log('[Database] Checking schema & initializing tables...');
-
-  // 1. Create tables if they do not exist
   await client.execute(`
     CREATE TABLE IF NOT EXISTS fields (
       id TEXT PRIMARY KEY,
@@ -162,7 +121,6 @@ async function runInitialization() {
       lastUpdated TEXT
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS alerts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,7 +129,6 @@ async function runInitialization() {
       FOREIGN KEY(fieldId) REFERENCES fields(id)
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS metrics (
       fieldId TEXT PRIMARY KEY,
@@ -181,7 +138,6 @@ async function runInitialization() {
       FOREIGN KEY(fieldId) REFERENCES fields(id)
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS regions (
       id TEXT PRIMARY KEY,
@@ -199,7 +155,6 @@ async function runInitialization() {
       farmersAffected NUMERIC
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS waterTableTrends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -208,7 +163,6 @@ async function runInitialization() {
       depthLudhiana NUMERIC
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS seasonalTrends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,7 +171,6 @@ async function runInitialization() {
       criticalFields INTEGER
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS rainfallECTrends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -226,7 +179,6 @@ async function runInitialization() {
       avgEC NUMERIC
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS yoyTrends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -236,7 +188,6 @@ async function runInitialization() {
       year2026 NUMERIC
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS riskScoreTrends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -244,7 +195,6 @@ async function runInitialization() {
       avgRisk NUMERIC
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS ecTrends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,7 +205,6 @@ async function runInitialization() {
       ganganagar NUMERIC
     )
   `);
-
   await client.execute(`
     CREATE TABLE IF NOT EXISTS readings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -269,12 +218,9 @@ async function runInitialization() {
       FOREIGN KEY(fieldId) REFERENCES fields(id)
     )
   `);
-
   await client.execute(`
     CREATE INDEX IF NOT EXISTS idx_readings_field_time ON readings(fieldId, timestamp)
   `);
-
-  // 2. Safe non-destructive column migrations for fields table
   try {
     const tableInfo = await client.execute('PRAGMA table_info(fields)');
     const existingCols = (tableInfo.rows || []).map(r => r.name);
@@ -290,7 +236,6 @@ async function runInitialization() {
       { name: 'notes', type: 'TEXT' },
       { name: 'lastUpdated', type: 'TEXT' }
     ];
-
     for (const col of requiredCols) {
       if (!existingCols.includes(col.name)) {
         console.log(`[Database] Adding missing column fields.${col.name}`);
@@ -300,12 +245,9 @@ async function runInitialization() {
   } catch (migErr) {
     console.warn('[Database] Column migration check notice:', migErr.message);
   }
-
-  // 3. Seed baseline data if empty (never overwrite existing user data)
   try {
     const fieldCountRes = await client.execute('SELECT COUNT(*) as count FROM fields');
     const fieldCount = fieldCountRes.rows[0]?.count ?? 0;
-
     if (Number(fieldCount) === 0) {
       console.log('[Database] Empty fields table detected. Seeding initial baseline farms...');
       for (const field of initialFields) {
@@ -334,12 +276,10 @@ async function runInitialization() {
             field.lastUpdated || 'Recently'
           ]
         });
-
         await client.execute({
           sql: 'INSERT INTO metrics (fieldId, ec, waterTable, rainfall) VALUES (?, ?, ?, ?)',
           args: [field.id, field.groundwaterEC, field.waterTableDepth, field.rainfallLast30Days]
         });
-
         if (Array.isArray(field.alerts)) {
           for (const alert of field.alerts) {
             await client.execute({
@@ -350,7 +290,6 @@ async function runInitialization() {
         }
       }
     }
-
     const regCountRes = await client.execute('SELECT COUNT(*) as count FROM regions');
     const regCount = regCountRes.rows[0]?.count ?? 0;
     if (Number(regCount) === 0) {
@@ -363,7 +302,6 @@ async function runInitialization() {
         });
       }
     }
-
     const wtCountRes = await client.execute('SELECT COUNT(*) as count FROM waterTableTrends');
     const wtCount = wtCountRes.rows[0]?.count ?? 0;
     if (Number(wtCount) === 0) {
@@ -405,7 +343,6 @@ async function runInitialization() {
         });
       }
     }
-
     console.log('[Database] Schema checked and initialized successfully.');
   } catch (seedErr) {
     console.error('[Database] Seeding notice:', seedErr.message);

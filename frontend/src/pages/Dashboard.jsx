@@ -14,14 +14,12 @@ import ECTrendChart from '../components/charts/ECTrendChart';
 import SoilHealthCard from '../components/soil/SoilHealthCard';
 import { getApiUrl } from '../utils/api';
 import './Dashboard.css';
-
 export default function Dashboard() {
   const { state, activeFarm, openPinDropModal, openLoginModal, role, t } = useApp();
   const { fields, summaryStats } = state;
   const navigate = useNavigate();
   const [weatherForecast, setWeatherForecast] = useState(null);
   const [speaking, setSpeaking] = useState(false);
-
   useEffect(() => {
     let active = true;
     const fetchForecast = async () => {
@@ -40,11 +38,9 @@ export default function Dashboard() {
     fetchForecast();
     return () => { active = false; };
   }, [activeFarm]);
-
   const handlePrint = () => {
     window.print();
   };
-
   const handleToggleSpeech = (text) => {
     if (!('speechSynthesis' in window)) {
       alert('Text-to-speech audio is not supported in this browser.');
@@ -63,10 +59,8 @@ export default function Dashboard() {
     setSpeaking(true);
     window.speechSynthesis.speak(utterance);
   };
-
   return (
     <div className="page-container fade-in">
-      {/* Role / Access Portal Banner */}
       <div className={`portal-banner ${role === 'farmer' ? 'farmer-mode' : 'panchayat-mode'}`}>
         <div className="portal-banner-content">
           <div className="portal-mode-badge">
@@ -97,8 +91,6 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
-
-      {/* 7-Day Weather & Salinity Leaching Forecast Widget (Ultra-Simple for Farmers) */}
       {weatherForecast && (
         <div className="card weather-forecast-card fade-in">
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -118,8 +110,6 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-
-          {/* Simple Directive Callout */}
           <div
             className={`leaching-advice-banner ${weatherForecast.directiveIcon === 'stop' ? 'banner-alert' : 'banner-safe'}`}
           >
@@ -145,8 +135,6 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-
-          {/* 7-Day Strip */}
           <div className="forecast-days-strip">
             {weatherForecast.forecast.map((d, i) => (
               <div key={i} className={`forecast-day-item ${d.willRain ? 'rain-expected' : ''}`}>
@@ -159,8 +147,6 @@ export default function Dashboard() {
                 <span className={`fday-rain ${d.rainMm > 0 ? 'has-rain' : ''}`}>
                   {d.rainMm > 0 ? `${d.rainMm} mm` : '0 mm'}
                 </span>
-
-                {/* Plain Action Tag */}
                 <span
                   className="fday-action-tag"
                   style={{
@@ -183,13 +169,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* Active Farm Soil Health Card (Shown prominently for the logged in farmer or active farm) */}
       {activeFarm && (
         <SoilHealthCard farm={activeFarm} onOpenPinDrop={openPinDropModal} />
       )}
-
-      {/* INDIVIDUAL FARMER EXCLUSIVE SECTION: STRICTLY THAT FARMER'S CHARACTERISTICS */}
       {role === 'farmer' && activeFarm && (
         <div className="farmer-characteristics-section fade-in">
           <div className="section-header">
@@ -201,9 +183,7 @@ export default function Dashboard() {
             </div>
             <span className="chip">Target: {activeFarm.cropType}</span>
           </div>
-
           <div className="farmer-actions-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-            {/* Step 1: Gypsum */}
             <div className="card farmer-action-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span className="step-number" style={{ background: '#22c55e', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</span>
@@ -223,8 +203,6 @@ export default function Dashboard() {
                 <ArrowRight size={13} />
               </button>
             </div>
-
-            {/* Step 2: Irrigation */}
             <div className="card farmer-action-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span className="step-number" style={{ background: '#38bdf8', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</span>
@@ -244,8 +222,6 @@ export default function Dashboard() {
                 <ArrowRight size={13} />
               </button>
             </div>
-
-            {/* Step 3: Drainage */}
             <div className="card farmer-action-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span className="step-number" style={{ background: '#f59e0b', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</span>
@@ -266,11 +242,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* PANCHAYAT OFFICER EXCLUSIVE VIEW: VILLAGE-WIDE AGGREGATE */}
       {role === 'panchayat' && (
         <>
-          {/* Top KPI Row */}
           <div className="grid-4 fade-in-delay-1">
             <MetricCard
               title="Village Avg Risk Score"
@@ -313,10 +286,7 @@ export default function Dashboard() {
               description="Real-time root-zone monitoring"
             />
           </div>
-
-          {/* Main Content Grid for Panchayat */}
           <div className="dashboard-main-grid">
-            {/* Left: Village Risk Overview + Real EC Trend Chart */}
             <div className="dashboard-left">
               <div className="card fade-in-delay-2">
                 <div className="card-header">
@@ -362,8 +332,6 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-
-              {/* Dynamic Village Trend Chart */}
               <div className="card fade-in-delay-3">
                 <div className="card-header">
                   <div className="section-title">
@@ -377,8 +345,6 @@ export default function Dashboard() {
                 <ECTrendChart height={250} />
               </div>
             </div>
-
-            {/* Right: Active Village Alerts */}
             <div className="dashboard-right">
               <div className="card fade-in-delay-2">
                 <div className="card-header">
@@ -410,8 +376,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-
-          {/* Monitored Fields Grid */}
           <div className="section-header">
             <div className="section-title">
               <div className="section-title-icon"><MapPin size={16} /></div>

@@ -3,14 +3,12 @@
   align-items: center;
   justify-content: center;
 }
-
 .gauge-score {
   font-family: var(--font-heading);
   font-size: 40px;
   font-weight: 800;
   dominant-baseline: middle;
 }
-
 .gauge-label {
   font-family: 'Inter', sans-serif;
   font-size: 10px;
@@ -18,7 +16,6 @@
   letter-spacing: 0.1em;
   dominant-baseline: middle;
 }
-
 .gauge-minmax {
   font-family: 'Inter', sans-serif;
   font-size: 10px;

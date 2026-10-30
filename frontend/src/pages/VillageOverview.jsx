@@ -12,8 +12,6 @@ import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../utils/api';
 import './VillageOverview.css';
-
-// Fixes gray-tile bug in modal/conditionally-rendered maps
 function MapResizeController() {
   const map = useMap();
   useEffect(() => {
@@ -23,15 +21,12 @@ function MapResizeController() {
   }, [map]);
   return null;
 }
-
-// Custom Marker for village pins based on recovery
 const createVillageIcon = (zoneColor) => new L.DivIcon({
   className: 'village-map-pin',
   html: `<div class="village-pin-outer" style="border-color: ${zoneColor}"><div class="village-pin-core" style="background: ${zoneColor}"></div></div>`,
   iconSize: [22, 22],
   iconAnchor: [11, 11]
 });
-
 export default function VillageOverview() {
   const { state, setActiveFarmId, openPinDropModal, t } = useApp();
   const navigate = useNavigate();
@@ -39,7 +34,6 @@ export default function VillageOverview() {
   const [filterZone, setFilterZone] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
-
   useEffect(() => {
     let isSubscribed = true;
     const fetchBenchmarks = async () => {
@@ -55,11 +49,9 @@ export default function VillageOverview() {
         if (isSubscribed) setLoading(false);
       }
     };
-
     fetchBenchmarks();
     return () => { isSubscribed = false; };
   }, [state.fields]);
-
   const handleRefreshAdvisories = async () => {
     setRegenerating(true);
     try {
@@ -77,7 +69,6 @@ export default function VillageOverview() {
       setRegenerating(false);
     }
   };
-
   const fields = state.fields || [];
   const stats = benchmarkData?.villageStats || {
     totalFields: fields.length,
@@ -89,7 +80,6 @@ export default function VillageOverview() {
     redFarms: fields.filter(f => (f.soilRecovery || 50) < 34).length,
     villageSaltTons: 24.8
   };
-
   const filteredFields = fields.filter(f => {
     const rec = f.soilRecovery ?? 50;
     if (filterZone === 'GREEN') return rec >= 67;
@@ -97,12 +87,10 @@ export default function VillageOverview() {
     if (filterZone === 'RED') return rec < 34;
     return true;
   });
-
   const handleSelectFarm = (id) => {
     setActiveFarmId(id);
     navigate('/');
   };
-
   const handleExportCSV = () => {
     const headers = ['Plot ID', 'Farm Name', 'Farmer', 'Crop', 'Soil Type', 'Area (ac)', 'EC (dS/m)', 'Water Table (m)', 'Soil Strain', 'Soil Recovery (%)', 'Risk Level'];
     const rows = fields.map(f => [
@@ -127,12 +115,9 @@ export default function VillageOverview() {
     link.click();
     document.body.removeChild(link);
   };
-
   const advisories = benchmarkData?.advisories || [];
-
   return (
     <div className="page-container fade-in">
-      {/* Header */}
       <div className="village-header-bar">
         <div>
           <h1>{t('navVillage')} - Panchayat Soil Health Hub</h1>
@@ -149,14 +134,11 @@ export default function VillageOverview() {
           </button>
         </div>
       </div>
-
       {loading && !benchmarkData && (
         <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>
           {t('loading')}
         </div>
       )}
-
-      {/* Village KPI Strip */}
       <div className="grid-4 village-kpi-row">
         <div className="card village-stat-card">
           <div className="vstat-top">
@@ -170,7 +152,6 @@ export default function VillageOverview() {
             {stats.greenFarms} Green · {stats.yellowFarms} Yellow · {stats.redFarms} Red
           </div>
         </div>
-
         <div className="card village-stat-card">
           <div className="vstat-top">
             <span className="vstat-label">Root Osmotic Stress</span>
@@ -179,7 +160,6 @@ export default function VillageOverview() {
           <div className="vstat-value">{stats.avgStrain} <span className="vstat-unit">load</span></div>
           <div className="vstat-sub">Cumulative root zone salinity stress</div>
         </div>
-
         <div className="card village-stat-card">
           <div className="vstat-top">
             <span className="vstat-label">Active Village Plots</span>
@@ -188,7 +168,6 @@ export default function VillageOverview() {
           <div className="vstat-value">{stats.totalFields} <span className="vstat-unit">farms</span></div>
           <div className="vstat-sub">{stats.totalAcres} total acres monitored</div>
         </div>
-
         <div className="card village-stat-card">
           <div className="vstat-top">
             <span className="vstat-label">Seasonal Salt Burden</span>
@@ -198,10 +177,7 @@ export default function VillageOverview() {
           <div className="vstat-sub">Total mineral salts deposited</div>
         </div>
       </div>
-
-      {/* Main Grid: Village Community Map + Peer Advisories */}
       <div className="village-main-grid">
-        {/* Left: Village Pin Map */}
         <div className="card village-map-card">
           <div className="card-header">
             <div className="section-title">
@@ -210,7 +186,6 @@ export default function VillageOverview() {
             </div>
             <span className="chip"><Compass size={11} /> Click any pin to open farm</span>
           </div>
-
           <div className="village-leaflet-wrap">
             <MapContainer
               center={[30.2, 75.0]}
@@ -228,7 +203,6 @@ export default function VillageOverview() {
                 const zoneColor = rec >= 67 ? '#22c55e' : rec >= 34 ? '#f59e0b' : '#ef4444';
                 const lat = farm.lat || 30.5;
                 const lng = farm.lng || 75.2;
-
                 return (
                   <Marker
                     key={farm.id}
@@ -261,8 +235,6 @@ export default function VillageOverview() {
             </MapContainer>
           </div>
         </div>
-
-        {/* Right: Community Soil Advisories */}
         <div className="card village-advisory-card">
           <div className="card-header">
             <div className="section-title">
@@ -273,7 +245,7 @@ export default function VillageOverview() {
               <span className="chip" style={{ color: 'var(--color-teal)' }}>
                 Field Extension Bulletin
               </span>
-              <button 
+              <button
                 className="btn btn-secondary btn-sm"
                 onClick={handleRefreshAdvisories}
                 disabled={regenerating}
@@ -284,7 +256,6 @@ export default function VillageOverview() {
               </button>
             </div>
           </div>
-
           <div className="village-advisories-list">
             {regenerating ? (
               <div className="ai-loading-box">
@@ -298,7 +269,6 @@ export default function VillageOverview() {
                 const highlight = item.highlight || (isWarning ? 'warning-highlight' : isRotation ? 'info-highlight' : 'drip-highlight');
                 const Icon = isWarning ? AlertTriangle : isRotation ? TrendingUp : CheckCircle2;
                 const iconColor = isWarning ? 'text-orange' : isRotation ? 'text-blue' : 'text-teal';
-
                 return (
                   <div key={item.id || index} className={`vadvisory-item ${highlight} fade-in`}>
                     <div className="vadvisory-title">
@@ -324,16 +294,12 @@ export default function VillageOverview() {
           </div>
         </div>
       </div>
-
-      {/* Cross-Field Comparison Matrix */}
       <div className="card village-table-card">
         <div className="card-header">
           <div className="section-title">
             <div className="section-title-icon"><Layers size={16} /></div>
             Village Field Directory & Comparison
           </div>
-
-          {/* Filter Pills */}
           <div className="village-filter-pills">
             {['ALL', 'GREEN', 'YELLOW', 'RED'].map(zone => (
               <button
@@ -346,7 +312,6 @@ export default function VillageOverview() {
             ))}
           </div>
         </div>
-
         <div className="table-responsive">
           <table className="village-table">
             <thead>
@@ -367,7 +332,6 @@ export default function VillageOverview() {
                 const rec = farm.soilRecovery ?? 50;
                 const strain = farm.soilStrain ?? 12.0;
                 const zoneColor = rec >= 67 ? '#22c55e' : rec >= 34 ? '#f59e0b' : '#ef4444';
-
                 return (
                   <tr key={farm.id} className="vtable-row">
                     <td>

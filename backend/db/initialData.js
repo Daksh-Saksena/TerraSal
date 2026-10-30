@@ -1,8 +1,3 @@
-/**
- * Initial baseline seed data for TerraSal.
- * Used to seed fresh databases so the dashboard, map, and trends are immediately populated.
- */
-
 export const initialFields = [
   {
     id: 'field-001',
@@ -167,9 +162,7 @@ export const initialFields = [
     alerts: [],
   },
 ];
-
 export const initialRegions = [
-  // Punjab
   {
     id: 'reg-pun-01',
     state: 'Punjab',
@@ -245,8 +238,6 @@ export const initialRegions = [
     dominantCrop: 'Wheat',
     farmersAffected: 29000,
   },
-
-  // Haryana
   {
     id: 'reg-har-01',
     state: 'Haryana',
@@ -292,8 +283,6 @@ export const initialRegions = [
     dominantCrop: 'Wheat',
     farmersAffected: 19000,
   },
-
-  // Rajasthan
   {
     id: 'reg-raj-01',
     state: 'Rajasthan',
@@ -340,7 +329,6 @@ export const initialRegions = [
     farmersAffected: 14000,
   },
 ];
-
 export const initialTrends = {
   waterTableData: [
     { month: 'Sep 24', depthGanganagar: 1.8, depthLudhiana: 2.4 },

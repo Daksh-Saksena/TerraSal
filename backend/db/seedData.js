@@ -1,6 +1,5 @@
 import { db, initializeDB } from './schema.js';
 import { analyzeSalinity } from '../services/salinityEngine.js';
-
 export const fieldsData = [
   {
     id: 'field-001',
@@ -129,7 +128,6 @@ export const fieldsData = [
     alerts: []
   }
 ];
-
 export const regionsData = [
   { id: 'reg-pun-01', state: 'Punjab', district: 'Ludhiana', lat: 30.9010, lng: 75.8573, riskScore: 72, riskLevel: 'HIGH', trend: 'worsening', avgEC: 4.6, waterTableDepth: 1.8, affectedArea: 38000, dominantCrop: 'Wheat', farmersAffected: 24500 },
   { id: 'reg-pun-02', state: 'Punjab', district: 'Bathinda', lat: 30.2110, lng: 74.9455, riskScore: 65, riskLevel: 'HIGH', trend: 'worsening', avgEC: 3.9, waterTableDepth: 2.2, affectedArea: 42000, dominantCrop: 'Cotton', farmersAffected: 28000 },
@@ -143,7 +141,6 @@ export const regionsData = [
   { id: 'reg-raj-02', state: 'Rajasthan', district: 'Hanumangarh', lat: 29.5817, lng: 74.3294, riskScore: 81, riskLevel: 'CRITICAL', trend: 'worsening', avgEC: 5.9, waterTableDepth: 1.5, affectedArea: 53000, dominantCrop: 'Wheat', farmersAffected: 36000 },
   { id: 'reg-raj-03', state: 'Rajasthan', district: 'Bikaner', lat: 28.0229, lng: 73.3119, riskScore: 32, riskLevel: 'LOW', trend: 'stable', avgEC: 2.1, waterTableDepth: 5.2, affectedArea: 18000, dominantCrop: 'Mustard', farmersAffected: 14000 }
 ];
-
 export const waterTableData = [
   { month: 'Sep 24', depthGanganagar: 1.8, depthLudhiana: 2.4 },
   { month: 'Oct 24', depthGanganagar: 1.75, depthLudhiana: 2.35 },
@@ -170,7 +167,6 @@ export const waterTableData = [
   { month: 'Jul 26', depthGanganagar: 1.2, depthLudhiana: 1.79 },
   { month: 'Aug 26', depthGanganagar: 1.2, depthLudhiana: 1.8 }
 ];
-
 export const seasonalData = [
   { month: 'Jan', avgSalinity: 3.8, criticalFields: 2 },
   { month: 'Feb', avgSalinity: 4.1, criticalFields: 2 },
@@ -185,7 +181,6 @@ export const seasonalData = [
   { month: 'Nov', avgSalinity: 3.6, criticalFields: 2 },
   { month: 'Dec', avgSalinity: 3.7, criticalFields: 2 }
 ];
-
 export const rainfallECData = [
   { month: 'Jan', rainfall: 18, avgEC: 4.2 },
   { month: 'Feb', rainfall: 22, avgEC: 4.4 },
@@ -200,7 +195,6 @@ export const rainfallECData = [
   { month: 'Nov', rainfall: 7, avgEC: 3.8 },
   { month: 'Dec', rainfall: 11, avgEC: 4.1 }
 ];
-
 export const yoyData = [
   { month: 'Jan', year2024: 3.2, year2025: 3.6, year2026: 4.2 },
   { month: 'Feb', year2024: 3.4, year2025: 3.8, year2026: 4.4 },
@@ -215,7 +209,6 @@ export const yoyData = [
   { month: 'Nov', year2024: 3.0, year2025: 3.4, year2026: 3.8 },
   { month: 'Dec', year2024: 3.1, year2025: 3.5, year2026: 4.1 }
 ];
-
 export const riskScoreTrend = [
   { month: 'Sep 24', avgRisk: 48 },
   { month: 'Oct 24', avgRisk: 50 },
@@ -242,7 +235,6 @@ export const riskScoreTrend = [
   { month: 'Jul 26', avgRisk: 60 },
   { month: 'Aug 26', avgRisk: 58 }
 ];
-
 export const ecTrendData = [
   { month: 'Sep 24', safeThreshold: 2.0, ludhiana: 3.4, hisar: 2.5, ganganagar: 4.8 },
   { month: 'Oct 24', safeThreshold: 2.0, ludhiana: 3.5, hisar: 2.6, ganganagar: 5.0 },
@@ -269,19 +261,15 @@ export const ecTrendData = [
   { month: 'Jul 26', safeThreshold: 2.0, ludhiana: 4.0, hisar: 2.9, ganganagar: 6.2 },
   { month: 'Aug 26', safeThreshold: 2.0, ludhiana: 4.6, hisar: 3.2, ganganagar: 6.8 }
 ];
-
 export async function runSeed() {
   await initializeDB();
   console.log('[Seed] Populating TerraSal SQLite database...');
-
   return new Promise((resolve, reject) => {
     db.serialize(() => {
       const tables = ['fields', 'alerts', 'metrics', 'regions', 'waterTableTrends', 'seasonalTrends', 'rainfallECTrends', 'yoyTrends', 'riskScoreTrends', 'ecTrends'];
       tables.forEach(table => {
         db.run(`DELETE FROM ${table}`);
       });
-
-      // Insert fields with calculated diagnostics
       const insertField = db.prepare(`
         INSERT INTO fields (
           id, name, farmerName, location, lat, lng, area, cropType, soilType, drainageQuality, irrigationMethod,
@@ -290,7 +278,6 @@ export async function runSeed() {
       `);
       const insertAlert = db.prepare('INSERT INTO alerts (fieldId, message) VALUES (?, ?)');
       const insertMetric = db.prepare('INSERT INTO metrics (fieldId, ec, waterTable, rainfall) VALUES (?, ?, ?, ?)');
-
       fieldsData.forEach(f => {
         const diag = analyzeSalinity({
           groundwaterEC: f.groundwaterEC,
@@ -302,7 +289,6 @@ export async function runSeed() {
           cropType: f.cropType,
           terrain: 'flat'
         });
-
         insertField.run(
           f.id,
           f.name,
@@ -324,16 +310,12 @@ export async function runSeed() {
           f.notes,
           'Active'
         );
-
         f.alerts.forEach(a => insertAlert.run(f.id, a));
         insertMetric.run(f.id, f.groundwaterEC, f.waterTableDepth, f.rainfallLast30Days);
       });
-
       insertField.finalize();
       insertAlert.finalize();
       insertMetric.finalize();
-
-      // Regions
       const insertRegion = db.prepare(`
         INSERT INTO regions (id, state, district, lat, lng, riskScore, riskLevel, trend, avgEC, waterTableDepth, affectedArea, dominantCrop, farmersAffected)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -342,38 +324,29 @@ export async function runSeed() {
         insertRegion.run(r.id, r.state, r.district, r.lat, r.lng, r.riskScore, r.riskLevel, r.trend, r.avgEC, r.waterTableDepth, r.affectedArea, r.dominantCrop, r.farmersAffected);
       });
       insertRegion.finalize();
-
-      // Trends
       const insertWT = db.prepare('INSERT INTO waterTableTrends (month, depthGanganagar, depthLudhiana) VALUES (?, ?, ?)');
       waterTableData.forEach(d => insertWT.run(d.month, d.depthGanganagar, d.depthLudhiana));
       insertWT.finalize();
-
       const insertSeasonal = db.prepare('INSERT INTO seasonalTrends (month, avgSalinity, criticalFields) VALUES (?, ?, ?)');
       seasonalData.forEach(d => insertSeasonal.run(d.month, d.avgSalinity, d.criticalFields));
       insertSeasonal.finalize();
-
       const insertRain = db.prepare('INSERT INTO rainfallECTrends (month, rainfall, avgEC) VALUES (?, ?, ?)');
       rainfallECData.forEach(d => insertRain.run(d.month, d.rainfall, d.avgEC));
       insertRain.finalize();
-
       const insertYoy = db.prepare('INSERT INTO yoyTrends (month, year2024, year2025, year2026) VALUES (?, ?, ?, ?)');
       yoyData.forEach(d => insertYoy.run(d.month, d.year2024, d.year2025, d.year2026));
       insertYoy.finalize();
-
       const insertRisk = db.prepare('INSERT INTO riskScoreTrends (month, avgRisk) VALUES (?, ?)');
       riskScoreTrend.forEach(d => insertRisk.run(d.month, d.avgRisk));
       insertRisk.finalize();
-
       const insertEc = db.prepare('INSERT INTO ecTrends (month, safeThreshold, ludhiana, hisar, ganganagar) VALUES (?, ?, ?, ?, ?)');
       ecTrendData.forEach(d => insertEc.run(d.month, d.safeThreshold, d.ludhiana, d.hisar, d.ganganagar));
       insertEc.finalize();
-
       console.log(`[Seed] Seeded ${fieldsData.length} fields, ${regionsData.length} regions, and trend matrices.`);
       resolve();
     });
   });
 }
-
 if (process.argv[1]?.endsWith('seedData.js')) {
   runSeed().then(() => {
     setTimeout(() => process.exit(0), 500);

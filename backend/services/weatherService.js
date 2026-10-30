@@ -1,23 +1,16 @@
 import axios from 'axios';
 import { queryAll, queryGet, execute } from '../db/index.js';
-
-// OpenWeatherMap API Key loaded from environment
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
-
-// In-memory weather cache to prevent external API spamming
 const weatherCache = new Map();
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-
+const CACHE_TTL_MS = 30 * 60 * 1000;
 export async function updateWeatherForAllFields() {
   try {
     console.log('[WeatherService] Starting weather update for all fields...');
-
     if (!API_KEY) {
       console.warn('[WeatherService] Notice: OPENWEATHER_API_KEY is not set. Skipping live external weather fetch.');
       return { updated: 0, reason: 'OPENWEATHER_API_KEY not configured' };
     }
-
     const coordinatesMap = {
       'Ludhiana, Punjab': { lat: 30.9010, lon: 75.8573 },
       'Hisar, Haryana': { lat: 29.1492, lon: 75.7217 },
@@ -26,17 +19,13 @@ export async function updateWeatherForAllFields() {
       'Bathinda, Punjab': { lat: 30.2110, lon: 74.9455 },
       'Bikaner, Rajasthan': { lat: 28.0229, lon: 73.3119 }
     };
-
     const fields = await queryAll('SELECT id, location, lat, lng FROM fields');
     let updatedCount = 0;
-
     for (const field of fields) {
       const coords = (field.lat && field.lng)
         ? { lat: field.lat, lon: field.lng }
         : coordinatesMap[field.location];
-
       if (!coords) continue;
-
       try {
         const response = await axios.get(BASE_URL, {
           params: {
@@ -47,10 +36,8 @@ export async function updateWeatherForAllFields() {
           },
           timeout: 6000
         });
-
         const weatherData = response.data;
         const recentRain = (weatherData.rain && (weatherData.rain['1h'] || weatherData.rain['3h'])) || 0;
-
         if (recentRain > 0) {
           const metrics = await queryGet('SELECT rainfall FROM metrics WHERE fieldId = ?', [field.id]);
           if (metrics) {
@@ -64,7 +51,6 @@ export async function updateWeatherForAllFields() {
         console.warn(`[WeatherService] Error fetching weather for field ${field.id}:`, err.message);
       }
     }
-
     console.log(`[WeatherService] Weather update complete. Updated ${updatedCount} field(s).`);
     return { updated: updatedCount };
   } catch (error) {
@@ -72,23 +58,17 @@ export async function updateWeatherForAllFields() {
     throw error;
   }
 }
-
-/**
- * Fetch live weather from OpenWeatherMap for any latitude and longitude (pin-drop)
- */
 export async function getWeatherForCoordinates(lat, lon) {
   const cacheKey = `weather_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
   const cached = weatherCache.get(cacheKey);
   if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
     return cached.data;
   }
-
   if (!API_KEY) {
     const data = getRealisticWeatherFallback(lat, lon);
     weatherCache.set(cacheKey, { timestamp: Date.now(), data });
     return data;
   }
-
   try {
     const response = await axios.get(BASE_URL, {
       params: {
@@ -99,10 +79,8 @@ export async function getWeatherForCoordinates(lat, lon) {
       },
       timeout: 5000
     });
-
     const d = response.data;
     const rain = (d.rain && (d.rain['1h'] || d.rain['3h'])) || 0;
-
     const result = {
       cityName: d.name || 'Pinned Location',
       temperature: Math.round(d.main?.temp ?? 28),
@@ -113,7 +91,6 @@ export async function getWeatherForCoordinates(lat, lon) {
       weatherMain: d.weather?.[0]?.main ?? 'Clear',
       windSpeed: d.wind?.speed ?? 3.5,
     };
-
     weatherCache.set(cacheKey, { timestamp: Date.now(), data: result });
     return result;
   } catch (err) {
@@ -123,28 +100,19 @@ export async function getWeatherForCoordinates(lat, lon) {
     return data;
   }
 }
-
-/**
- * 7-Day Weather & Salinity Leaching Forecast
- */
 export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
   const cacheKey = `forecast_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
   const cached = weatherCache.get(cacheKey);
   if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
     return cached.data;
   }
-
-  // Generate realistic 7-day meteorological projection
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const today = new Date();
   const forecastDays = [];
   let totalRain7Days = 0;
-
-  // Realistic weather pattern
   const rainChances = [0, 4, 18, 12, 0, 0, 2];
   const temps = [33, 31, 28, 29, 32, 34, 33];
   const conditions = ['Clear', 'Partly Cloudy', 'Rain Shower', 'Thunderstorm', 'Clear', 'Clear', 'Sunny'];
-
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -152,11 +120,9 @@ export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
     const dateStr = d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
     const rainMm = rainChances[i];
     totalRain7Days += rainMm;
-
     let actionBadge = 'Safe to Water';
     let actionType = 'safe';
     let plainTip = 'Water early morning before sun gets hot';
-
     if (rainMm >= 10) {
       actionBadge = 'Natural Rain Leaching';
       actionType = 'flush';
@@ -174,7 +140,6 @@ export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
       actionType = 'dry';
       plainTip = 'Mulch with crop straw to stop salt crust';
     }
-
     forecastDays.push({
       day: dayName,
       date: dateStr,
@@ -188,8 +153,6 @@ export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
       plainTip
     });
   }
-
-  // Compute smart leaching & irrigation recommendation
   const rainNext48h = forecastDays[1].rainMm + forecastDays[2].rainMm;
   let leachingAdvice = '';
   let adviceType = 'normal';
@@ -197,7 +160,6 @@ export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
   let simpleReason = 'Normal dry weather. Irrigate in early morning (5:00 AM - 8:00 AM) to prevent salt crusting.';
   let directiveColor = '#008a50';
   let directiveIcon = 'check';
-
   if (rainNext48h >= 15) {
     adviceType = 'rain_delay';
     simpleDirective = 'PAUSE TUBEWELL TODAY - RAINFALL EXPECTED';
@@ -220,9 +182,7 @@ export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
     simpleReason = 'Moderate moisture conditions. Irrigate strictly during early morning (5:00 AM to 8:00 AM) to the crop root depth.';
     leachingAdvice = `Moderate moisture conditions. Maintain regular irrigation schedule according to crop root-zone tensiometer readings.`;
   }
-
   const audioScript = `${simpleDirective}. ${simpleReason}`;
-
   const forecastResult = {
     location: `${Number(lat).toFixed(2)}°N, ${Number(lon).toFixed(2)}°E`,
     forecast: forecastDays,
@@ -237,11 +197,9 @@ export async function get7DayForecastForCoordinates(lat = 30.9, lon = 75.85) {
     adviceType,
     updatedAt: new Date().toISOString()
   };
-
   weatherCache.set(cacheKey, { timestamp: Date.now(), data: forecastResult });
   return forecastResult;
 }
-
 function getRealisticWeatherFallback(lat, lon) {
   return {
     cityName: (lat && lon) ? `${Number(lat).toFixed(2)}°N, ${Number(lon).toFixed(2)}°E` : 'Pinned Location',

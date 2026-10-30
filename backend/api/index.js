@@ -1,8 +1,6 @@
 import app from '../app.js';
 import { initializeDB } from '../db/index.js';
-
 let initPromise = null;
-
 export default async function handler(req, res) {
   try {
     if (!initPromise) {

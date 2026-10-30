@@ -1,17 +1,12 @@
-// Crop salt tolerance database
-// ECe = EC of soil saturation extract at which 50% yield reduction occurs
-// Sources: FAO guidelines for salt-tolerant crops
-
 export const cropDatabase = [
-  // Very tolerant (ECe threshold > 8 dS/m)
   {
     id: 'barley',
     name: 'Barley',
     scientificName: 'Hordeum vulgare',
     category: 'Cereal',
     toleranceLevel: 'very-high',
-    ecThreshold50: 13.0, // dS/m: 50% yield loss
-    ecMaxTolerable: 8.0, // dS/m: threshold above which stress begins
+    ecThreshold50: 13.0,
+    ecMaxTolerable: 8.0,
     yieldReduction: '10% per dS/m above 8',
     idealSoilTypes: ['sandy', 'sandy-loam', 'loamy'],
     waterRequirement: 'low',
@@ -64,7 +59,6 @@ export const cropDatabase = [
     notes: 'Drought and salt tolerant. Good oilseed alternative.',
     icon: '🌻',
   },
-  // Moderately tolerant (ECe 4-8 dS/m)
   {
     id: 'wheat',
     name: 'Wheat',
@@ -125,7 +119,6 @@ export const cropDatabase = [
     notes: 'Sensitive in early stages. Moderate tolerance at maturity.',
     icon: '🟡',
   },
-  // Sensitive (ECe < 4 dS/m)
   {
     id: 'rice',
     name: 'Rice (Paddy)',
@@ -187,11 +180,8 @@ export const cropDatabase = [
     icon: '🫘',
   },
 ];
-
 export const getCropById = (id) => cropDatabase.find(c => c.id === id);
-
 export const getCropsByTolerance = (level) => cropDatabase.filter(c => c.toleranceLevel === level);
-
 export const getRecommendedCrops = (ec) => {
   return cropDatabase
     .filter(c => c.ecMaxTolerable >= ec)

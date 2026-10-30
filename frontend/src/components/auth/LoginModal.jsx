@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Shield, User, X, Check, Sprout, Building, ArrowRight, MapPin } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import './LoginModal.css';
-
 export default function LoginModal() {
   const {
     state,
@@ -15,16 +14,12 @@ export default function LoginModal() {
     openPinDropModal,
     t
   } = useApp();
-
   const fields = state.fields || [];
   const [selectedFarmerId, setSelectedFarmerId] = useState(farmerId || fields[0]?.id || '');
-
   if (!isLoginModalOpen) return null;
-
   const handleSelectPanchayat = () => {
     loginAsPanchayat();
   };
-
   const handleSelectFarmer = () => {
     if (selectedFarmerId) {
       loginAsFarmer(selectedFarmerId);
@@ -32,13 +27,10 @@ export default function LoginModal() {
       loginAsFarmer(fields[0].id);
     }
   };
-
   const selectedFarmObj = fields.find(f => f.id === selectedFarmerId) || fields[0];
-
   return (
     <div className="login-modal-overlay fade-in" onClick={closeLoginModal}>
       <div className="login-modal-container" onClick={e => e.stopPropagation()}>
-        {/* Header */}
         <div className="login-modal-header">
           <div>
             <span className="login-portal-tag">Access Portal</span>
@@ -51,10 +43,7 @@ export default function LoginModal() {
             <X size={20} />
           </button>
         </div>
-
-        {/* Portals Grid */}
         <div className="login-portals-grid">
-          {/* Panchayat Officer Card */}
           <div className={`login-portal-card ${role === 'panchayat' ? 'current-active' : ''}`}>
             <div className="portal-card-top">
               <div className="portal-icon-box panchayat">
@@ -66,14 +55,12 @@ export default function LoginModal() {
             <p className="portal-desc">
               Manage all village plots, track community salinity risk, broadcast agricultural advisories, and export official reports.
             </p>
-
             <ul className="portal-features-list">
               <li><Check size={14} className="check-icon" /> View all {fields.length} village plots & farmers</li>
               <li><Check size={14} className="check-icon" /> Village-wide salinity plume tracking</li>
               <li><Check size={14} className="check-icon" /> Cross-plot soil recovery benchmarks</li>
               <li><Check size={14} className="check-icon" /> Official Agriculture Department CSV export</li>
             </ul>
-
             <button
               className="btn btn-primary portal-enter-btn"
               onClick={handleSelectPanchayat}
@@ -82,8 +69,6 @@ export default function LoginModal() {
               <ArrowRight size={16} />
             </button>
           </div>
-
-          {/* Individual Farmer Card */}
           <div className={`login-portal-card ${role === 'farmer' ? 'current-active' : ''}`}>
             <div className="portal-card-top">
               <div className="portal-icon-box farmer">
@@ -95,7 +80,6 @@ export default function LoginModal() {
             <p className="portal-desc">
               Personalized soil recovery shield. Strictly displays your own farm's real measurements, daily watering decision, and gypsum doses.
             </p>
-
             <div className="farmer-select-box">
               <label className="farmer-select-label">Select Your Registered Farm:</label>
               {fields.length > 0 ? (
@@ -115,7 +99,6 @@ export default function LoginModal() {
                   <span>No registered farms found in database.</span>
                 </div>
               )}
-
               {selectedFarmObj && (
                 <div className="selected-farm-preview">
                   <div className="sfp-row">
@@ -138,7 +121,6 @@ export default function LoginModal() {
                   </div>
                 </div>
               )}
-
               <button
                 type="button"
                 className="btn-link register-new-btn"
@@ -151,7 +133,6 @@ export default function LoginModal() {
                 <span>+ Register Another Farm / Plot</span>
               </button>
             </div>
-
             <button
               className="btn btn-secondary portal-enter-btn farmer-btn"
               onClick={handleSelectFarmer}

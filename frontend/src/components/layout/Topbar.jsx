@@ -3,7 +3,6 @@ import { Bell, Search, RefreshCw, ChevronDown, CheckCheck, Sun, Moon, Globe, Shi
 import { useApp } from '../../context/AppContext';
 import { getRelativeTime } from '../../utils/formatters';
 import './Topbar.css';
-
 export default function Topbar({ pageTitle }) {
   const {
     state, theme, toggleTheme, role, setRole,
@@ -18,10 +17,7 @@ export default function Topbar({ pageTitle }) {
   const notifRef = useRef(null);
   const roleRef = useRef(null);
   const langRef = useRef(null);
-
   const unreadCount = state.notifications.filter(n => !n.read).length;
-
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -37,13 +33,11 @@ export default function Topbar({ pageTitle }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
   const handleRefresh = async () => {
     setRefreshing(true);
     if (refetch) await refetch();
     setTimeout(() => setRefreshing(false), 800);
   };
-
   const getNotifIcon = (type) => {
     const dotColors = {
       critical: '#dc2626',
@@ -64,15 +58,12 @@ export default function Topbar({ pageTitle }) {
       />
     );
   };
-
   return (
     <header className="topbar">
       <div className="topbar-left">
         <h2 className="topbar-title">{pageTitle}</h2>
       </div>
-
       <div className="topbar-right">
-        {/* Search */}
         <div className="search-wrap">
           <Search size={15} className="search-icon" />
           <input
@@ -81,8 +72,6 @@ export default function Topbar({ pageTitle }) {
             placeholder="Search fields, districts..."
           />
         </div>
-
-        {/* Role & Login Switcher */}
         <div className="role-switch-wrap">
           <button
             className={`role-badge-btn ${role === 'panchayat' ? 'panchayat' : 'farmer'}`}
@@ -97,8 +86,6 @@ export default function Topbar({ pageTitle }) {
             <span className="switch-user-pill">Switch</span>
           </button>
         </div>
-
-        {/* Theme Switcher: tweakcn Supabase Light / Dark */}
         <button
           className="icon-btn theme-toggle-btn"
           onClick={toggleTheme}
@@ -108,8 +95,6 @@ export default function Topbar({ pageTitle }) {
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
-
-        {/* Refresh */}
         <button
           className={`icon-btn ${refreshing ? 'spinning' : ''}`}
           onClick={handleRefresh}
@@ -117,8 +102,6 @@ export default function Topbar({ pageTitle }) {
         >
           <RefreshCw size={16} />
         </button>
-
-        {/* Notifications */}
         <div className="notif-wrap" ref={notifRef}>
           <button
             className="icon-btn notif-btn"
@@ -130,7 +113,6 @@ export default function Topbar({ pageTitle }) {
               <span className="notif-badge">{unreadCount}</span>
             )}
           </button>
-
           {showNotifications && (
             <div className="notif-dropdown">
               <div className="notif-header">

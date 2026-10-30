@@ -6,20 +6,17 @@ import ECTrendChart from '../components/charts/ECTrendChart';
 import RainfallECChart from '../components/charts/RainfallECChart';
 import SeasonalChart from '../components/charts/SeasonalChart';
 import './Trends.css';
-
 export default function Trends() {
   const { state, role, activeFarm, userFields } = useApp();
   const isFarmer = role === 'farmer';
   const [selectedFieldId, setSelectedFieldId] = useState(activeFarm?.id || (userFields[0]?.id || null));
   const [trendsData, setTrendsData] = useState(state.trends);
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     if (isFarmer && activeFarm?.id) {
       setSelectedFieldId(activeFarm.id);
     }
   }, [isFarmer, activeFarm?.id]);
-
   useEffect(() => {
     let isCancelled = false;
     const fetchTrends = async () => {
@@ -39,21 +36,17 @@ export default function Trends() {
         if (!isCancelled) setLoading(false);
       }
     };
-
     fetchTrends();
     return () => {
       isCancelled = true;
     };
   }, [selectedFieldId]);
-
   const t = trendsData || state.trends || {};
   const hasHistory = Boolean(
     (t.fieldTrend && t.fieldTrend.points?.length > 0) ||
     (Array.isArray(t.ecTrendData) && t.ecTrendData.length > 0)
   );
-
   const currentField = (isFarmer ? userFields : state.fields).find(f => f.id === selectedFieldId) || activeFarm;
-
   return (
     <div className="page-container fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
@@ -65,7 +58,6 @@ export default function Trends() {
               : 'Dynamic multi-season telemetry and root-zone salinity monitoring across all registered village plots.'}
           </p>
         </div>
-
         {!isFarmer && state.fields?.length > 1 && (
           <div className="trends-field-selector" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
@@ -103,7 +95,6 @@ export default function Trends() {
           </div>
         )}
       </div>
-
       {isFarmer && currentField && (
         <div className="card farmer-trend-banner" style={{ marginBottom: 20, padding: 18 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 14 }}>
@@ -129,7 +120,6 @@ export default function Trends() {
               <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginTop: 2 }}>Monsoon rains leach surface salts</span>
             </div>
           </div>
-
           <div style={{ display: 'flex', gap: 10, background: 'rgba(0,138,80,0.06)', border: '1px solid rgba(0,138,80,0.2)', padding: 14, borderRadius: 'var(--radius-sm)' }}>
             <Info size={16} color="#008a50" style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>
@@ -143,7 +133,6 @@ export default function Trends() {
           </div>
         </div>
       )}
-
       {!hasHistory && !loading ? (
         <div className="card" style={{ textAlign: 'center', padding: '56px 24px' }}>
           <TrendingUp size={32} style={{ color: 'var(--text-muted)', marginBottom: 12 }} />
@@ -175,7 +164,6 @@ export default function Trends() {
               </span>
             </div>
           </div>
-
           <div className="card chart-card">
             <div className="card-header">
               <div className="section-title">
@@ -189,7 +177,6 @@ export default function Trends() {
               <span>Heavy rainfall (&gt;40mm) naturally dissolves rootzone salts and drains them below root depth.</span>
             </div>
           </div>
-
           <div className="card chart-card">
             <div className="card-header">
               <div className="section-title">

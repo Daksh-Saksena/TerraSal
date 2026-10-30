@@ -3,21 +3,17 @@ import {
   AlertTriangle, CheckCircle2, Info, MapPin, User, Clock
 } from 'lucide-react';
 import './SoilHealthCard.css';
-
 const CROP_LABELS = {
   wheat: 'Wheat', rice: 'Rice', cotton: 'Cotton', barley: 'Barley',
   mustard: 'Mustard', sugarcane: 'Sugarcane', chickpea: 'Chickpea',
   lentil: 'Lentil', sorghum: 'Jowar', sunflower: 'Sunflower',
   safflower: 'Safflower', 'sugar-beet': 'Sugar Beet',
 };
-
-// FAO/ICAR EC thresholds per crop (dS/m)
 const CROP_EC_THRESHOLD = {
   wheat: 6.0, barley: 8.0, cotton: 7.7, safflower: 5.3,
   sorghum: 4.0, sunflower: 4.8, mustard: 5.0, rice: 3.0,
   sugarcane: 1.7, chickpea: 1.1, lentil: 1.5, 'sugar-beet': 7.0,
 };
-
 const scoreColor = (s) => s <= 3 ? '#22c55e' : s <= 6 ? '#f59e0b' : '#ef4444';
 const riskColor  = (s) => s < 35 ? '#22c55e' : s < 60 ? '#f59e0b' : s < 80 ? '#f97316' : '#ef4444';
 const riskLabel  = (s) =>
@@ -25,13 +21,11 @@ const riskLabel  = (s) =>
   s < 60 ? { text: 'Caution',  short: 'Moderate Risk' } :
   s < 80 ? { text: 'Stressed', short: 'High Risk'     } :
            { text: 'Critical', short: 'Critical Risk'  };
-
 const buildMetrics = (farm, vitals) => {
   const ec   = farm.groundwaterEC      ?? 0;
   const wt   = farm.waterTableDepth    ?? 0;
   const rain = farm.rainfallLast30Days ?? 0;
   const thr  = CROP_EC_THRESHOLD[farm.cropType] ?? 3.0;
-
   const ecScore    = Math.min(10, Math.round((ec / thr) * 5));
   const wtScore    = wt <= 0 ? 5 : Math.min(10, Math.round(Math.max(0, (4.5 - wt)) * 2.2));
   const rainScore  = rain >= 100 ? 0 : rain >= 60 ? 2 : rain >= 30 ? 4 : rain >= 15 ? 6 : rain >= 5 ? 8 : 10;
@@ -39,9 +33,7 @@ const buildMetrics = (farm, vitals) => {
   const leachScore = leachReq > 50 ? 9 : leachReq > 30 ? 7 : leachReq > 15 ? 5 : leachReq > 5 ? 3 : 1;
   const osmP       = vitals?.osmoticPressure ?? parseFloat((ec * 0.36).toFixed(2));
   const osmScore   = osmP > 3.5 ? 10 : osmP > 2.0 ? 7 : osmP > 1.0 ? 5 : osmP > 0.5 ? 3 : 1;
-
   const cropName = CROP_LABELS[farm.cropType] || farm.cropType;
-
   return [
     {
       key: 'ec', icon: Droplets, iconClass: 'metric-icon-blue',
@@ -103,14 +95,12 @@ const buildMetrics = (farm, vitals) => {
     },
   ];
 };
-
 const getTopAction = (farm, riskScore) => {
   const ec  = farm.groundwaterEC ?? 0;
   const wt  = farm.waterTableDepth ?? 0;
   const thr = CROP_EC_THRESHOLD[farm.cropType] ?? 3.0;
   const m   = farm.irrigationMethod;
   const cn  = CROP_LABELS[farm.cropType] || farm.cropType;
-
   if (riskScore >= 80) {
     return (m === 'flood' || m === 'canal')
       ? { urgency: 'urgent', text: `Critical root-zone salinity (${ec} dS/m). Stop flood irrigation immediately and switch to drip. Schedule a heavy leaching flush (25% to 40% extra water over crop dose) before the next crop cycle. Soil sensors will track root salt clearance.` }
@@ -127,21 +117,17 @@ const getTopAction = (farm, riskScore) => {
     return { urgency: 'medium', text: `Conditions are manageable. Schedule a preventive leaching irrigation before the next crop. Tubewell EC readings (${ec} dS/m) indicate stable soil balance.` };
   return { urgency: 'good', text: `Your field is healthy. Tubewell EC readings (${ec} dS/m) are within safe limits. Current irrigation volume is optimal.` };
 };
-
 export default function SoilHealthCard({ farm, onOpenPinDrop }) {
   if (!farm) return null;
-
   const riskScore = farm.riskScore ?? 50;
   const vitals    = farm.whoopMetrics?.vitals ?? null;
   const metrics   = buildMetrics(farm, vitals);
   const mainColor = riskColor(riskScore);
   const label     = riskLabel(riskScore);
   const action    = getTopAction(farm, riskScore);
-
   const radius = 52;
   const circ   = 2 * Math.PI * radius;
   const offset = circ - (riskScore / 100) * circ;
-
   const URGENCY = {
     urgent: { border: 'rgba(239,68,68,0.35)', bg: 'rgba(239,68,68,0.08)', Icon: AlertTriangle, color: '#ef4444', label: 'Urgent Action'    },
     high:   { border: 'rgba(249,115,22,0.35)', bg: 'rgba(249,115,22,0.08)', Icon: AlertTriangle, color: '#f97316', label: 'Action Required' },
@@ -151,10 +137,8 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
   const us         = URGENCY[action.urgency];
   const ActionIcon = us.Icon;
   const badMetrics = metrics.filter(m => m.score >= 6);
-
   return (
     <div className="shc-card fade-in">
-      {/* Header */}
       <div className="shc-header">
         <div className="shc-identity">
           <div>
@@ -174,8 +158,6 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
           <MapPin size={13} /><span>New Farm</span>
         </button>
       </div>
-
-      {/* Body: score ring + metric tiles */}
       <div className="shc-body">
         <div className="shc-score-panel">
           <div className="shc-ring-wrap">
@@ -202,7 +184,6 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
             <span>Irrigate 5 to 8 AM to cut evaporation and salt crusting</span>
           </div>
         </div>
-
         <div className="shc-metrics-grid">
           {metrics.map(m => {
             const Icon   = m.icon;
@@ -226,8 +207,6 @@ export default function SoilHealthCard({ farm, onOpenPinDrop }) {
           })}
         </div>
       </div>
-
-      {/* Plain-English summary + recommended action */}
       <div className="shc-summary-row">
         <div className="shc-summary-left">
           <div className="shc-summary-title">What's happening in your field?</div>

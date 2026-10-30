@@ -8,7 +8,6 @@ import MapView from './pages/MapView';
 import Trends from './pages/Trends';
 import Recommendations from './pages/Recommendations';
 import Settings from './pages/Settings';
-
 function App() {
   return (
     <BrowserRouter>
@@ -28,5 +27,4 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;

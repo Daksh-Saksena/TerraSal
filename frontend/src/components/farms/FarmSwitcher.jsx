@@ -1,18 +1,15 @@
 import { Plus, Trash2, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import './FarmSwitcher.css';
-
 export default function FarmSwitcher() {
   const { state, activeFarm, setActiveFarmId, openPinDropModal, deleteFarm } = useApp();
   const fields = state.fields || [];
-
   const handleDelete = (e, id, name) => {
     e.stopPropagation();
     if (confirm(`Remove farm profile "${name}" from this village kiosk?`)) {
       deleteFarm(id);
     }
   };
-
   return (
     <div className="farm-switcher-container">
       <div className="farm-switcher-header">
@@ -29,13 +26,11 @@ export default function FarmSwitcher() {
           <span>New Farm</span>
         </button>
       </div>
-
       <div className="farm-switcher-list">
         {fields.map(farm => {
           const isActive = farm.id === activeFarm?.id;
           const recovery = farm.soilRecovery ?? 50;
           const zoneColor = recovery >= 67 ? '#22c55e' : recovery >= 34 ? '#f59e0b' : '#ef4444';
-
           return (
             <div
               key={farm.id}
@@ -43,13 +38,11 @@ export default function FarmSwitcher() {
               onClick={() => setActiveFarmId(farm.id)}
             >
               <div className="farm-session-left">
-                {/* Soil Recovery Ring Indicator */}
                 <div className="farm-mini-ring" style={{ borderColor: `${zoneColor}60` }}>
                   <span className="farm-mini-recovery" style={{ color: zoneColor }}>
                     {recovery}%
                   </span>
                 </div>
-
                 <div className="farm-session-text">
                   <div className="farm-session-title">
                     <span className="farm-name-text">{farm.name}</span>
@@ -66,7 +59,6 @@ export default function FarmSwitcher() {
                   </div>
                 </div>
               </div>
-
               <div className="farm-session-actions">
                 <button
                   className="farm-delete-btn"

@@ -2,26 +2,20 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envPath = path.join(__dirname, '..', '.env');
-
 class AIService {
   constructor() {
     this.apiKey = process.env.OPENAI_API_KEY || '';
     this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
   }
-
   getApiKey() {
     return this.apiKey || process.env.OPENAI_API_KEY || '';
   }
-
   setApiKey(key) {
     this.apiKey = (key || '').trim();
     process.env.OPENAI_API_KEY = this.apiKey;
-
-    // Persist to backend/.env
     try {
       let envContent = '';
       if (fs.existsSync(envPath)) {
@@ -37,11 +31,9 @@ class AIService {
       console.warn('[AIService] Failed to write key to .env file:', err.message);
     }
   }
-
   isConfigured() {
     return Boolean(this.getApiKey() && this.getApiKey().startsWith('sk-'));
   }
-
   getStatus() {
     const key = this.getApiKey();
     const isConfigured = this.isConfigured();
@@ -52,17 +44,11 @@ class AIService {
       maskedKey: masked
     };
   }
-
-  /**
-   * Synthesize real fields for Cross-Field Extension Intelligence
-   */
   async generateVillagePeerIntelligence(fields = [], villageStats = {}) {
     const apiKey = this.getApiKey();
-
     if (!this.isConfigured()) {
       return this.generateDynamicFallback(fields, villageStats, 'Generated via TerraSal Agronomic Extension Matrix');
     }
-
     try {
       const fieldSummaries = fields.map(f => ({
         farmer: f.farmerName || f.name,
@@ -76,31 +62,25 @@ class AIService {
         recovery: `${f.soilRecovery}%`,
         riskLevel: f.riskLevel
       }));
-
       const prompt = `You are a Senior Agronomist and Soil Salinity Specialist for South Asian irrigated agricultural basins (Punjab, Haryana, Rajasthan).
 We are analyzing collective village panchayat farm plots.
-
 DATA & TELEMETRY STREAM CONTEXT:
 - All monitored fields receive automated in-situ soil EC and water table depth sensor telemetry.
 - Recommend practical farm management interventions based on available sensor data.
 - Calibrate recommendations dynamically: schedule pre-sowing leaching irrigation before the next crop cycle, reduce irrigation volume by 20-25% for high-risk/shallow plots to halt capillary salt surges, and leverage root-zone EC logs to monitor salt flush velocity.
-
 Village Aggregates:
 - Active plots: ${fields.length}
 - Average Soil Recovery: ${villageStats.avgRecovery || 'N/A'}%
 - Average Root Strain: ${villageStats.avgStrain || 'N/A'} / 21
 - Seasonal Salt Burden: ${villageStats.villageSaltTons || 'N/A'} tons
-
 Individual Monitored Plots:
 ${JSON.stringify(fieldSummaries, null, 2)}
-
 TASK:
 Analyze the cross-field trends, identify which specific farmers are succeeding with good practices (e.g. drip, gypsum, drainage) vs those struggling with flood irrigation, shallow water tables, or high EC.
 Produce exactly 3 distinct, highly actionable agronomic insights for the village:
 1. Peer Irrigation / Management Best Practice (comparing top-performing farmers with those on flood irrigation, e.g. reducing irrigation volume by 20-25%)
 2. Water Table / Drainage Cluster Warning (identifying the shallowest water tables and capillary rise risk in specific plots, scheduling leaching irrigation before next crop)
 3. Crop Rotation / Soil Amendment Opportunity (actionable crop swap or amendment strategy based on actual EC levels from in-situ sensor logs)
-
 Return ONLY valid JSON matching this schema:
 {
   "advisories": [
@@ -133,7 +113,6 @@ Return ONLY valid JSON matching this schema:
     }
   ]
 }`;
-
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
         {
@@ -159,7 +138,6 @@ Return ONLY valid JSON matching this schema:
           timeout: 15000
         }
       );
-
       const content = response.data.choices[0].message.content;
       const parsed = JSON.parse(content);
       const advisories = (parsed.advisories || []).map((a, idx) => ({
@@ -168,26 +146,20 @@ Return ONLY valid JSON matching this schema:
         aiGenerated: true,
         model: this.model
       }));
-
       return {
         success: true,
         source: 'gpt-4o-mini',
         advisories
       };
-
     } catch (error) {
       console.error('[AIService] OpenAI API call failed:', error.response?.data || error.message);
       return this.generateDynamicFallback(
-        fields, 
-        villageStats, 
+        fields,
+        villageStats,
         `Agronomic advisory generated via local extension matrix`
       );
     }
   }
-
-  /**
-   * Generates dynamic peer intelligence derived from actual fields in the DB when API key is missing or calls fail.
-   */
   generateDynamicFallback(fields = [], villageStats = {}, fallbackReason = '') {
     if (!fields || fields.length === 0) {
       return {
@@ -197,17 +169,12 @@ Return ONLY valid JSON matching this schema:
         advisories: []
       };
     }
-
     const sortedByRecovery = [...fields].sort((a, b) => (b.soilRecovery || 0) - (a.soilRecovery || 0));
     const bestDrip = sortedByRecovery.find(f => f.irrigationMethod === 'drip') || sortedByRecovery[0];
     const strugglingFlood = [...fields].reverse().find(f => f.irrigationMethod === 'flood' || f.irrigationMethod === 'canal') || sortedByRecovery[sortedByRecovery.length - 1];
-
     const shallowPlots = fields.filter(f => (f.waterTableDepth || 5) <= 1.8);
     const highSalinePlots = fields.filter(f => (f.groundwaterEC || 0) >= 4.0);
-
     const advisories = [];
-
-    // 1. Irrigation comparison
     if (bestDrip && strugglingFlood) {
       advisories.push({
         id: 'peer-dyn-1',
@@ -221,8 +188,6 @@ Return ONLY valid JSON matching this schema:
         fallbackReason
       });
     }
-
-    // 2. Water table warning
     if (shallowPlots.length > 0) {
       const plotNames = shallowPlots.slice(0, 2).map(p => `${p.name} (${p.waterTableDepth}m)`).join(' and ');
       advisories.push({
@@ -237,8 +202,6 @@ Return ONLY valid JSON matching this schema:
         fallbackReason
       });
     }
-
-    // 3. Crop rotation
     if (highSalinePlots.length > 0) {
       const sample = highSalinePlots[0];
       advisories.push({
@@ -253,7 +216,6 @@ Return ONLY valid JSON matching this schema:
         fallbackReason
       });
     }
-
     return {
       success: true,
       source: 'dynamic-matrix',
@@ -261,5 +223,4 @@ Return ONLY valid JSON matching this schema:
     };
   }
 }
-
 export const aiService = new AIService();

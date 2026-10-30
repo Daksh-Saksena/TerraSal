@@ -1,17 +1,3 @@
-/**
- * TerraSal Salinity Prediction Engine: V1
- *
- * This module implements a weighted multi-factor scoring algorithm
- * to predict soil salinity risk and crop stress probability.
- *
- * Design notes:
- * - Each factor contributes to an overall 0-100 risk score
- * - Weights are research-informed (FAO/ICAR soil management guidelines)
- * - Replace `computeFactorScore()` internals with ML model output in V2
- * - All inputs are normalized to 0-10 subscores before weighting
- */
-
-// Factor weights must sum to 1.0
 const FACTOR_WEIGHTS = {
   groundwaterEC: 0.25,
   waterTableDepth: 0.20,
@@ -22,15 +8,6 @@ const FACTOR_WEIGHTS = {
   cropTolerance: 0.05,
   terrain: 0.02,
 };
-
-// ─── Scoring Functions ─────────────────────────────────────────────────────
-
-/**
- * Score groundwater EC (electrical conductivity)
- * Higher EC → higher risk
- * @param {number} ec - dS/m
- * @returns {number} 0-10
- */
 const scoreEC = (ec) => {
   if (ec <= 0.5) return 0;
   if (ec <= 1.5) return 1;
@@ -42,13 +19,6 @@ const scoreEC = (ec) => {
   if (ec <= 7.0) return 9.2;
   return 10;
 };
-
-/**
- * Score water table depth
- * Shallower water table → higher risk (salts rise via capillary action)
- * @param {number} depth - meters below surface
- * @returns {number} 0-10
- */
 const scoreWaterTable = (depth) => {
   if (depth >= 6.0) return 0;
   if (depth >= 5.0) return 1;
@@ -60,11 +30,6 @@ const scoreWaterTable = (depth) => {
   if (depth >= 1.0) return 9.5;
   return 10;
 };
-
-/**
- * Score soil type (capillary rise potential)
- * Clay > Loam > Sandy in terms of salt accumulation risk
- */
 const scoreSoilType = (soilType) => {
   const scores = {
     'clay': 10,
@@ -75,11 +40,6 @@ const scoreSoilType = (soilType) => {
   };
   return scores[soilType] ?? 5;
 };
-
-/**
- * Score drainage quality
- * Poor drainage → salts accumulate, higher risk
- */
 const scoreDrainage = (drainage) => {
   const scores = {
     'very-poor': 10,
@@ -90,13 +50,6 @@ const scoreDrainage = (drainage) => {
   };
   return scores[drainage] ?? 5;
 };
-
-/**
- * Score rainfall over last 30 days
- * Higher rainfall → leaching effect → lower salinity risk
- * @param {number} mm - millimeters
- * @returns {number} 0-10 (inverted: more rain = lower score)
- */
 const scoreRainfall = (mm) => {
   if (mm >= 100) return 0;
   if (mm >= 60) return 1.5;
@@ -107,11 +60,6 @@ const scoreRainfall = (mm) => {
   if (mm >= 3) return 9;
   return 10;
 };
-
-/**
- * Score irrigation method
- * Flood irrigation → salt accumulation; drip/sprinkler → controlled
- */
 const scoreIrrigation = (method) => {
   const scores = {
     'flood': 9,
@@ -123,11 +71,6 @@ const scoreIrrigation = (method) => {
   };
   return scores[method] ?? 5;
 };
-
-/**
- * Score based on crop salt tolerance
- * Sensitive crops → higher risk at same salinity level
- */
 const scoreCropTolerance = (cropType) => {
   const scores = {
     'rice': 9,
@@ -145,11 +88,6 @@ const scoreCropTolerance = (cropType) => {
   };
   return scores[cropType] ?? 5;
 };
-
-/**
- * Score terrain/elevation (flat terrain → waterlogging risk)
- * This is a simplified proxy; replace with DEM data in V2
- */
 const scoreTerrain = (terrain) => {
   const scores = {
     'depression': 10,
@@ -160,39 +98,18 @@ const scoreTerrain = (terrain) => {
   };
   return scores[terrain] ?? 5;
 };
-
-// ─── Factor Descriptors ─────────────────────────────────────────────────────
-
 const getECDescription = (ec, score) => {
   if (score <= 2) return `Groundwater EC of ${ec} dS/m is within safe limits: low salinity risk.`;
   if (score <= 5) return `Groundwater EC of ${ec} dS/m indicates moderate salinity: monitor trends.`;
   if (score <= 7) return `Groundwater EC of ${ec} dS/m is elevated: crops showing early stress.`;
   return `Groundwater EC of ${ec} dS/m is critically high: most crops will experience severe yield loss.`;
 };
-
 const getWaterTableDescription = (depth, score) => {
   if (score <= 2) return `Water table at ${depth}m depth is adequately deep: capillary rise not a concern.`;
   if (score <= 5) return `Water table at ${depth}m is at a moderate depth: some capillary salt rise possible.`;
   if (score <= 7) return `Water table at ${depth}m is dangerously shallow: active capillary salt rise occurring.`;
   return `Water table at ${depth}m is critically shallow: severe waterlogging and salt accumulation risk.`;
 };
-
-// ─── Main Engine ────────────────────────────────────────────────────────────
-
-/**
- * Main salinity risk prediction function
- *
- * @param {Object} inputs
- * @param {number} inputs.groundwaterEC - dS/m
- * @param {number} inputs.waterTableDepth - meters
- * @param {string} inputs.soilType - clay|clay-loam|loamy|sandy-loam|sandy
- * @param {string} inputs.drainageQuality - very-poor|poor|moderate|good|excellent
- * @param {number} inputs.rainfallLast30Days - mm
- * @param {string} inputs.irrigationMethod - flood|canal|furrow|sprinkler|drip|none
- * @param {string} inputs.cropType - wheat|rice|cotton|...
- * @param {string} inputs.terrain - depression|flat|gentle-slope|moderate-slope|steep
- * @returns {Object} Full risk assessment result
- */
 export const analyzeSalinity = (rawInputs = {}) => {
   const inputs = rawInputs || {};
   const groundwaterEC = typeof inputs.groundwaterEC === 'number' ? inputs.groundwaterEC : (parseFloat(inputs.groundwaterEC) || 2.0);
@@ -203,8 +120,6 @@ export const analyzeSalinity = (rawInputs = {}) => {
   const irrigationMethod = String(inputs.irrigationMethod || 'flood').toLowerCase();
   const cropType = String(inputs.cropType || 'wheat').toLowerCase();
   const terrain = String(inputs.terrain || 'flat').toLowerCase();
-
-  // Compute individual factor scores (0-10)
   const factorScores = {
     groundwaterEC: scoreEC(groundwaterEC),
     waterTableDepth: scoreWaterTable(waterTableDepth),
@@ -215,27 +130,19 @@ export const analyzeSalinity = (rawInputs = {}) => {
     cropTolerance: scoreCropTolerance(cropType),
     terrain: scoreTerrain(terrain),
   };
-
-  // Weighted risk score (0-100)
   const riskScore = Math.round(
     Object.entries(factorScores).reduce((total, [key, score]) => {
       return total + score * FACTOR_WEIGHTS[key] * 10;
     }, 0)
   );
-
-  // Risk level classification
   const riskLevel =
     riskScore >= 80 ? 'CRITICAL' :
     riskScore >= 60 ? 'HIGH' :
     riskScore >= 35 ? 'MODERATE' : 'LOW';
-
-  // Crop stress probability (correlated with risk score, weighted by crop sensitivity)
   const cropSensitivityFactor = factorScores.cropTolerance / 10;
   const stressProbability = Math.min(100, Math.round(
     riskScore * 0.7 + factorScores.groundwaterEC * 2.5 * cropSensitivityFactor
   ));
-
-  // Factor breakdown for visualization
   const factors = [
     {
       name: 'Groundwater EC',
@@ -310,53 +217,34 @@ export const analyzeSalinity = (rawInputs = {}) => {
       severity: factorScores.terrain >= 7 ? 'high' : factorScores.terrain >= 4 ? 'moderate' : 'low',
     },
   ].sort((a, b) => b.contribution - a.contribution);
-
-  // Generate explanation
   const topFactors = factors.slice(0, 3).map(f => f.name.toLowerCase()).join(', ');
   const explanation = generateExplanation(riskLevel, riskScore, inputs, factorScores, topFactors);
-
-  // Generate recommendations
   const recommendations = generateRecommendations(riskLevel, inputs, factorScores);
-
-  // ─── Root Osmotic Stress & Resilience Calculation ─────────────────────────
-  // 1. Soil Strain (0.0 to 21.0): Allostatic osmotic stress load
   const ecStrain = Math.min(10, (groundwaterEC / 7.0) * 10);
   const wtStrain = Math.min(10, Math.max(0, (4.5 - waterTableDepth) * 2.5));
   const rawStrain = (riskScore / 100) * 16.5 + (ecStrain / 10) * 3.5 + (wtStrain / 10) * 1.0;
   const soilStrain = Math.min(21.0, Math.max(0.5, parseFloat(rawStrain.toFixed(1))));
-
   const strainCategory =
     soilStrain >= 18.0 ? 'All-Out Strain' :
     soilStrain >= 14.0 ? 'High Strain' :
     soilStrain >= 10.0 ? 'Moderate Strain' : 'Light Strain';
-
-  // 2. Soil Recovery (0% to 100%): Resilience & restorative capacity
   let baseRecovery = 100 - riskScore;
   if (drainageQuality === 'excellent') baseRecovery += 12;
   else if (drainageQuality === 'good') baseRecovery += 6;
   else if (drainageQuality === 'very-poor') baseRecovery -= 15;
-
   if (irrigationMethod === 'drip') baseRecovery += 10;
   else if (irrigationMethod === 'sprinkler') baseRecovery += 4;
   else if (irrigationMethod === 'flood') baseRecovery -= 10;
-
   if (waterTableDepth >= 4.0) baseRecovery += 8;
   else if (waterTableDepth <= 1.5) baseRecovery -= 16;
-
   const soilRecovery = Math.min(99, Math.max(12, Math.round(baseRecovery)));
   const recoveryZone = soilRecovery >= 67 ? 'GREEN' : soilRecovery >= 34 ? 'YELLOW' : 'RED';
-
-  // 3. Root Zone Vitals
   const osmoticPressure = parseFloat((groundwaterEC * 0.36).toFixed(2));
   const capillaryFlux = waterTableDepth < 2.0 ? parseFloat(((2.5 - waterTableDepth) * 3.2).toFixed(1)) : 0.4;
   const cropEcThreshold = cropType === 'barley' ? 8.0 : cropType === 'cotton' ? 7.7 : cropType === 'wheat' ? 6.0 : 3.0;
   const leachingCalc = Math.round((groundwaterEC / Math.max(1, 5 * cropEcThreshold - groundwaterEC)) * 100);
   const leachingRequirement = Math.min(65, Math.max(5, isNaN(leachingCalc) ? 15 : leachingCalc));
-
-  // 4. Target Strain Capacity based on Recovery
   const targetStrainMax = parseFloat(((soilRecovery / 100) * 14.5 + 4.0).toFixed(1));
-
-  // 5. Optimal Irrigation Recovery Window
   const irrigationWindow = {
     optimalTime: '05:30 AM to 08:30 AM',
     reason: 'Minimum atmospheric vapor pressure deficit reduces salt crusting on surface',
@@ -366,7 +254,6 @@ export const analyzeSalinity = (rawInputs = {}) => {
       ? 'Targeted irrigation permitted. Maintain soil moisture above 65% field capacity.'
       : 'Soil is in prime recovery zone. Standard irrigation cycle recommended.'
   };
-
   const whoopMetrics = {
     soilStrain,
     strainCategory,
@@ -386,7 +273,6 @@ export const analyzeSalinity = (rawInputs = {}) => {
     },
     irrigationWindow
   };
-
   return {
     riskScore,
     riskLevel,
@@ -404,9 +290,6 @@ export const analyzeSalinity = (rawInputs = {}) => {
     },
   };
 };
-
-// ─── Explanation Generator ──────────────────────────────────────────────────
-
 const generateExplanation = (riskLevel, riskScore, rawInputs, factorScores, topFactors) => {
   const inputs = {
     groundwaterEC: rawInputs?.groundwaterEC ?? 2.0,
@@ -423,9 +306,6 @@ const generateExplanation = (riskLevel, riskScore, rawInputs, factorScores, topF
   };
   return levelDescriptions[riskLevel] || levelDescriptions.MODERATE;
 };
-
-// ─── Recommendation Generator ───────────────────────────────────────────────
-
 const generateRecommendations = (riskLevel, inputs, factorScores) => {
   const immediate = [];
   const shortTerm = [];
@@ -433,8 +313,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
   const alternativeCrops = [];
   const irrigationChanges = [];
   const soilTreatment = [];
-
-  // Immediate actions based on risk level
   if (riskLevel === 'CRITICAL') {
     immediate.push('Stop flood irrigation immediately: switch to drip or sprinkler to reduce salt loading');
     immediate.push('Apply a heavy leaching irrigation (30-40% excess) to flush salts below root zone');
@@ -448,8 +326,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
     immediate.push('Field sensor monitoring active: tracking daily soil salinity drift');
     immediate.push('Schedule preventive leaching irrigation before next sowing');
   }
-
-  // Drainage-based recommendations
   if (factorScores.drainageQuality >= 7) {
     shortTerm.push('Install subsurface tile drains at 1-1.5m depth to remove saline water');
     shortTerm.push('Construct field drainage channels along field boundaries');
@@ -458,8 +334,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
     shortTerm.push('Clear and deepen existing drainage channels');
     shortTerm.push('Ensure field has minimum 0.2% surface slope for runoff');
   }
-
-  // Soil treatment
   if (factorScores.groundwaterEC >= 5 || factorScores.drainageQuality >= 7) {
     soilTreatment.push({
       title: 'Gypsum Application',
@@ -472,7 +346,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
       timing: 'Post-harvest / pre-sowing',
     });
   }
-
   if (factorScores.drainageQuality >= 5) {
     soilTreatment.push({
       title: 'Leaching Irrigation Protocol',
@@ -480,14 +353,11 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
       timing: 'Pre-sowing (15-20 days before)',
     });
   }
-
   soilTreatment.push({
     title: 'Green Manuring',
     description: 'Grow Dhaincha (Sesbania bispinosa) or Sunhemp as green manure. Plough in at flowering stage to improve organic matter and reduce soil salinity over time.',
     timing: 'Between crop cycles (June to July)',
   });
-
-  // Irrigation recommendations
   const irrigation = String(inputs?.irrigationMethod || 'flood').toLowerCase();
   if (irrigation === 'flood' || irrigation === 'canal') {
     irrigationChanges.push({
@@ -503,7 +373,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
       subsidy: null,
     });
   }
-
   if (factorScores.waterTableDepth >= 6) {
     irrigationChanges.push({
       title: 'Skip Irrigation During Monsoon',
@@ -512,8 +381,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
       subsidy: null,
     });
   }
-
-  // Alternative crops based on EC levels
   const ec = typeof inputs?.groundwaterEC === 'number' ? inputs.groundwaterEC : (parseFloat(inputs?.groundwaterEC) || 2.0);
   if (ec >= 6) {
     alternativeCrops.push('Sugar Beet (tolerates up to 7.0 dS/m)', 'Barley (tolerates up to 8.0 dS/m)', 'Safflower (tolerates up to 5.3 dS/m)');
@@ -524,15 +391,12 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
   } else {
     alternativeCrops.push('All major crops suitable: maintain current practices');
   }
-
-  // Long-term strategies
   longTerm.push('Install automated soil EC sensors for continuous monitoring (connect to TerraSal platform)');
   longTerm.push('Adopt crop rotation with salt-tolerant species every 3rd season to break salt cycle');
   if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
     longTerm.push('Partner with local KVK (Krishi Vigyan Kendra) for soil health card analysis');
     longTerm.push('Explore participation in ICAR salt-tolerant variety trials');
   }
-
   return {
     immediate,
     shortTerm,
@@ -542,12 +406,6 @@ const generateRecommendations = (riskLevel, inputs, factorScores) => {
     soilTreatment,
   };
 };
-
-/**
- * FAO Maas-Hoffman Crop Salinity Tolerance Parameters
- * a = Threshold ECe (dS/m) at which yield begins to decline
- * b = Percent yield decrease per dS/m increase beyond threshold
- */
 export const FAO_CROP_PARAMETERS = {
   'barley': { threshold: 8.0, slope: 5.0, name: 'Barley (Jau)', rating: 'Tolerant' },
   'cotton': { threshold: 7.7, slope: 5.2, name: 'Cotton (Kapas)', rating: 'Tolerant' },
@@ -560,31 +418,18 @@ export const FAO_CROP_PARAMETERS = {
   'chickpea': { threshold: 1.5, slope: 14.0, name: 'Chickpea (Chana)', rating: 'Sensitive' },
   'lentil': { threshold: 1.2, slope: 18.0, name: 'Lentil (Masoor)', rating: 'Sensitive' }
 };
-
-/**
- * What-If Crop Switch and Leaching Simulator
- */
 export function simulateCropSwitch({ currentCrop = 'wheat', proposedCrop = 'barley', groundwaterEC = 3.5, leachingFraction = 0.15 }) {
   const currentKey = currentCrop.toLowerCase();
   const proposedKey = proposedCrop.toLowerCase();
-
   const currentParams = FAO_CROP_PARAMETERS[currentKey] || { threshold: 5.0, slope: 8.0, name: currentCrop, rating: 'Moderate' };
   const proposedParams = FAO_CROP_PARAMETERS[proposedKey] || { threshold: 7.0, slope: 6.0, name: proposedCrop, rating: 'Tolerant' };
-
-  // Effective root zone ECe under steady-state with leaching fraction LF
-  // ECe ≈ ECw / (2 * LF^0.5) under typical leaching
   const lf = Math.max(0.05, Math.min(0.40, parseFloat(leachingFraction) || 0.15));
   const effectiveECe = parseFloat((groundwaterEC / (2 * Math.sqrt(lf))).toFixed(2));
-
-  // Yield Loss calculation YL = b * (ECe - a)
   const currentLoss = Math.max(0, Math.min(100, Math.round((effectiveECe - currentParams.threshold) * currentParams.slope)));
   const proposedLoss = Math.max(0, Math.min(100, Math.round((effectiveECe - proposedParams.threshold) * proposedParams.slope)));
   const yieldAdvantage = Math.max(0, currentLoss - proposedLoss);
-
-  // Leaching requirement to achieve 100% potential yield
   const lrCurrent = Math.min(0.45, Math.max(0.05, groundwaterEC / (5 * currentParams.threshold - groundwaterEC)));
   const lrProposed = Math.min(0.45, Math.max(0.05, groundwaterEC / (5 * proposedParams.threshold - groundwaterEC)));
-
   return {
     effectiveECe,
     leachingFraction: lf,
@@ -610,30 +455,19 @@ export function simulateCropSwitch({ currentCrop = 'wheat', proposedCrop = 'barl
       : `Current crop ${currentParams.name} is already well-matched or superior for this salinity level.`
   };
 }
-
-/**
- * Soil Lab Report Diagnostic (pH, ECe, SAR, Gypsum Requirement)
- */
 export function evaluateLabSoilReport({ labSoilEC, labPH, labSAR, soilType = 'loamy' }) {
   const ec = parseFloat(labSoilEC) || 2.5;
   const ph = parseFloat(labPH) || 7.5;
   const sar = parseFloat(labSAR) || 6.0;
-
-  // Approximate ESP from SAR (USDA formula: ESP ≈ 100(-0.0126 + 0.01475*SAR)/(1 + (-0.0126 + 0.01475*SAR)))
   const espEst = Math.max(1, Math.round((1.475 * sar) / (1 + (0.01475 * sar))));
-
-  // Classification (US Salinity Lab Staff, Handbook 60)
   let soilClass = 'Normal (Non-saline)';
   let primaryRemedy = 'No major chemical amendments required. Maintain good irrigation practices.';
   let gypsumRequirementTonsPerAcre = 0;
-
   if (ec >= 4.0 && sar < 13 && ph < 8.5) {
     soilClass = 'Saline Soil (White Alkali)';
     primaryRemedy = 'Chemical gypsum NOT needed. Physical leaching with fresh or low-EC canal water and sub-surface tile drainage is required.';
   } else if (ec < 4.0 && sar >= 13 && ph >= 8.5) {
     soilClass = 'Sodic / Alkali Soil (Black Alkali)';
-    // Gypsum requirement formula: GR = (ESP_initial - ESP_target) * CEC * factor
-    // Approx CEC by soil type: clay=25, loam=15, sand=8
     const cec = soilType.includes('clay') ? 22 : soilType.includes('sand') ? 10 : 16;
     const targetESP = 10;
     const excessESP = Math.max(0, espEst - targetESP);
@@ -646,7 +480,6 @@ export function evaluateLabSoilReport({ labSoilEC, labPH, labSAR, soilType = 'lo
     gypsumRequirementTonsPerAcre = parseFloat((excessESP * cec * 0.018).toFixed(1));
     primaryRemedy = `Apply Gypsum (${gypsumRequirementTonsPerAcre} tons/acre) FIRST to stabilize soil structure, then perform leaching. Do NOT leach before adding calcium amendment!`;
   }
-
   return {
     measuredECe: ec,
     measuredPH: ph,

@@ -3,7 +3,6 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { useApp } from '../../context/AppContext';
-
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -19,13 +18,9 @@ const CustomTooltip = ({ active, payload, label }) => {
     </div>
   );
 };
-
 export default function ECTrendChart({ height = 280, customData = null, fieldTrend = null }) {
   const { state } = useApp();
-  
-  // Prefer explicit props or context trends
   const activeFieldTrend = fieldTrend || state.trends?.fieldTrend;
-  
   if (activeFieldTrend && activeFieldTrend.points?.length) {
     const data = activeFieldTrend.points;
     return (
@@ -68,13 +63,10 @@ export default function ECTrendChart({ height = 280, customData = null, fieldTre
       </ResponsiveContainer>
     );
   }
-
   const rawData = customData || state.trends?.ecTrendData || [];
   const data = rawData;
   const fields = state.trends?.fields || state.fields || [];
-
   const COLOR_PALETTE = ['#008a50', '#f97316', '#2563eb', '#9333ea', '#db2777', '#0891b2', '#eab308'];
-
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>

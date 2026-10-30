@@ -3,7 +3,6 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { useApp } from '../../context/AppContext';
-
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -19,7 +18,6 @@ const CustomTooltip = ({ active, payload, label }) => {
     </div>
   );
 };
-
 export default function RainfallECChart({ height = 280 }) {
   const { state } = useApp();
   const rainfallECData = state.trends?.rainfallECData || [];

@@ -15,40 +15,33 @@
   z-index: 90;
   transition: left var(--transition);
 }
-
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-
 .topbar-title {
   font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
 }
-
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
-/* Search */
 .search-wrap {
   position: relative;
   display: flex;
   align-items: center;
 }
-
 .search-icon {
   position: absolute;
   left: 10px;
   color: var(--text-muted);
   pointer-events: none;
 }
-
 .search-input {
   background: var(--bg-input);
   border: 1px solid var(--border-card);
@@ -60,17 +53,13 @@
   transition: all var(--transition);
   font-family: inherit;
 }
-
 .search-input::placeholder { color: var(--text-muted); }
-
 .search-input:focus {
   outline: none;
   border-color: var(--color-primary);
   width: 260px;
   box-shadow: 0 0 0 3px rgba(0, 138, 80, 0.15);
 }
-
-/* Icon Buttons */
 .icon-btn {
   width: 36px;
   height: 36px;
@@ -85,37 +74,29 @@
   transition: all var(--transition);
   flex-shrink: 0;
 }
-
 .icon-btn:hover {
   background: var(--border-card);
   color: var(--text-primary);
 }
-
 .theme-toggle-btn {
   color: var(--color-primary);
 }
 .theme-toggle-btn:hover {
   border-color: var(--border-accent);
 }
-
 .icon-btn.spinning svg {
   animation: spin 0.8s linear infinite;
 }
-
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
-/* Notifications */
 .notif-wrap {
   position: relative;
 }
-
 .notif-btn {
   position: relative;
 }
-
 .notif-badge {
   position: absolute;
   top: -4px;
@@ -132,7 +113,6 @@
   justify-content: center;
   border: 2px solid var(--bg-primary);
 }
-
 .notif-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -146,7 +126,6 @@
   overflow: hidden;
   animation: fadeInUp 0.2s ease;
 }
-
 .notif-header {
   display: flex;
   align-items: center;
@@ -157,7 +136,6 @@
   font-weight: 600;
   color: var(--text-primary);
 }
-
 .notif-mark-all {
   display: flex;
   align-items: center;
@@ -169,12 +147,10 @@
   cursor: pointer;
   font-family: inherit;
 }
-
 .notif-list {
   max-height: 320px;
   overflow-y: auto;
 }
-
 .notif-item {
   display: flex;
   gap: 10px;
@@ -184,36 +160,27 @@
   position: relative;
   border-bottom: 1px solid var(--border-subtle);
 }
-
 .notif-item:last-child { border-bottom: none; }
-
 .notif-item:hover { background: var(--bg-hover); }
-
 .notif-item.read { opacity: 0.65; }
-
 .notif-type-icon { font-size: 1rem; margin-top: 2px; flex-shrink: 0; }
-
 .notif-content { flex: 1; }
-
 .notif-title {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2px;
 }
-
 .notif-msg {
   font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.4;
   margin-bottom: 4px;
 }
-
 .notif-time {
   font-size: 0.6875rem;
   color: var(--text-muted);
 }
-
 .notif-unread-dot {
   width: 7px;
   height: 7px;
@@ -222,8 +189,6 @@
   margin-top: 6px;
   flex-shrink: 0;
 }
-
-/* User Chip */
 .user-chip {
   display: flex;
   align-items: center;
@@ -235,12 +200,10 @@
   cursor: pointer;
   transition: all var(--transition);
 }
-
 .user-chip:hover {
   background: var(--border-subtle);
   border-color: var(--border-accent);
 }
-
 .user-avatar {
   width: 28px;
   height: 28px;
@@ -254,32 +217,26 @@
   justify-content: center;
   flex-shrink: 0;
 }
-
 .user-info {
   display: flex;
   flex-direction: column;
 }
-
 .user-name {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1;
 }
-
 .user-role {
   font-size: 0.6875rem;
   color: var(--text-muted);
   line-height: 1;
   margin-top: 2px;
 }
-
-/* Role & Language Switchers */
 .role-switch-wrap,
 .lang-switch-wrap {
   position: relative;
 }
-
 .role-badge-btn {
   display: flex;
   align-items: center;
@@ -295,26 +252,22 @@
   color: var(--text-primary);
   font-family: inherit;
 }
-
 .role-badge-btn.panchayat {
   border-color: rgba(0, 138, 80, 0.4);
   background: rgba(0, 138, 80, 0.08);
   color: var(--color-primary);
 }
-
 .role-badge-btn.farmer {
   border-color: rgba(245, 158, 11, 0.4);
   background: rgba(245, 158, 11, 0.08);
   color: #d97706;
 }
-
 .role-btn-text {
   max-width: 170px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .switch-user-pill {
   font-size: 0.68rem;
   font-weight: 700;
@@ -326,7 +279,6 @@
   color: var(--text-muted);
   margin-left: 2px;
 }
-
 .lang-btn {
   display: flex;
   align-items: center;
@@ -334,13 +286,11 @@
   width: auto;
   padding: 0 8px;
 }
-
 .lang-code-tag {
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
-
 .dropdown-menu-box {
   position: absolute;
   top: calc(100% + 8px);
@@ -354,7 +304,6 @@
   min-width: 180px;
   animation: fadeIn 0.15s ease;
 }
-
 .dropdown-header-title {
   font-size: 0.6875rem;
   text-transform: uppercase;
@@ -363,7 +312,6 @@
   letter-spacing: 0.5px;
   padding: 6px 10px 4px;
 }
-
 .dropdown-item-btn {
   width: 100%;
   display: flex;
@@ -380,25 +328,20 @@
   transition: background var(--transition);
   font-family: inherit;
 }
-
 .dropdown-item-btn:hover {
   background: var(--bg-hover);
 }
-
 .dropdown-item-btn.active {
   background: var(--bg-hover);
   color: var(--color-primary);
   font-weight: 600;
 }
-
 .dropdown-item-text {
   display: flex;
   flex-direction: column;
 }
-
 .dropdown-item-desc {
   font-size: 0.6875rem;
   color: var(--text-muted);
   font-weight: normal;
 }
-

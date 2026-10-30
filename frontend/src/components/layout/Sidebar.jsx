@@ -7,7 +7,6 @@ import {
 import { useApp } from '../../context/AppContext';
 import FarmSwitcher from '../farms/FarmSwitcher';
 import './Sidebar.css';
-
 const panchayatNavItems = [
   { path: '/', icon: LayoutDashboard, key: 'navDashboard', defaultLabel: 'Village Dashboard' },
   { path: '/village', icon: Users, key: 'navVillage', defaultLabel: 'Village Hub' },
@@ -17,7 +16,6 @@ const panchayatNavItems = [
   { path: '/recommendations', icon: BookOpen, key: 'navRecommendations', defaultLabel: 'Advisories' },
   { path: '/settings', icon: Settings, key: 'navSettings', defaultLabel: 'Settings' },
 ];
-
 const farmerNavItems = [
   { path: '/', icon: LayoutDashboard, key: 'navDashboard', defaultLabel: 'My Farm Dashboard' },
   { path: '/map', icon: Map, key: 'navMap', defaultLabel: 'My Field Map' },
@@ -26,16 +24,13 @@ const farmerNavItems = [
   { path: '/recommendations', icon: BookOpen, key: 'navRecommendations', defaultLabel: 'Treatment & Gypsum' },
   { path: '/settings', icon: Settings, key: 'navSettings', defaultLabel: 'Settings' },
 ];
-
 export default function Sidebar() {
   const location = useLocation();
   const { state, role, toggleSidebar, t } = useApp();
   const collapsed = state.sidebarCollapsed;
   const currentNavItems = role === 'farmer' ? farmerNavItems : panchayatNavItems;
-
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
-      {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon">
           <Waves size={20} />
@@ -47,8 +42,6 @@ export default function Sidebar() {
           </div>
         )}
       </div>
-
-      {/* Nav Items */}
       <nav className="sidebar-nav">
         {currentNavItems.map(({ path, icon: Icon, key, defaultLabel }) => {
           const isActive = location.pathname === path;
@@ -69,11 +62,7 @@ export default function Sidebar() {
           );
         })}
       </nav>
-
-      {/* Village Farm Sessions (Gemini chat-style) */}
       {!collapsed && <FarmSwitcher />}
-
-      {/* Footer */}
       <div className="sidebar-footer">
         {!collapsed && (
           <div className="sidebar-version">

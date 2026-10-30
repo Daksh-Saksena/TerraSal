@@ -8,20 +8,14 @@ import { useNavigate } from 'react-router-dom';
 import { getRiskColor } from '../utils/formatters';
 import RiskBadge from '../components/ui/RiskBadge';
 import './MapView.css';
-
-// Fix for default Leaflet icon paths in React
 delete L.Icon.Default.prototype._getIconUrl;
-
-// Map controller to invalidate size and fit bounds to real fields
 function MapController({ selectedCoords, allCoords }) {
   const map = useMap();
-
   useEffect(() => {
     const t1 = setTimeout(() => map.invalidateSize(), 150);
     const t2 = setTimeout(() => map.invalidateSize(), 500);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [map]);
-
   useEffect(() => {
     if (selectedCoords && selectedCoords[0] && selectedCoords[1]) {
       map.flyTo(selectedCoords, 15, { duration: 1.2 });
@@ -34,11 +28,8 @@ function MapController({ selectedCoords, allCoords }) {
       }
     }
   }, [selectedCoords, allCoords, map]);
-
   return null;
 }
-
-// Custom Farm Marker with pulsed ring based on risk
 const createFarmPin = (riskLevel) => {
   const color = riskLevel === 'CRITICAL' ? '#ef4444' : riskLevel === 'HIGH' ? '#f97316' : riskLevel === 'MODERATE' ? '#f59e0b' : '#22c55e';
   return new L.DivIcon({
@@ -53,49 +44,35 @@ const createFarmPin = (riskLevel) => {
     iconAnchor: [12, 12]
   });
 };
-
 export default function MapView() {
   const { state, activeFarm, setActiveFarmId, openPinDropModal, role, t } = useApp();
   const navigate = useNavigate();
   const fields = state.fields || [];
-
-  // In farmer mode, focus strictly on their own field
   const displayedFields = role === 'farmer' && activeFarm
     ? [activeFarm]
     : fields;
-
   const [selectedCrop, setSelectedCrop] = useState('All');
   const [selectedRisk, setSelectedRisk] = useState('All');
   const [selectedField, setSelectedField] = useState(activeFarm || displayedFields[0] || null);
   const [flyCoords, setFlyCoords] = useState(null);
   const [showPlumes, setShowPlumes] = useState(true);
-
-  // Filter fields
   const filtered = displayedFields.filter(f => {
     if (selectedCrop !== 'All' && (f.cropType || '').toLowerCase() !== selectedCrop.toLowerCase()) return false;
     if (selectedRisk !== 'All' && f.riskLevel !== selectedRisk) return false;
     return true;
   });
-
-  // Unique crops present in real data
   const availableCrops = ['All', ...new Set(displayedFields.map(f => f.cropType).filter(Boolean))];
-
-  // Coordinates array for auto-fitting bounds
   const validCoords = filtered
     .filter(f => f.lat && f.lng)
     .map(f => [f.lat, f.lng]);
-
   const defaultCenter = activeFarm?.lat && activeFarm?.lng
     ? [activeFarm.lat, activeFarm.lng]
     : validCoords[0] || [30.9, 75.85];
-
-  // Real summary metrics calculated from actual fields
   const totalAcreage = filtered.reduce((sum, f) => sum + (f.area || 0), 0);
   const highRiskCount = filtered.filter(f => f.riskLevel === 'CRITICAL' || f.riskLevel === 'HIGH').length;
   const avgEC = filtered.length > 0
     ? (filtered.reduce((sum, f) => sum + (f.groundwaterEC ?? f.metrics?.ec ?? 3.5), 0) / filtered.length).toFixed(1)
     : '0';
-
   const handleSelectFieldInList = (field) => {
     setSelectedField(field);
     setActiveFarmId(field.id);
@@ -103,12 +80,10 @@ export default function MapView() {
       setFlyCoords([field.lat, field.lng]);
     }
   };
-
   const handleOpenDiagnostic = (field) => {
     setActiveFarmId(field.id);
     navigate('/analyze');
   };
-
   const handleExportCSV = () => {
     const headers = ['Plot ID', 'Farm Name', 'Farmer', 'Location', 'Latitude', 'Longitude', 'Area (Acres)', 'Crop', 'Soil Type', 'EC (dS/m)', 'Water Table (m)', 'Risk Level', 'Recovery %'];
     const rows = filtered.map(f => [
@@ -126,7 +101,6 @@ export default function MapView() {
       f.riskLevel || 'MODERATE',
       f.soilRecovery ?? 50
     ]);
-
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
@@ -136,10 +110,8 @@ export default function MapView() {
     link.click();
     document.body.removeChild(link);
   };
-
   return (
     <div className="page-container fade-in">
-      {/* Page Header */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1>{role === 'farmer' ? 'My Farm Location & Soil Map' : 'Village Plots & Aquifer Map'}</h1>
@@ -162,8 +134,6 @@ export default function MapView() {
           </button>
         </div>
       </div>
-
-      {/* Real Summary Strip */}
       <div className="map-summary-row">
         <div className="map-stat-card">
           <div className="map-stat-val">{filtered.length}</div>
@@ -182,13 +152,9 @@ export default function MapView() {
           <div className="map-stat-label">Avg Measured EC</div>
         </div>
       </div>
-
-      {/* Interactive Controls & Map Layout */}
       <div className="map-layout-grid">
-        {/* Left Column: Filter Controls + Leaflet Map */}
         <div className="map-main-col">
           <div className="map-filter-bar">
-            {/* Layers */}
             <div className="map-filter-group">
               <span className="filter-label"><Layers size={13} /> Layer:</span>
               <label className="map-layer-toggle">
@@ -200,8 +166,6 @@ export default function MapView() {
                 <span>Root Salinity Plumes</span>
               </label>
             </div>
-
-            {/* Risk filter */}
             <div className="map-filter-group">
               <span className="filter-label">Risk:</span>
               {['All', 'CRITICAL', 'HIGH', 'MODERATE', 'LOW'].map(r => (
@@ -215,8 +179,6 @@ export default function MapView() {
                 </button>
               ))}
             </div>
-
-            {/* Crop filter if multiple crops */}
             {availableCrops.length > 2 && (
               <div className="map-filter-group">
                 <span className="filter-label">Crop:</span>
@@ -232,8 +194,6 @@ export default function MapView() {
               </div>
             )}
           </div>
-
-          {/* Leaflet Map Container */}
           <div className="map-container-wrap" style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color, rgba(255,255,255,0.1))' }}>
             <MapContainer
               center={defaultCenter}
@@ -247,8 +207,6 @@ export default function MapView() {
                 maxZoom={19}
               />
               <MapController selectedCoords={flyCoords} allCoords={validCoords} />
-
-              {/* Real Registered Farm Plumes */}
               {showPlumes && filtered.map(field => {
                 if (!field.lat || !field.lng) return null;
                 const ec = field.groundwaterEC ?? field.metrics?.ec ?? 3.5;
@@ -269,8 +227,6 @@ export default function MapView() {
                   />
                 );
               })}
-
-              {/* Real Registered Farm Markers */}
               {filtered.map(field => {
                 if (!field.lat || !field.lng) return null;
                 const isSelected = selectedField?.id === field.id;
@@ -306,14 +262,12 @@ export default function MapView() {
                             {field.riskLevel}
                           </span>
                         </div>
-
                         <div style={{ fontSize: '0.76rem', color: '#475569', marginBottom: '8px', lineHeight: 1.4 }}>
                           <div><strong>Location:</strong> {field.location}</div>
                           <div><strong>Crop:</strong> {field.cropType} · {field.area} Acres</div>
                           <div><strong>EC:</strong> <strong>{field.groundwaterEC ?? field.metrics?.ec ?? 3.5} dS/m</strong></div>
                           <div><strong>Water Table:</strong> {field.waterTableDepth ?? field.metrics?.waterTable ?? 2.5}m</div>
                         </div>
-
                         <button
                           style={{
                             width: '100%',
@@ -343,8 +297,6 @@ export default function MapView() {
             </MapContainer>
           </div>
         </div>
-
-        {/* Right Column: Real Registered Plots List */}
         <div className="map-sidebar-col">
           <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div className="card-header" style={{ padding: '16px 18px', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>
@@ -357,7 +309,6 @@ export default function MapView() {
                 </span>
               </div>
             </div>
-
             <div className="map-plots-list" style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
               {filtered.length === 0 ? (
                 <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -397,11 +348,9 @@ export default function MapView() {
                           {field.riskLevel}
                         </span>
                       </div>
-
                       <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                         <span>Farmer: <strong>{field.farmerName || 'Farmer'}</strong></span> · <span>{field.cropType}</span> ({field.area} Ac)
                       </div>
-
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                         <span>EC: <strong style={{ color: ecVal > 4 ? '#ef4444' : '#22c55e' }}>{ecVal} dS/m</strong></span>
                         <span>Water Table: <strong>{field.waterTableDepth ?? field.metrics?.waterTable ?? 2.5}m</strong></span>

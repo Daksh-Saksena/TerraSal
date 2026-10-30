@@ -136,8 +136,8 @@ export default function Trends() {
               <strong style={{ color: 'var(--text-primary)' }}>How salt changes through the year on your field:</strong>
               <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)' }}>
                 In the hot summer months (May & June), intense heat evaporates surface moisture and pulls underground salt up into the root zone.
-                When monsoon arrives in July–August, rainfall dissolves and flushes the salt downward into deeper soil.
-                Before sowing your winter {currentField.cropType || 'wheat'} crop in October–November, ensure tubewell water is tested to avoid root burn.
+                When monsoon arrives in July to August, rainfall dissolves and flushes the salt downward into deeper soil.
+                Before sowing your winter {currentField.cropType || 'wheat'} crop in October to November, ensure tubewell water is tested to avoid root burn.
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   BookOpen, Sprout, Droplets, Layers, ExternalLink,
   ChevronDown, ChevronUp, Download, CheckCircle,
-  AlertTriangle, Sparkles, Star
+  AlertTriangle, Star, Zap
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Recommendations.css';
@@ -349,7 +349,7 @@ export default function Recommendations() {
 
               {practice.subsidy && (
                 <div className="irr-subsidy-banner" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Sparkles size={14} style={{ color: '#d97706', flexShrink: 0 }} />
+                  <Zap size={14} style={{ color: '#d97706', flexShrink: 0 }} />
                   <div><strong>Subsidy Available:</strong> {practice.subsidy}</div>
                 </div>
               )}

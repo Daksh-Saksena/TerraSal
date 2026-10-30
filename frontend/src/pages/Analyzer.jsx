@@ -3,7 +3,7 @@ import {
   FlaskConical, ChevronRight, AlertTriangle, CheckCircle,
   Info, Droplets, ArrowDownUp, CloudRain, Layers, Waves,
   Sprout, Lightbulb, RefreshCw, MapPin, Activity,
-  Volume2, VolumeX, Sparkles, ShieldCheck, ShieldAlert,
+  Volume2, VolumeX, ShieldCheck, ShieldAlert,
   Clock, Zap
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -463,7 +463,7 @@ export default function Analyzer() {
                       step="0.1"
                       onChange={e => setLabPH(parseFloat(e.target.value) || 7)}
                     />
-                    <span className="form-hint">Normal: 6.5–7.8, Alkaline/Sodic: &gt;8.5</span>
+                    <span className="form-hint">Normal: 6.5-7.8, Alkaline/Sodic: &gt;8.5</span>
                   </div>
 
                   <div className="form-group">
@@ -566,7 +566,7 @@ export default function Analyzer() {
                   className={`kisan-mode-btn ${viewMode === 'kisan' ? 'active' : ''}`}
                   onClick={() => setViewMode('kisan')}
                 >
-                  <Sparkles size={14} />
+                  <Sprout size={14} />
                   <span>Simplified Farmer View</span>
                 </button>
                 <button
@@ -732,20 +732,20 @@ export default function Analyzer() {
                   {/* 3 Direct Farmer Action Steps */}
                   <div className="kisan-actions-card">
                     <h3>
-                      <Sparkles size={18} color="#008a50" />
+                      <Sprout size={18} color="#008a50" />
                       Farmer's 3-Step Action Plan (What to do on your field)
                     </h3>
                     <div className="kisan-steps-grid">
                       {/* Step 1 */}
                       <div className="kisan-step-card">
                         <span className="kisan-step-badge">Step 1 • Soil Amendment</span>
-                        <h4>Apply Agricultural Gypsum (2–2.5 Trolleys/Acre)</h4>
+                        <h4>Apply Agricultural Gypsum (2-2.5 Trolleys/Acre)</h4>
                         <p>
                           Agricultural Gypsum supplies Calcium to knock harmful Sodium off the soil particles, loosening the hardpan so salts wash away downward.
                           Broadcast before pre-sowing plowing.
                         </p>
                         <div className="kisan-step-highlight" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Sparkles size={14} style={{ color: '#d97706', flexShrink: 0 }} />
+                          <CheckCircle size={14} style={{ color: '#d97706', flexShrink: 0 }} />
                           <span>50% Subsidy available at your local Block Agriculture / KVK office.</span>
                         </div>
                       </div>
@@ -753,7 +753,7 @@ export default function Analyzer() {
                       {/* Step 2 */}
                       <div className="kisan-step-card">
                         <span className="kisan-step-badge">Step 2 • Irrigation Window</span>
-                        <h4>Irrigate Only Between 5:00 AM – 8:30 AM</h4>
+                        <h4>Irrigate Only Between 5:00 AM to 8:30 AM</h4>
                         <p>
                           NEVER run tubewells in afternoon heat (11 AM to 4 PM). Afternoon heat evaporates water rapidly and leaves behind baked salt crust around plant roots. Early morning watering lets moisture soak deep.
                         </p>
@@ -784,7 +784,7 @@ export default function Analyzer() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                       <div>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Sparkles size={16} color="#008a50" />
+                          <Layers size={16} color="#008a50" />
                           Interactive Field Simulator (Live Parameter Adjustment)
                         </h4>
                         <p style={{ margin: '4px 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
@@ -1263,7 +1263,7 @@ export default function Analyzer() {
                                 </div>
                                 {irr.subsidy && (
                                   <div className="irr-subsidy" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <Sparkles size={13} style={{ color: '#d97706', flexShrink: 0 }} />
+                                    <Zap size={13} style={{ color: '#d97706', flexShrink: 0 }} />
                                     <span>{irr.subsidy}</span>
                                   </div>
                                 )}

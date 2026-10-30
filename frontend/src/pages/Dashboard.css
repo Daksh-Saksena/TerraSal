@@ -247,8 +247,8 @@
 }
 
 .portal-banner.farmer-mode {
-  border-left: 4px solid #f59e0b;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, var(--bg-card) 60%);
+  border-left: 3px solid #16a34a;
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.04) 0%, var(--bg-card) 60%);
 }
 
 .portal-mode-badge {
@@ -313,29 +313,33 @@
 .leaching-advice-banner {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 18px;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
   font-size: 0.875rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
 }
 
-.leaching-advice-banner.rain_delay {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #1d4ed8;
+.leaching-advice-banner.banner-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 
-.leaching-advice-banner.dry_leach {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: #b45309;
+.leaching-advice-banner.banner-safe {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
 }
 
-.leaching-advice-banner.moderate {
-  background: rgba(0, 138, 80, 0.1);
-  border: 1px solid rgba(0, 138, 80, 0.3);
-  color: #008a50;
+[data-theme="dark"] .leaching-advice-banner.banner-alert {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .leaching-advice-banner.banner-safe {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .advice-icon {
@@ -417,5 +421,54 @@
   .forecast-days-strip {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+.speech-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.speech-btn:hover {
+  background: rgba(34, 197, 94, 0.22);
+}
+
+.speech-btn.active-speaking {
+  background: #22c55e;
+  color: #fff;
+  border-color: #22c55e;
+  animation: pulseSpeech 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseSpeech {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.speech-btn-label {
+  font-family: inherit;
+}
+
+.farmer-action-card {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 4px solid var(--primary);
+  transition: transform 0.2s ease;
+}
+
+.farmer-action-card:hover {
+  transform: translateY(-2px);
 }
 

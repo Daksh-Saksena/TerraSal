@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FlaskConical, ChevronRight, AlertTriangle, CheckCircle,
   Info, Droplets, ArrowDownUp, CloudRain, Layers, Waves,
-  Sprout, Lightbulb, RefreshCw, MapPin, Activity
+  Sprout, Lightbulb, RefreshCw, MapPin, Activity,
+  Volume2, VolumeX, Sparkles, ShieldCheck, ShieldAlert,
+  Clock, Zap
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getApiUrl } from '../utils/api';
@@ -35,12 +37,41 @@ const PRESETS = [
 ];
 
 export default function Analyzer() {
-  const { state, activeFarm, openPinDropModal, setAnalyzerResult, t } = useApp();
+  const { state, role, activeFarm, openPinDropModal, setAnalyzerResult, t } = useApp();
   const [activeTool, setActiveTool] = useState('diagnostic'); // 'diagnostic' | 'whatif' | 'lab'
+  const [viewMode, setViewMode] = useState('kisan'); // 'kisan' | 'technical'
   const [inputs, setInputs] = useState(state.analyzerInputs ?? DEFAULT_INPUTS);
   const [result, setResult] = useState(state.analyzerResult ?? null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('vitals');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Auto-sync real active farm parameters on mount or when activeFarm changes
+  useEffect(() => {
+    if (activeFarm) {
+      const realInputs = {
+        groundwaterEC: activeFarm.groundwaterEC ?? 3.5,
+        waterTableDepth: activeFarm.waterTableDepth ?? 2.5,
+        soilType: activeFarm.soilType ?? 'loamy',
+        drainageQuality: activeFarm.drainageQuality ?? 'moderate',
+        rainfallLast30Days: activeFarm.rainfallLast30Days ?? 15,
+        irrigationMethod: activeFarm.irrigationMethod ?? 'flood',
+        cropType: activeFarm.cropType ?? 'wheat',
+        terrain: 'flat',
+      };
+      setInputs(realInputs);
+      executeAnalysis(realInputs);
+    }
+  }, [activeFarm?.id]);
+
+  // Clean up speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // What-If Simulator State
   const [simCurrentCrop, setSimCurrentCrop] = useState(activeFarm?.cropType || 'wheat');
@@ -57,6 +88,26 @@ export default function Analyzer() {
   const [labSoilType, setLabSoilType] = useState('loamy');
   const [labResult, setLabResult] = useState(null);
   const [labLoading, setLabLoading] = useState(false);
+
+  const executeAnalysis = async (targetInputs) => {
+    setLoading(true);
+    try {
+      const response = await fetch(getApiUrl('/api/analyze'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetInputs)
+      });
+      if (response.ok) {
+        const analysisResult = await response.json();
+        setResult(analysisResult);
+        setAnalyzerResult(analysisResult, targetInputs);
+      }
+    } catch (error) {
+      console.error('Failed to run analysis:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSimulateCrop = async () => {
     setSimLoading(true);
@@ -108,7 +159,7 @@ export default function Analyzer() {
 
   const loadActiveFarm = () => {
     if (!activeFarm) return;
-    setInputs({
+    const farmData = {
       groundwaterEC: activeFarm.groundwaterEC ?? 3.5,
       waterTableDepth: activeFarm.waterTableDepth ?? 2.5,
       soilType: activeFarm.soilType ?? 'loamy',
@@ -117,41 +168,72 @@ export default function Analyzer() {
       irrigationMethod: activeFarm.irrigationMethod ?? 'flood',
       cropType: activeFarm.cropType ?? 'wheat',
       terrain: 'flat',
-    });
-    setResult(null);
+    };
+    setInputs(farmData);
+    executeAnalysis(farmData);
   };
 
   const handleChange = (key, value) => {
-    setInputs(prev => ({ ...prev, [key]: value }));
+    const updated = { ...inputs, [key]: value };
+    setInputs(updated);
+    // If in Kisan Mode, execute analysis seamlessly
+    if (viewMode === 'kisan') {
+      executeAnalysis(updated);
+    }
   };
 
   const handleAnalyze = async () => {
-    setLoading(true);
-    setResult(null);
-    try {
-      const response = await fetch(getApiUrl('/api/analyze'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inputs)
-      });
-      const analysisResult = await response.json();
-      setResult(analysisResult);
-      setAnalyzerResult(analysisResult, inputs);
-    } catch (error) {
-      console.error('Failed to run analysis:', error);
-    } finally {
-      setLoading(false);
+    await executeAnalysis(inputs);
+  };
+
+  const toggleSpeech = () => {
+    if (!('speechSynthesis' in window)) {
+      alert('Speech synthesis audio is not supported in this browser.');
+      return;
     }
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const farmerName = activeFarm?.farmerName || activeFarm?.name || 'Farmer';
+    const ec = inputs.groundwaterEC;
+    const wt = inputs.waterTableDepth;
+    const crop = inputs.cropType || 'wheat';
+    const isDangerous = (result?.riskLevel === 'critical' || ec >= 5.0 || wt < 2.0);
+    const isModerate = (result?.riskLevel === 'high' || result?.riskLevel === 'moderate' || ec >= 3.5);
+
+    let script = `Hello Farmer ${farmerName}. Here is your soil diagnostic for ${crop}. `;
+    if (isDangerous) {
+      script += `Warning: High salt danger. Groundwater salt is ${ec} dS per meter, and water table is very shallow at only ${wt} meters. Rising salt is reaching your crop roots. `;
+    } else if (isModerate) {
+      script += `Caution: Moderate salt detected. Water salt is ${ec} dS per meter. You must irrigate carefully to prevent salt crusting. `;
+    } else {
+      script += `Good news: Your soil and water are safe. Water salt is ${ec} dS per meter, which is healthy. `;
+    }
+
+    script += `Here is your three-step action plan. Number one: Apply 2 trolleys of agricultural gypsum per acre before sowing. Number two: Never water in the hot afternoon; irrigate only in early morning between 5:00 and 8:30 AM. Number three: Dig a shallow border trench to drain standing salty water away.`;
+
+    const utterance = new SpeechSynthesisUtterance(script);
+    utterance.rate = 0.92;
+    utterance.pitch = 1.0;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
   };
 
   const applyPreset = (preset) => {
     setInputs(preset.inputs);
-    setResult(null);
+    executeAnalysis(preset.inputs);
   };
 
   const getSeverityIcon = (severity) => {
-    const icons = { critical: '🔴', high: '🟠', moderate: '🟡', low: '🟢' };
-    return icons[severity] ?? '⚪';
+    if (severity === 'critical') return <ShieldAlert size={14} style={{ color: '#dc2626' }} />;
+    if (severity === 'high') return <AlertTriangle size={14} style={{ color: '#ea580c' }} />;
+    if (severity === 'moderate') return <AlertTriangle size={14} style={{ color: '#d97706' }} />;
+    return <CheckCircle size={14} style={{ color: '#16a34a' }} />;
   };
 
   return (
@@ -466,39 +548,344 @@ export default function Analyzer() {
           </div>
         )}
 
-        {/* Tool 0: Existing Comprehensive Diagnostic */}
+        {/* Tool 0: Salinity Diagnostic Engine (Kisan Easy Mode vs Technical Agronomist Mode) */}
         {activeTool === 'diagnostic' && (
-          <>
-            {/* Presets & Active Farm */}
-            <div className="analyzer-presets">
-              <span className="preset-label"><Layers size={13} /> Quick Load:</span>
-              {activeFarm && (
+          <div className="diagnostic-view-wrapper">
+            {/* Top Navigation & Mode Switcher */}
+            <div className="kisan-top-nav">
+              <div className="kisan-active-badge">
+                <div className="badge-icon"><Sprout size={18} /></div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>Active Field Evaluated</span>
+                  <span>{activeFarm ? `${activeFarm.name} • ${activeFarm.farmerName || activeFarm.farmer} (${activeFarm.area} Acres, ${activeFarm.cropType})` : 'Active Field Data'}</span>
+                </div>
+              </div>
+
+              <div className="kisan-mode-toggle">
                 <button
-                  className="preset-btn active-farm-load-btn"
-                  onClick={loadActiveFarm}
-                  title="Load data from currently active village farm"
+                  className={`kisan-mode-btn ${viewMode === 'kisan' ? 'active' : ''}`}
+                  onClick={() => setViewMode('kisan')}
                 >
-                  ⚡ Active Farm: {activeFarm.name}
+                  <Sparkles size={14} />
+                  <span>Simplified Farmer View</span>
                 </button>
-              )}
-              <button
-                className="preset-btn pin-drop-quick-btn"
-                onClick={openPinDropModal}
-              >
-                <MapPin size={12} /> Drop Pin on Map
-              </button>
-              {PRESETS.map((preset, i) => (
                 <button
-                  key={i}
-                  className="preset-btn"
-                  onClick={() => applyPreset(preset)}
+                  className={`kisan-mode-btn ${viewMode === 'technical' ? 'active' : ''}`}
+                  onClick={() => setViewMode('technical')}
                 >
-                  {preset.name}
+                  <FlaskConical size={14} />
+                  <span>Agronomist & Lab Mode</span>
                 </button>
-              ))}
+              </div>
             </div>
 
-            <div className="analyzer-layout">
+            {/* View Mode 1: Simplified Farmer View */}
+            {viewMode === 'kisan' && (() => {
+              const ec = inputs.groundwaterEC ?? 3.5;
+              const wt = inputs.waterTableDepth ?? 2.5;
+              const crop = inputs.cropType || 'wheat';
+              const isDanger = (result?.riskLevel === 'critical' || ec >= 5.0 || wt < 2.0);
+              const isCaution = !isDanger && (result?.riskLevel === 'high' || result?.riskLevel === 'moderate' || ec >= 3.5);
+              const stressPct = result?.stressProbability ?? (isDanger ? 75 : isCaution ? 45 : 15);
+              const cropThreshold = (crop === 'barley' ? 8.0 : crop === 'cotton' ? 7.7 : crop === 'rice' ? 3.0 : 6.0);
+
+              return (
+                <div className="kisan-view-container fade-in" style={{ marginTop: 20 }}>
+                  {/* Big Hero Status Card (Softer Pastel Banner) */}
+                  <div className={`kisan-status-hero ${isDanger ? 'red' : isCaution ? 'yellow' : 'green'}`}>
+                    <div className="kisan-hero-main">
+                      <div className={`kisan-traffic-badge ${isDanger ? 'red' : isCaution ? 'yellow' : 'green'}`}>
+                        {isDanger ? <ShieldAlert size={26} /> : isCaution ? <AlertTriangle size={26} /> : <ShieldCheck size={26} />}
+                      </div>
+                      <div className="kisan-hero-text">
+                        <h2>
+                          {isDanger
+                            ? `CRITICAL ALERT: Saline Groundwater Rising Into ${crop.toUpperCase()} Root Zone!`
+                            : isCaution
+                            ? `WARNING: Moderate Salinity Accumulation in Soil`
+                            : `HEALTHY: Soil and Groundwater Conditions are Favorable`}
+                        </h2>
+                        <p>
+                          {isDanger
+                            ? `Underground water is too close to the surface (${wt}m) and tubewell water has high salt (${ec} dS/m). Saline moisture is rising like a wick into your crop roots. Expected crop stress is ~${stressPct}%. Follow the 3 action steps below immediately.`
+                            : isCaution
+                            ? `Groundwater salt (${ec} dS/m) is manageable, but improper afternoon irrigation will cause salt crusting and root stress. Strictly water in the early morning and prepare gypsum.`
+                            : `Tubewell water is sweet and water table is deep enough (${wt}m) to give roots ample breathing room. Your ${crop} is at minimal risk.`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Audio Readout Bar */}
+                    <div className="kisan-audio-bar">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Volume2 size={18} color="#008a50" />
+                        <div>
+                          <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)', display: 'block' }}>Audio Advisory Readout</strong>
+                          <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                            Listen to diagnostic summary and 3-step action plan in simple spoken words.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        className={`kisan-speech-btn ${isSpeaking ? 'speaking' : ''}`}
+                        onClick={toggleSpeech}
+                      >
+                        {isSpeaking ? <VolumeX size={17} /> : <Volume2 size={17} />}
+                        <span>{isSpeaking ? 'Stop Audio' : 'Listen to Spoken Advisory'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3 Big Metric Cards */}
+                  <div className="kisan-vitals-grid">
+                    {/* Water Saltiness */}
+                    <div className="kisan-vital-card">
+                      <div className="kisan-vital-top">
+                        <span className="kisan-vital-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Droplets size={14} style={{ color: '#0284c7' }} /> Tubewell Water Salinity
+                        </span>
+                        <span className="chip" style={{
+                          color: ec > 5.0 ? '#ef4444' : ec > 3.0 ? '#f59e0b' : '#008a50',
+                          background: ec > 5.0 ? 'rgba(239,68,68,0.1)' : ec > 3.0 ? 'rgba(245,158,11,0.1)' : 'rgba(0,138,80,0.1)'
+                        }}>
+                          {ec > 5.0 ? 'High Salinity' : ec > 3.0 ? 'Moderate Salinity' : 'Low Salinity (Sweet)'}
+                        </span>
+                      </div>
+                      <div className="kisan-vital-val">{ec} <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>dS/m</span></div>
+                      <div className="kisan-meter-bar">
+                        <div
+                          className="kisan-meter-fill"
+                          style={{
+                            width: `${Math.min(100, (ec / 8) * 100)}%`,
+                            background: ec > 5.0 ? '#ef4444' : ec > 3.0 ? '#f59e0b' : '#008a50'
+                          }}
+                        />
+                      </div>
+                      <p className="kisan-vital-desc">
+                        {ec > 4.5
+                          ? 'Salty irrigation water burns root tips and leaf edges if applied during daytime heat.'
+                          : 'Water salinity is within acceptable bounds for leaching and normal watering.'}
+                      </p>
+                    </div>
+
+                    {/* Groundwater Depth */}
+                    <div className="kisan-vital-card">
+                      <div className="kisan-vital-top">
+                        <span className="kisan-vital-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <ArrowDownUp size={14} style={{ color: '#008a50' }} /> Water Table Depth
+                        </span>
+                        <span className="chip" style={{
+                          color: wt < 2.0 ? '#ef4444' : wt < 3.0 ? '#f59e0b' : '#008a50',
+                          background: wt < 2.0 ? 'rgba(239,68,68,0.1)' : wt < 3.0 ? 'rgba(245,158,11,0.1)' : 'rgba(0,138,80,0.1)'
+                        }}>
+                          {wt < 2.0 ? 'Critically Shallow (<2m)' : wt < 3.0 ? 'Moderate Depth (2-3m)' : 'Optimal Depth (>3m)'}
+                        </span>
+                      </div>
+                      <div className="kisan-vital-val">{wt} <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>meters</span></div>
+                      <div className="kisan-meter-bar">
+                        <div
+                          className="kisan-meter-fill"
+                          style={{
+                            width: `${Math.min(100, (wt / 5) * 100)}%`,
+                            background: wt < 2.0 ? '#ef4444' : wt < 3.0 ? '#f59e0b' : '#008a50'
+                          }}
+                        />
+                      </div>
+                      <p className="kisan-vital-desc">
+                        {wt < 2.0
+                          ? 'Water is rising to the topsoil by capillary wick action, leaving white salt crust.'
+                          : 'Water table is deep enough so that capillary suction does not choke root oxygen.'}
+                      </p>
+                    </div>
+
+                    {/* Crop Threat & Yield Risk */}
+                    <div className="kisan-vital-card">
+                      <div className="kisan-vital-top">
+                        <span className="kisan-vital-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Sprout size={14} style={{ color: '#ea580c' }} /> Crop Stress & Yield Risk
+                        </span>
+                        <span className="chip" style={{
+                          color: stressPct > 50 ? '#ef4444' : stressPct > 30 ? '#f59e0b' : '#008a50',
+                          background: stressPct > 50 ? 'rgba(239,68,68,0.1)' : stressPct > 30 ? 'rgba(245,158,11,0.1)' : 'rgba(0,138,80,0.1)'
+                        }}>
+                          {crop.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="kisan-vital-val" style={{ color: stressPct > 50 ? '#ef4444' : stressPct > 30 ? '#f59e0b' : '#008a50' }}>
+                        {stressPct}% <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Stress Risk</span>
+                      </div>
+                      <div className="kisan-meter-bar">
+                        <div
+                          className="kisan-meter-fill"
+                          style={{
+                            width: `${stressPct}%`,
+                            background: stressPct > 50 ? '#ef4444' : stressPct > 30 ? '#f59e0b' : '#008a50'
+                          }}
+                        />
+                      </div>
+                      <p className="kisan-vital-desc">
+                        Safe salt threshold for {crop} is {cropThreshold} dS/m. Follow action steps to protect grain filling.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3 Direct Farmer Action Steps */}
+                  <div className="kisan-actions-card">
+                    <h3>
+                      <Sparkles size={18} color="#008a50" />
+                      Farmer's 3-Step Action Plan (What to do on your field)
+                    </h3>
+                    <div className="kisan-steps-grid">
+                      {/* Step 1 */}
+                      <div className="kisan-step-card">
+                        <span className="kisan-step-badge">Step 1 • Soil Amendment</span>
+                        <h4>Apply Agricultural Gypsum (2–2.5 Trolleys/Acre)</h4>
+                        <p>
+                          Agricultural Gypsum supplies Calcium to knock harmful Sodium off the soil particles, loosening the hardpan so salts wash away downward.
+                          Broadcast before pre-sowing plowing.
+                        </p>
+                        <div className="kisan-step-highlight" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Sparkles size={14} style={{ color: '#d97706', flexShrink: 0 }} />
+                          <span>50% Subsidy available at your local Block Agriculture / KVK office.</span>
+                        </div>
+                      </div>
+
+                      {/* Step 2 */}
+                      <div className="kisan-step-card">
+                        <span className="kisan-step-badge">Step 2 • Irrigation Window</span>
+                        <h4>Irrigate Only Between 5:00 AM – 8:30 AM</h4>
+                        <p>
+                          NEVER run tubewells in afternoon heat (11 AM to 4 PM). Afternoon heat evaporates water rapidly and leaves behind baked salt crust around plant roots. Early morning watering lets moisture soak deep.
+                        </p>
+                        <div className="kisan-step-highlight" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Clock size={14} style={{ color: '#008a50', flexShrink: 0 }} />
+                          <span>Reduces daytime evaporative salt accumulation by up to 40%.</span>
+                        </div>
+                      </div>
+
+                      {/* Step 3 */}
+                      <div className="kisan-step-card">
+                        <span className="kisan-step-badge">Step 3 • Perimeter Drainage</span>
+                        <h4>Dig a 1.5 ft Boundary Drain Trench</h4>
+                        <p>
+                          Dig a shallow perimeter drain channel (1.5 ft deep) along the lowest slope edge of your plot.
+                          Rising saline ground moisture will seep into the trench instead of rising into root zones.
+                        </p>
+                        <div className="kisan-step-highlight" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <CheckCircle size={14} style={{ color: '#16a34a', flexShrink: 0 }} />
+                          <span>Keeps root zone aerated and drains standing saline runoff.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Interactive Live Adjustment Sliders */}
+                  <div className="kisan-simulator-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Sparkles size={16} color="#008a50" />
+                          Interactive Field Simulator (Live Parameter Adjustment)
+                        </h4>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                          Drag the sliders to see how reducing salt or lowering water table depth restores your land to GREEN.
+                        </p>
+                      </div>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={loadActiveFarm}
+                        style={{ fontSize: '0.75rem', padding: '5px 10px' }}
+                      >
+                        Reset to Farm Data
+                      </button>
+                    </div>
+
+                    <div className="kisan-slider-row">
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span><Droplets size={13} /> Groundwater Saltiness (EC):</span>
+                          <strong>{inputs.groundwaterEC} dS/m</strong>
+                        </label>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="10.0"
+                          step="0.1"
+                          value={inputs.groundwaterEC}
+                          onChange={e => handleChange('groundwaterEC', parseFloat(e.target.value) || 0)}
+                          className="form-range"
+                        />
+                        <span className="form-hint">Drag left to test mixing with sweet canal water or rainwater</span>
+                      </div>
+
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span><ArrowDownUp size={13} /> Water Table Depth:</span>
+                          <strong>{inputs.waterTableDepth} meters</strong>
+                        </label>
+                        <input
+                          type="range"
+                          min="0.8"
+                          max="5.0"
+                          step="0.1"
+                          value={inputs.waterTableDepth}
+                          onChange={e => handleChange('waterTableDepth', parseFloat(e.target.value) || 0)}
+                          className="form-range"
+                        />
+                        <span className="form-hint">Drag right to test improved drainage trenches and lowered water table</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toggle to Technical Agronomist View */}
+                  <div style={{ textAlign: 'center', marginTop: 10, padding: 12 }}>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => setViewMode('technical')}
+                      style={{ fontSize: '0.875rem' }}
+                    >
+                      <FlaskConical size={15} />
+                      <span>Switch to Detailed Agronomist & Lab View &raquo;</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* View Mode 2: Technical Agronomist View */}
+            {viewMode === 'technical' && (
+              <div className="fade-in" style={{ marginTop: 20 }}>
+                {/* Presets & Active Farm */}
+                <div className="analyzer-presets">
+                  <span className="preset-label"><Layers size={13} /> Quick Load:</span>
+                  {activeFarm && (
+                    <button
+                      className="preset-btn active-farm-load-btn"
+                      onClick={loadActiveFarm}
+                      title="Load data from currently active village farm"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <Zap size={13} /> Active Farm: {activeFarm.name}
+                    </button>
+                  )}
+                  <button
+                    className="preset-btn pin-drop-quick-btn"
+                    onClick={openPinDropModal}
+                  >
+                    <MapPin size={12} /> Drop Pin on Map
+                  </button>
+                  {PRESETS.map((preset, i) => (
+                    <button
+                      key={i}
+                      className="preset-btn"
+                      onClick={() => applyPreset(preset)}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="analyzer-layout">
               {/* Input Panel */}
               <div className="analyzer-inputs card">
                 <div className="card-header">
@@ -870,9 +1257,16 @@ export default function Analyzer() {
                             {result.recommendations.irrigationChanges.map((irr, i) => (
                               <div key={i} className="irrigation-card">
                                 <h4>{irr.title}</h4>
-                                <p>{irr.description}</p>
-                                <div className="irr-benefit">✅ {irr.benefit}</div>
-                                {irr.subsidy && <div className="irr-subsidy">💰 {irr.subsidy}</div>}
+                                <div className="irr-benefit" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <CheckCircle size={13} style={{ color: '#16a34a', flexShrink: 0 }} />
+                                  <span>{irr.benefit}</span>
+                                </div>
+                                {irr.subsidy && (
+                                  <div className="irr-subsidy" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <Sparkles size={13} style={{ color: '#d97706', flexShrink: 0 }} />
+                                    <span>{irr.subsidy}</span>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -922,8 +1316,10 @@ export default function Analyzer() {
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
+      </div>
+    )}
       </div>
       );
 }

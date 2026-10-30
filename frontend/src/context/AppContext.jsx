@@ -6,6 +6,7 @@ import { getTranslation } from '../utils/i18n';
 export const AppContext = createContext(null);
 
 const savedRole = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_role') || 'panchayat') : 'panchayat';
+const savedFarmerId = typeof window !== 'undefined' ? localStorage.getItem('terrasal_farmer_id') : null;
 const savedLang = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_lang') || 'en') : 'en';
 const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_theme') || 'light') : 'light';
 
@@ -14,9 +15,11 @@ const initialState = {
   error: null,
   theme: savedTheme,
   role: savedRole, // 'panchayat' or 'farmer'
+  farmerId: savedFarmerId, // strictly isolate to this farmer when role === 'farmer'
+  isLoginModalOpen: false,
   language: savedLang, // 'en' | 'hi' | 'pa'
   fields: [],
-  activeFarmId: null,
+  activeFarmId: savedFarmerId,
   isPinDropModalOpen: false,
   summaryStats: {
     totalFields: 0,
@@ -102,6 +105,21 @@ const reducer = (state, action) => {
       return { ...state, activeFarmId: action.payload, selectedFieldId: action.payload };
     case 'SET_ROLE':
       return { ...state, role: action.payload };
+    case 'LOGIN_PANCHAYAT':
+      return { ...state, role: 'panchayat', isLoginModalOpen: false };
+    case 'LOGIN_FARMER':
+      return {
+        ...state,
+        role: 'farmer',
+        farmerId: action.payload,
+        activeFarmId: action.payload,
+        selectedFieldId: action.payload,
+        isLoginModalOpen: false
+      };
+    case 'OPEN_LOGIN_MODAL':
+      return { ...state, isLoginModalOpen: true };
+    case 'CLOSE_LOGIN_MODAL':
+      return { ...state, isLoginModalOpen: false };
     case 'SET_LANGUAGE':
       return { ...state, language: action.payload };
     case 'OPEN_PIN_DROP_MODAL':
@@ -151,7 +169,10 @@ export const AppProvider = ({ children }) => {
   // Sync role and language
   useEffect(() => {
     localStorage.setItem('terrasal_role', state.role);
-  }, [state.role]);
+    if (state.farmerId) {
+      localStorage.setItem('terrasal_farmer_id', state.farmerId);
+    }
+  }, [state.role, state.farmerId]);
 
   useEffect(() => {
     localStorage.setItem('terrasal_lang', state.language);
@@ -196,7 +217,20 @@ export const AppProvider = ({ children }) => {
   const setActiveFarmId = (id) => dispatch({ type: 'SET_ACTIVE_FARM', payload: id });
   const openPinDropModal = () => dispatch({ type: 'OPEN_PIN_DROP_MODAL' });
   const closePinDropModal = () => dispatch({ type: 'CLOSE_PIN_DROP_MODAL' });
+  const openLoginModal = () => dispatch({ type: 'OPEN_LOGIN_MODAL' });
+  const closeLoginModal = () => dispatch({ type: 'CLOSE_LOGIN_MODAL' });
   const selectField = (id) => dispatch({ type: 'SELECT_FIELD', payload: id });
+
+  const loginAsPanchayat = () => {
+    dispatch({ type: 'LOGIN_PANCHAYAT' });
+    localStorage.setItem('terrasal_role', 'panchayat');
+  };
+
+  const loginAsFarmer = (farmerId) => {
+    dispatch({ type: 'LOGIN_FARMER', payload: farmerId });
+    localStorage.setItem('terrasal_role', 'farmer');
+    localStorage.setItem('terrasal_farmer_id', farmerId);
+  };
 
   const addFarm = async (farmData) => {
     try {
@@ -234,7 +268,15 @@ export const AppProvider = ({ children }) => {
     dispatch({ type: 'MARK_NOTIFICATION_READ', payload: id });
   const markAllRead = () => dispatch({ type: 'MARK_ALL_READ' });
 
-  const activeFarm = state.fields.find(f => f.id === state.activeFarmId) || state.fields[0] || null;
+  // For individual farmer: strictly lock activeFarm to their own field
+  const activeFarm = state.role === 'farmer'
+    ? (state.fields.find(f => f.id === state.farmerId) || state.fields[0] || null)
+    : (state.fields.find(f => f.id === state.activeFarmId) || state.fields[0] || null);
+
+  // In farmer mode, user only has access to their own field
+  const userFields = state.role === 'farmer'
+    ? (activeFarm ? [activeFarm] : [])
+    : state.fields;
 
   // Localized string helper
   const t = (key) => getTranslation(state.language, key);
@@ -244,13 +286,20 @@ export const AppProvider = ({ children }) => {
       state,
       theme: state.theme,
       role: state.role,
+      farmerId: state.farmerId,
+      isLoginModalOpen: state.isLoginModalOpen,
       language: state.language,
       setRole,
+      loginAsPanchayat,
+      loginAsFarmer,
+      openLoginModal,
+      closeLoginModal,
       setLanguage,
       t,
       toggleTheme,
       setTheme,
       activeFarm,
+      userFields,
       setActiveFarmId,
       openPinDropModal,
       closePinDropModal,

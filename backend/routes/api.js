@@ -447,29 +447,127 @@ router.get('/regions', async (req, res) => {
 });
 
 /**
- * Get all trends
+ * Get dynamic trends based on registered fields in database
+ * Supports optional ?fieldId=... for individual farmer plot isolation
  */
 router.get('/trends', async (req, res) => {
   try {
-    const waterTableData = await queryAll('SELECT * FROM waterTableTrends');
-    const seasonalData = await queryAll('SELECT * FROM seasonalTrends');
-    const rainfallECData = await queryAll('SELECT * FROM rainfallECTrends');
-    const yoyData = await queryAll('SELECT * FROM yoyTrends');
-    const riskScoreTrend = await queryAll('SELECT * FROM riskScoreTrends');
-    const ecTrendData = await queryAll('SELECT * FROM ecTrends');
+    const { fieldId } = req.query;
+    const fields = await queryAll('SELECT * FROM fields');
+    const metricsRows = await queryAll('SELECT * FROM metrics');
+    const metricsMap = new Map(metricsRows.map(m => [m.fieldId, m]));
 
-    const formattedEcTrendData = ecTrendData.map(d => ({
-      ...d,
-      __safe: d.safeThreshold
-    }));
+    // Attach real metrics
+    const populatedFields = fields.map(f => {
+      const m = metricsMap.get(f.id);
+      return {
+        ...f,
+        groundwaterEC: m?.ec ?? f.groundwaterEC ?? 3.5,
+        waterTableDepth: m?.waterTable ?? f.waterTableDepth ?? 2.5,
+        rainfallLast30Days: m?.rainfall ?? f.rainfallLast30Days ?? 15
+      };
+    });
+
+    const months = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+    // Seasonal multipliers reflecting capillary salt rise and monsoon flush
+    // Nov-Apr: winter stable, May-Jun: pre-monsoon salt rise, Jul-Aug: monsoon leaching, Sep-Oct: recovery
+    const seasonalECFactors = [0.95, 0.98, 1.02, 1.05, 1.12, 1.22, 1.25, 0.85, 0.80, 0.88, 0.94, 1.00];
+    const seasonalRainFactors = [5, 3, 8, 12, 6, 10, 25, 120, 110, 45, 15, 12];
+    const seasonalWTFactors = [1.05, 1.10, 1.15, 1.20, 1.28, 1.35, 1.30, 0.85, 0.80, 0.90, 0.98, 1.00];
+
+    // Crop tolerance thresholds (FAO)
+    const cropThresholds = {
+      'wheat': 6.0,
+      'barley': 8.0,
+      'cotton': 7.7,
+      'rice': 3.0,
+      'mustard': 5.0,
+      'sorghum': 6.8,
+      'sugarcane': 4.0
+    };
+
+    // Construct dynamic monthly EC trend points for each field
+    const ecTrendData = months.map((month, i) => {
+      const point = {
+        month,
+        safeThreshold: 4.0 // baseline village reference
+      };
+
+      populatedFields.forEach(f => {
+        const baseEC = f.groundwaterEC || 3.5;
+        const val = parseFloat((baseEC * seasonalECFactors[i]).toFixed(1));
+        point[f.name] = val;
+        point[f.id] = val;
+      });
+
+      return point;
+    });
+
+    // Construct dynamic rainfall vs EC points
+    const rainfallECData = months.map((month, i) => {
+      const avgVillageEC = populatedFields.length > 0
+        ? parseFloat((populatedFields.reduce((sum, f) => sum + (f.groundwaterEC * seasonalECFactors[i]), 0) / populatedFields.length).toFixed(1))
+        : parseFloat((3.5 * seasonalECFactors[i]).toFixed(1));
+
+      return {
+        month,
+        rainfall: seasonalRainFactors[i],
+        avgEC: avgVillageEC
+      };
+    });
+
+    // Construct dynamic water table trend data
+    const waterTableData = months.map((month, i) => {
+      const point = { month };
+      populatedFields.forEach(f => {
+        const baseDepth = f.waterTableDepth || 2.5;
+        point[f.name] = parseFloat((baseDepth * seasonalWTFactors[i]).toFixed(2));
+        point[f.id] = point[f.name];
+      });
+      return point;
+    });
+
+    // Construct dynamic seasonal trend
+    const seasonalData = [
+      { month: 'Rabi (Winter)', avgSalinity: parseFloat((populatedFields.reduce((s, f) => s + f.groundwaterEC, 0) / (populatedFields.length || 1) * 0.98).toFixed(1)), criticalFields: populatedFields.filter(f => f.riskScore >= 70).length },
+      { month: 'Zaid (Summer)', avgSalinity: parseFloat((populatedFields.reduce((s, f) => s + f.groundwaterEC, 0) / (populatedFields.length || 1) * 1.24).toFixed(1)), criticalFields: populatedFields.filter(f => f.riskScore >= 60).length },
+      { month: 'Kharif (Monsoon)', avgSalinity: parseFloat((populatedFields.reduce((s, f) => s + f.groundwaterEC, 0) / (populatedFields.length || 1) * 0.84).toFixed(1)), criticalFields: Math.max(0, populatedFields.filter(f => f.riskScore >= 70).length - 1) },
+      { month: 'Post-Monsoon', avgSalinity: parseFloat((populatedFields.reduce((s, f) => s + f.groundwaterEC, 0) / (populatedFields.length || 1) * 1.0).toFixed(1)), criticalFields: populatedFields.filter(f => f.riskScore >= 70).length }
+    ];
+
+    // Individual field trend isolation if requested
+    let fieldTrend = null;
+    if (fieldId) {
+      const target = populatedFields.find(f => f.id === fieldId) || populatedFields[0];
+      if (target) {
+        const cropKey = (target.cropType || 'wheat').toLowerCase();
+        const safeThresh = cropThresholds[cropKey] || 4.5;
+        fieldTrend = {
+          fieldId: target.id,
+          fieldName: target.name,
+          farmerName: target.farmerName,
+          cropType: target.cropType,
+          currentEC: target.groundwaterEC,
+          currentWaterTable: target.waterTableDepth,
+          safeThreshold: safeThresh,
+          points: months.map((m, i) => ({
+            month: m,
+            ec: parseFloat((target.groundwaterEC * seasonalECFactors[i]).toFixed(1)),
+            waterTable: parseFloat((target.waterTableDepth * seasonalWTFactors[i]).toFixed(2)),
+            rainfall: seasonalRainFactors[i],
+            safeThreshold: safeThresh
+          }))
+        };
+      }
+    }
 
     res.json({
-      waterTableData,
-      seasonalData,
+      fields: populatedFields.map(f => ({ id: f.id, name: f.name, farmerName: f.farmerName, cropType: f.cropType, ec: f.groundwaterEC })),
+      fieldTrend,
+      ecTrendData,
       rainfallECData,
-      yoyData,
-      riskScoreTrend,
-      ecTrendData: formattedEcTrendData
+      waterTableData,
+      seasonalData
     });
   } catch (error) {
     console.error('[API] /trends error:', error.message);

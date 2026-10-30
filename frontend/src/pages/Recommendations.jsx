@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
   BookOpen, Sprout, Droplets, Layers, ExternalLink,
-  ChevronDown, ChevronUp, Download, CheckCircle
+  ChevronDown, ChevronUp, Download, CheckCircle,
+  AlertTriangle, Sparkles, Star
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Recommendations.css';
@@ -311,9 +312,14 @@ export default function Recommendations() {
                     </span>
                   </div>
                 </div>
-                <div className="irr-rating">
+                <div className="irr-rating" style={{ display: 'flex', gap: 2 }}>
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} style={{ color: i < practice.rating ? '#f59e0b' : 'rgba(255,255,255,0.1)', fontSize: '14px' }}>★</span>
+                    <Star
+                      key={i}
+                      size={14}
+                      fill={i < practice.rating ? '#f59e0b' : 'none'}
+                      color={i < practice.rating ? '#f59e0b' : 'var(--border-card)'}
+                    />
                   ))}
                 </div>
               </div>
@@ -322,13 +328,19 @@ export default function Recommendations() {
 
               <div className="irr-details">
                 <div className="irr-detail-col">
-                  <div className="irr-detail-title">✅ Benefits</div>
+                  <div className="irr-detail-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CheckCircle size={14} style={{ color: '#16a34a' }} />
+                    <span>Benefits</span>
+                  </div>
                   {practice.benefits.map((b, i) => (
                     <div key={i} className="irr-detail-item good">{b}</div>
                   ))}
                 </div>
                 <div className="irr-detail-col">
-                  <div className="irr-detail-title">⚠️ Limitations</div>
+                  <div className="irr-detail-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <AlertTriangle size={14} style={{ color: '#d97706' }} />
+                    <span>Limitations</span>
+                  </div>
                   {practice.limitations.map((l, i) => (
                     <div key={i} className="irr-detail-item neutral">{l}</div>
                   ))}
@@ -336,8 +348,9 @@ export default function Recommendations() {
               </div>
 
               {practice.subsidy && (
-                <div className="irr-subsidy-banner">
-                  💰 <strong>Subsidy Available:</strong> {practice.subsidy}
+                <div className="irr-subsidy-banner" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Sparkles size={14} style={{ color: '#d97706', flexShrink: 0 }} />
+                  <div><strong>Subsidy Available:</strong> {practice.subsidy}</div>
                 </div>
               )}
             </div>

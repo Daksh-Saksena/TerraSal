@@ -246,7 +246,7 @@ export default function Settings() {
                       </button>
                     </div>
                     <div className="api-note">
-                      🔧 API integration will be available in TerraSal V2. Contact support to join the beta program.
+                      API integration will be available in TerraSal V2. Contact support to join the beta program.
                     </div>
                   </div>
                 ))}

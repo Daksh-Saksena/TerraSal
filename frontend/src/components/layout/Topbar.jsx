@@ -8,7 +8,8 @@ export default function Topbar({ pageTitle }) {
   const {
     state, theme, toggleTheme, role, setRole,
     language, setLanguage, t, activeFarm,
-    markNotificationRead, markAllRead, refetch
+    markNotificationRead, markAllRead, refetch,
+    openLoginModal
   } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
@@ -44,8 +45,24 @@ export default function Topbar({ pageTitle }) {
   };
 
   const getNotifIcon = (type) => {
-    const icons = { critical: '🔴', warning: '🟡', info: '🔵', success: '🟢' };
-    return icons[type] ?? '⚪';
+    const dotColors = {
+      critical: '#dc2626',
+      warning: '#ea580c',
+      info: '#0284c7',
+      success: '#16a34a'
+    };
+    return (
+      <span
+        style={{
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          backgroundColor: dotColors[type] || '#64748b',
+          display: 'inline-block',
+          flexShrink: 0
+        }}
+      />
+    );
   };
 
   return (
@@ -65,80 +82,20 @@ export default function Topbar({ pageTitle }) {
           />
         </div>
 
-        {/* Role Switcher (Panchayat vs Farmer) */}
-        <div className="role-switch-wrap" ref={roleRef}>
+        {/* Role & Login Switcher */}
+        <div className="role-switch-wrap">
           <button
             className={`role-badge-btn ${role === 'panchayat' ? 'panchayat' : 'farmer'}`}
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            title="Switch View Mode"
+            onClick={openLoginModal}
+            title="Switch User / Login Portal"
+            id="role-switch-btn"
           >
             {role === 'panchayat' ? <Shield size={14} /> : <User size={14} />}
             <span className="role-btn-text">
-              {role === 'panchayat' ? t('rolePanchayat') : `${t('roleFarmer')}${activeFarm ? `: ${activeFarm.farmerName || activeFarm.name}` : ''}`}
+              {role === 'panchayat' ? 'Panchayat Officer' : `Farmer: ${activeFarm?.farmerName || 'Farmer'} (${activeFarm?.name || ''})`}
             </span>
-            <ChevronDown size={12} />
+            <span className="switch-user-pill">Switch</span>
           </button>
-
-          {showRoleMenu && (
-            <div className="dropdown-menu-box role-dropdown">
-              <div className="dropdown-header-title">{t('roleLabel')}</div>
-              <button
-                className={`dropdown-item-btn ${role === 'panchayat' ? 'active' : ''}`}
-                onClick={() => { setRole('panchayat'); setShowRoleMenu(false); }}
-              >
-                <Shield size={15} className="text-primary" />
-                <div className="dropdown-item-text">
-                  <strong>{t('rolePanchayat')}</strong>
-                  <span className="dropdown-item-desc">{t('allPlots')}</span>
-                </div>
-              </button>
-              <button
-                className={`dropdown-item-btn ${role === 'farmer' ? 'active' : ''}`}
-                onClick={() => { setRole('farmer'); setShowRoleMenu(false); }}
-              >
-                <User size={15} className="text-secondary" />
-                <div className="dropdown-item-text">
-                  <strong>{t('roleFarmer')}</strong>
-                  <span className="dropdown-item-desc">{activeFarm ? `${activeFarm.farmerName} (${activeFarm.name})` : t('myPlot')}</span>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Language Selector (EN, HI, PA) */}
-        <div className="lang-switch-wrap" ref={langRef}>
-          <button
-            className="icon-btn lang-btn"
-            onClick={() => setShowLangMenu(!showLangMenu)}
-            title="Language / भाषा / ਭਾਸ਼ਾ"
-          >
-            <Globe size={15} />
-            <span className="lang-code-tag">{language.toUpperCase()}</span>
-          </button>
-
-          {showLangMenu && (
-            <div className="dropdown-menu-box lang-dropdown">
-              <button
-                className={`dropdown-item-btn ${language === 'en' ? 'active' : ''}`}
-                onClick={() => { setLanguage('en'); setShowLangMenu(false); }}
-              >
-                <span>🇬🇧 English</span>
-              </button>
-              <button
-                className={`dropdown-item-btn ${language === 'hi' ? 'active' : ''}`}
-                onClick={() => { setLanguage('hi'); setShowLangMenu(false); }}
-              >
-                <span>🇮🇳 हिन्दी (Hindi)</span>
-              </button>
-              <button
-                className={`dropdown-item-btn ${language === 'pa' ? 'active' : ''}`}
-                onClick={() => { setLanguage('pa'); setShowLangMenu(false); }}
-              >
-                <span>🌾 ਪੰਜਾਬੀ (Punjabi)</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Theme Switcher: tweakcn Supabase Light / Dark */}

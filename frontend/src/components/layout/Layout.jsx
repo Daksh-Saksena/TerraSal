@@ -3,13 +3,14 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import ErrorBanner from '../ui/ErrorBanner';
 import PinDropModal from '../farms/PinDropModal';
+import LoginModal from '../auth/LoginModal';
 import { useApp } from '../../context/AppContext';
 
 const pageTitles = {
   '/': 'Dashboard',
   '/village': 'Village Panchayat Hub',
   '/analyze': 'Salinity Analyzer',
-  '/map': 'Regional Map View',
+  '/map': 'Field Map',
   '/trends': 'Historical Trends',
   '/recommendations': 'Advisory Center',
   '/settings': 'Settings & Configuration',
@@ -31,6 +32,7 @@ export default function Layout({ children }) {
         </main>
       </div>
       <PinDropModal />
+      <LoginModal />
     </div>
   );
 }

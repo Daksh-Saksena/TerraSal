@@ -11,7 +11,7 @@ export const TREND_ICONS = {
   improving: '↓',
   stable: '→',
   worsening: '↑',
-  critical: '⚠',
+  critical: '!',
 };
 
 export const SOIL_TYPES = [

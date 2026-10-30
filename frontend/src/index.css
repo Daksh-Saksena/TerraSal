@@ -25,50 +25,50 @@
   --topbar-height: 64px;
 }
 
-/* ─── Light Mode (Default: "Better Light Theme Supabase") ─────────── */
+/* ─── Light Mode (Calm, Soft, Premium Slate Theme) ─────────── */
 :root, [data-theme="light"] {
   color-scheme: light;
 
   /* Surfaces */
-  --bg-primary: #fcfcfc;
-  --bg-secondary: #fdfdfd;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
   --bg-card: #ffffff;
-  --bg-card-hover: #f7f9f8;
-  --bg-input: #f6f6f6;
-  --bg-sidebar: #fcfcfc;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #f1f5f9;
+  --bg-sidebar: #ffffff;
   --bg-popover: #ffffff;
-  --bg-hover: #ededed;
-  --bg-active: rgba(0, 138, 80, 0.12);
+  --bg-hover: #f1f5f9;
+  --bg-active: rgba(0, 138, 80, 0.08);
 
   /* Typography */
-  --text-primary: #171717;
-  --text-secondary: #525252;
-  --text-muted: #737373;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
   --text-accent: #008a50;
 
   /* Borders */
-  --border-subtle: #eaeaea;
-  --border-card: #dfdfdf;
-  --border-accent: rgba(0, 138, 80, 0.45);
+  --border-subtle: #f1f5f9;
+  --border-card: #e2e8f0;
+  --border-accent: rgba(0, 138, 80, 0.35);
 
   /* Shadows */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 1px #dfdfdf;
-  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px #008a50;
-  --shadow-glow: 0 0 20px rgba(0, 138, 80, 0.15);
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03), 0 0 0 1px #e2e8f0;
+  --shadow-card-hover: 0 4px 14px rgba(15, 23, 42, 0.06), 0 0 0 1px #cbd5e1;
+  --shadow-glow: 0 0 20px rgba(0, 138, 80, 0.12);
 
   /* Risk & Status Colors */
-  --color-safe: #008a50;
-  --color-safe-bg: rgba(0, 138, 80, 0.12);
+  --color-safe: #16a34a;
+  --color-safe-bg: #f0fdf4;
   --color-moderate: #d97706;
-  --color-moderate-bg: rgba(217, 119, 6, 0.12);
+  --color-moderate-bg: #fffbeb;
   --color-high: #ea580c;
-  --color-high-bg: rgba(234, 88, 12, 0.12);
-  --color-critical: #ca3214;
-  --color-critical-bg: rgba(202, 50, 20, 0.12);
-  --color-destructive: #ca3214;
+  --color-high-bg: #fff7ed;
+  --color-critical: #dc2626;
+  --color-critical-bg: #fef2f2;
+  --color-destructive: #dc2626;
 
   /* Charts */
-  --chart-1: #72e3ad;
+  --chart-1: #34d399;
   --chart-2: #3b82f6;
   --chart-3: #8b5cf6;
   --chart-4: #f59e0b;

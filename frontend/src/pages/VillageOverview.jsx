@@ -63,7 +63,7 @@ export default function VillageOverview() {
   const handleRefreshAdvisories = async () => {
     setRegenerating(true);
     try {
-      const res = await fetch('/api/village/regenerate-ai', { method: 'POST' });
+      const res = await fetch(getApiUrl('/api/village/regenerate-ai'), { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setBenchmarkData(prev => ({

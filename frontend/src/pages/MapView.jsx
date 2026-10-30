@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Circle, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Download, Layers, Wifi, WifiOff } from 'lucide-react';
+import { Download, Layers, Wifi, WifiOff, MapPin, Sprout, Droplets, AlertTriangle, ArrowRight, Compass, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { getRiskColor } from '../utils/formatters';
 import RiskBadge from '../components/ui/RiskBadge';
 import './MapView.css';
@@ -11,402 +12,408 @@ import './MapView.css';
 // Fix for default Leaflet icon paths in React
 delete L.Icon.Default.prototype._getIconUrl;
 
-// Fixes gray-tile bug by invalidating Leaflet container size after mount
-function MapResizeController() {
+// Map controller to invalidate size and fit bounds to real fields
+function MapController({ selectedCoords, allCoords }) {
   const map = useMap();
-    useEffect(() => {
-      const t1 = setTimeout(() => map.invalidateSize(), 150);
-      const t2 = setTimeout(() => map.invalidateSize(), 500);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }, [map]);
-    return null;
-  }
 
-const TREND_ICONS = { improving: '↓', stable: '→', worsening: '↑', critical: '⚠' };
-  const TREND_COLORS = { improving: '#22c55e', stable: '#94a3b8', worsening: '#f97316', critical: '#ef4444' };
+  useEffect(() => {
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [map]);
 
-  const stateColors = {
-    'Punjab': '#008a50',
-    'Haryana': '#f59e0b',
-    'Rajasthan': '#f97316',
-  };
+  useEffect(() => {
+    if (selectedCoords && selectedCoords[0] && selectedCoords[1]) {
+      map.flyTo(selectedCoords, 15, { duration: 1.2 });
+    } else if (allCoords && allCoords.length > 0) {
+      if (allCoords.length === 1) {
+        map.setView(allCoords[0], 13);
+      } else {
+        const bounds = L.latLngBounds(allCoords);
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+      }
+    }
+  }, [selectedCoords, allCoords, map]);
 
-  const farmPinIcon = (color) => new L.DivIcon({
-    className: 'farm-plot-pin',
-    html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.4)"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7]
+  return null;
+}
+
+// Custom Farm Marker with pulsed ring based on risk
+const createFarmPin = (riskLevel) => {
+  const color = riskLevel === 'CRITICAL' ? '#ef4444' : riskLevel === 'HIGH' ? '#f97316' : riskLevel === 'MODERATE' ? '#f59e0b' : '#22c55e';
+  return new L.DivIcon({
+    className: 'real-farm-pin',
+    html: `
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:24px;height:24px;">
+        <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:${color};opacity:0.25;animation:pulse 2s infinite;"></div>
+        <div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #ffffff;box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
+};
+
+export default function MapView() {
+  const { state, activeFarm, setActiveFarmId, openPinDropModal, role, t } = useApp();
+  const navigate = useNavigate();
+  const fields = state.fields || [];
+
+  // In farmer mode, focus strictly on their own field
+  const displayedFields = role === 'farmer' && activeFarm
+    ? [activeFarm]
+    : fields;
+
+  const [selectedCrop, setSelectedCrop] = useState('All');
+  const [selectedRisk, setSelectedRisk] = useState('All');
+  const [selectedField, setSelectedField] = useState(activeFarm || displayedFields[0] || null);
+  const [flyCoords, setFlyCoords] = useState(null);
+  const [showPlumes, setShowPlumes] = useState(true);
+
+  // Filter fields
+  const filtered = displayedFields.filter(f => {
+    if (selectedCrop !== 'All' && (f.cropType || '').toLowerCase() !== selectedCrop.toLowerCase()) return false;
+    if (selectedRisk !== 'All' && f.riskLevel !== selectedRisk) return false;
+    return true;
   });
 
-  export default function MapView() {
-    const { state, t } = useApp();
-    const mockRegions = state.regions || [];
-    const fields = state.fields || [];
+  // Unique crops present in real data
+  const availableCrops = ['All', ...new Set(displayedFields.map(f => f.cropType).filter(Boolean))];
 
-    const [selectedState, setSelectedState] = useState('All');
-    const [selectedRisk, setSelectedRisk] = useState('All');
-    const [selectedRegion, setSelectedRegion] = useState(null);
-    const [showHeatmap, setShowHeatmap] = useState(true);
-    const [showPlots, setShowPlots] = useState(true);
+  // Coordinates array for auto-fitting bounds
+  const validCoords = filtered
+    .filter(f => f.lat && f.lng)
+    .map(f => [f.lat, f.lng]);
 
-    const summary = {
-      totalDistricts: mockRegions.length,
-      criticalDistricts: mockRegions.filter(r => r.riskLevel === 'CRITICAL').length,
-      highRiskDistricts: mockRegions.filter(r => r.riskLevel === 'HIGH').length,
-      totalAffectedArea: mockRegions.reduce((s, r) => s + r.affectedArea, 0),
-      totalFarmersAffected: mockRegions.reduce((s, r) => s + r.farmersAffected, 0),
-    };
+  const defaultCenter = activeFarm?.lat && activeFarm?.lng
+    ? [activeFarm.lat, activeFarm.lng]
+    : validCoords[0] || [30.9, 75.85];
 
-    const filtered = mockRegions.filter(r => {
-      if (selectedState !== 'All' && r.state !== selectedState) return false;
-      if (selectedRisk !== 'All' && r.riskLevel !== selectedRisk) return false;
-      return true;
-    });
+  // Real summary metrics calculated from actual fields
+  const totalAcreage = filtered.reduce((sum, f) => sum + (f.area || 0), 0);
+  const highRiskCount = filtered.filter(f => f.riskLevel === 'CRITICAL' || f.riskLevel === 'HIGH').length;
+  const avgEC = filtered.length > 0
+    ? (filtered.reduce((sum, f) => sum + (f.groundwaterEC ?? f.metrics?.ec ?? 3.5), 0) / filtered.length).toFixed(1)
+    : '0';
 
-    const getMarkerRadius = (score) => {
-      if (score >= 80) return 18;
-      if (score >= 60) return 15;
-      if (score >= 35) return 12;
-      return 10;
-    };
+  const handleSelectFieldInList = (field) => {
+    setSelectedField(field);
+    setActiveFarmId(field.id);
+    if (field.lat && field.lng) {
+      setFlyCoords([field.lat, field.lng]);
+    }
+  };
 
-    const handleExportCSV = () => {
-      const headers = ['District', 'State', 'Risk Score', 'Risk Level', 'Avg EC (dS/m)', 'Water Table Depth (m)', 'Dominant Crop', 'Affected Area (ha)', 'Farmers Affected'];
-      const rows = filtered.map(r => [
-        `"${r.district}"`,
-        `"${r.state}"`,
-        r.riskScore,
-        r.riskLevel,
-        r.avgEC,
-        r.waterTableDepth,
-        `"${r.dominantCrop}"`,
-        r.affectedArea,
-        r.farmersAffected
-      ]);
-      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `Regional_Salinity_Map_Data_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
+  const handleOpenDiagnostic = (field) => {
+    setActiveFarmId(field.id);
+    navigate('/analyze');
+  };
 
-    return (
-      <div className="page-container fade-in">
-          <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h1>{t('navMap')}</h1>
-              <p>Multi-layer geospatial salinity tracking across regional aquifers and village plots</p>
-            </div>
-            <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} title="Export Map Dataset as CSV">
-              <Download size={14} />
-              <span>{t('exportCSV')}</span>
+  const handleExportCSV = () => {
+    const headers = ['Plot ID', 'Farm Name', 'Farmer', 'Location', 'Latitude', 'Longitude', 'Area (Acres)', 'Crop', 'Soil Type', 'EC (dS/m)', 'Water Table (m)', 'Risk Level', 'Recovery %'];
+    const rows = filtered.map(f => [
+      f.id,
+      `"${f.name || ''}"`,
+      `"${f.farmerName || ''}"`,
+      `"${f.location || ''}"`,
+      f.lat || '',
+      f.lng || '',
+      f.area || 0,
+      f.cropType || '',
+      f.soilType || '',
+      f.groundwaterEC ?? f.metrics?.ec ?? 0,
+      f.waterTableDepth ?? f.metrics?.waterTable ?? 0,
+      f.riskLevel || 'MODERATE',
+      f.soilRecovery ?? 50
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `TerraSal_Village_Plots_Map_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="page-container fade-in">
+      {/* Page Header */}
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1>{role === 'farmer' ? 'My Farm Location & Soil Map' : 'Village Plots & Aquifer Map'}</h1>
+          <p>
+            {role === 'farmer'
+              ? `Real-time root-zone salinity buffer and sensor mapping for plot: ${activeFarm?.name || 'Your Farm'}`
+              : `Geospatial salinity plume tracking across ${fields.length} registered village plots`}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {role === 'panchayat' && (
+            <button className="btn btn-primary btn-sm" onClick={openPinDropModal} title="Register a new village plot">
+              <MapPin size={14} />
+              <span>+ Add Field Pin</span>
             </button>
-          </div>
+          )}
+          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} title="Export CSV for Agriculture Department">
+            <Download size={14} />
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
 
-          {/* Summary Row */}
-          <div className="map-summary-row">
-            <div className="map-stat-card">
-              <div className="map-stat-val">{summary.totalDistricts}</div>
-              <div className="map-stat-label">Districts Monitored</div>
-            </div>
-            <div className="map-stat-card critical">
-              <div className="map-stat-val">{summary.criticalDistricts}</div>
-              <div className="map-stat-label">Critical Districts</div>
-            </div>
-            <div className="map-stat-card warning">
-              <div className="map-stat-val">{summary.highRiskDistricts}</div>
-              <div className="map-stat-label">High Risk Districts</div>
-            </div>
-            <div className="map-stat-card">
-              <div className="map-stat-val">{(summary.totalAffectedArea / 1000).toFixed(0)}k ha</div>
-              <div className="map-stat-label">Affected Area</div>
-            </div>
-            <div className="map-stat-card">
-              <div className="map-stat-val">{(summary.totalFarmersAffected / 1000).toFixed(1)}k</div>
-              <div className="map-stat-label">Farmers Affected</div>
-            </div>
-          </div>
+      {/* Real Summary Strip */}
+      <div className="map-summary-row">
+        <div className="map-stat-card">
+          <div className="map-stat-val">{filtered.length}</div>
+          <div className="map-stat-label">{role === 'farmer' ? 'My Plots' : 'Registered Plots'}</div>
+        </div>
+        <div className="map-stat-card">
+          <div className="map-stat-val">{totalAcreage} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Acres</span></div>
+          <div className="map-stat-label">Total Monitored Area</div>
+        </div>
+        <div className="map-stat-card critical">
+          <div className="map-stat-val">{highRiskCount}</div>
+          <div className="map-stat-label">High/Critical Salinity</div>
+        </div>
+        <div className="map-stat-card warning">
+          <div className="map-stat-val">{avgEC} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>dS/m</span></div>
+          <div className="map-stat-label">Avg Measured EC</div>
+        </div>
+      </div>
 
-          <div className="map-layout">
-            {/* Map */}
-            <div className="map-section">
-                {/* Layer toggles & Filters */}
-                <div className="map-filters" style={{ flexWrap: 'wrap', gap: '12px' }}>
-                  <div className="map-filter-group">
-                    <span className="filter-label"><Layers size={12} /> Layers:</span>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8125rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                      <input
-                        type="checkbox"
-                        checked={showHeatmap}
-                        onChange={e => setShowHeatmap(e.target.checked)}
-                      />
-                      Salinity Plume Heatmap
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8125rem', cursor: 'pointer', color: 'var(--text-secondary)', marginLeft: '8px' }}>
-                      <input
-                        type="checkbox"
-                        checked={showPlots}
-                        onChange={e => setShowPlots(e.target.checked)}
-                      />
-                      Monitored Village Plots ({fields.length})
-                    </label>
-                  </div>
+      {/* Interactive Controls & Map Layout */}
+      <div className="map-layout-grid">
+        {/* Left Column: Filter Controls + Leaflet Map */}
+        <div className="map-main-col">
+          <div className="map-filter-bar">
+            {/* Layers */}
+            <div className="map-filter-group">
+              <span className="filter-label"><Layers size={13} /> Layer:</span>
+              <label className="map-layer-toggle">
+                <input
+                  type="checkbox"
+                  checked={showPlumes}
+                  onChange={e => setShowPlumes(e.target.checked)}
+                />
+                <span>Root Salinity Plumes</span>
+              </label>
+            </div>
 
-                  <div className="map-filter-group">
-                    <span className="filter-label">State:</span>
-                    {['All', 'Punjab', 'Haryana', 'Rajasthan'].map(s => (
-                      <button
-                        key={s}
-                        className={`filter-btn ${selectedState === s ? 'active' : ''}`}
-                        onClick={() => setSelectedState(s)}
-                        style={selectedState === s && s !== 'All' ? { borderColor: stateColors[s], color: stateColors[s], background: `${stateColors[s]}15` } : {}}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="map-filter-group">
-                    <span className="filter-label">Risk:</span>
-                    {['All', 'CRITICAL', 'HIGH', 'MODERATE', 'LOW'].map(r => (
-                      <button
-                        key={r}
-                        className={`filter-btn ${selectedRisk === r ? 'active' : ''}`}
-                        onClick={() => setSelectedRisk(r)}
-                        style={selectedRisk === r && r !== 'All' ? { borderColor: getRiskColor(r), color: getRiskColor(r), background: `${getRiskColor(r)}15` } : {}}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* Risk filter */}
+            <div className="map-filter-group">
+              <span className="filter-label">Risk:</span>
+              {['All', 'CRITICAL', 'HIGH', 'MODERATE', 'LOW'].map(r => (
+                <button
+                  key={r}
+                  className={`filter-btn ${selectedRisk === r ? 'active' : ''}`}
+                  onClick={() => setSelectedRisk(r)}
+                  style={selectedRisk === r && r !== 'All' ? { borderColor: getRiskColor(r), color: getRiskColor(r), background: `${getRiskColor(r)}15` } : {}}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
 
-                {/* Leaflet Map */}
-                <div className="map-container-wrap">
-                  <MapContainer
-                    center={[29.5, 74.8]}
-                    zoom={7}
-                    style={{ height: '520px', width: '100%' }}
-                    zoomControl={true}
+            {/* Crop filter if multiple crops */}
+            {availableCrops.length > 2 && (
+              <div className="map-filter-group">
+                <span className="filter-label">Crop:</span>
+                {availableCrops.map(c => (
+                  <button
+                    key={c}
+                    className={`filter-btn ${selectedCrop === c ? 'active' : ''}`}
+                    onClick={() => setSelectedCrop(c)}
                   >
-                    <TileLayer
-                      url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      maxZoom={19}
-                    />
-                    <MapResizeController />
-
-                    {/* Salinity Plume Heatmap Layer */}
-                    {showHeatmap && filtered.map(region => (
-                      <Circle
-                        key={`heat-${region.id}`}
-                        center={[region.lat, region.lng]}
-                        radius={region.riskScore >= 70 ? 28000 : 18000}
-                        pathOptions={{
-                          fillColor: getRiskColor(region.riskLevel),
-                          fillOpacity: 0.14,
-                          color: getRiskColor(region.riskLevel),
-                          weight: 1,
-                          opacity: 0.3
-                        }}
-                      />
-                    ))}
-
-                    {/* District Center Markers */}
-                    {filtered.map(region => (
-                      <CircleMarker
-                        key={region.id}
-                        center={[region.lat, region.lng]}
-                        radius={getMarkerRadius(region.riskScore)}
-                        fillColor={getRiskColor(region.riskLevel)}
-                        color={getRiskColor(region.riskLevel)}
-                        weight={2}
-                        opacity={0.9}
-                        fillOpacity={0.65}
-                        eventHandlers={{
-                          click: () => setSelectedRegion(region),
-                        }}
-                      >
-                        <Popup>
-                          <div className="map-popup">
-                            <div className="popup-header">
-                              <strong>{region.district}</strong>
-                              <span className="popup-state">{region.state}</span>
-                            </div>
-                            <div className="popup-metrics">
-                              <div className="popup-metric">
-                                <span>Risk Score</span>
-                                <strong style={{ color: getRiskColor(region.riskLevel) }}>{region.riskScore}/100</strong>
-                              </div>
-                              <div className="popup-metric">
-                                <span>Avg EC</span>
-                                <strong>{region.avgEC} dS/m</strong>
-                              </div>
-                              <div className="popup-metric">
-                                <span>Water Table</span>
-                                <strong>{region.waterTableDepth}m</strong>
-                              </div>
-                              <div className="popup-metric">
-                                <span>Main Crop</span>
-                                <strong>{region.dominantCrop}</strong>
-                              </div>
-                            </div>
-                          </div>
-                        </Popup>
-                      </CircleMarker>
-                    ))}
-
-                    {/* Village Farm Pins */}
-                    {showPlots && fields.map(field => {
-                      const fLat = field.lat || 30.9;
-                      const fLng = field.lng || 75.85;
-                      const color = field.riskLevel === 'CRITICAL' ? '#ef4444' : field.riskLevel === 'HIGH' ? '#f97316' : '#22c55e';
-                      return (
-                        <Marker
-                          key={`farm-${field.id}`}
-                          position={[fLat, fLng]}
-                          icon={farmPinIcon(color)}
-                        >
-                          <Popup>
-                            <div className="map-popup">
-                              <div className="popup-header">
-                                <strong>{field.name}</strong>
-                                <span className="popup-state">{field.farmerName || 'Farmer'}</span>
-                              </div>
-                              <div style={{ fontSize: '0.75rem', margin: '4px 0', display: 'flex', alignItems: 'center', gap: '4px', color: field.sensorConnected ? '#22c55e' : '#94a3b8' }}>
-                                {field.sensorConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
-                                {field.sensorConnected ? 'Live Sensor Telemetry' : 'Manual Survey'}
-                              </div>
-                              <div className="popup-metrics">
-                                <div className="popup-metric">
-                                  <span>Crop</span>
-                                  <strong>{field.cropType}</strong>
-                                </div>
-                                <div className="popup-metric">
-                                  <span>EC</span>
-                                  <strong>{field.groundwaterEC ?? field.metrics?.ec ?? 0} dS/m</strong>
-                                </div>
-                                <div className="popup-metric">
-                                  <span>Recovery</span>
-                                  <strong>{field.soilRecovery ?? 50}%</strong>
-                                </div>
-                              </div>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      );
-                    })}
-                  </MapContainer>
-
-                  {/* Legend */}
-                  <div className="map-legend">
-                    <div className="legend-title">Risk Level</div>
-                    {[
-                      { level: 'CRITICAL', label: 'Critical (≥80)' },
-                      { level: 'HIGH', label: 'High (60 to 79)' },
-                      { level: 'MODERATE', label: 'Moderate (35 to 59)' },
-                      { level: 'LOW', label: 'Low (<35)' },
-                    ].map(item => (
-                      <div key={item.level} className="legend-item">
-                        <span className="legend-dot" style={{ background: getRiskColor(item.level) }} />
-                        <span>{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                    {c}
+                  </button>
+                ))}
               </div>
+            )}
+          </div>
 
-              {/* Region Table */}
-              <div className="map-sidebar-panel">
-                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-                    <span className="card-title">District Summary ({filtered.length})</span>
-                  </div>
-                  <div className="region-table-wrap">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>District</th>
-                          <th>EC</th>
-                          <th>Risk</th>
-                          <th>Trend</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filtered
-                          .sort((a, b) => b.riskScore - a.riskScore)
-                          .map(region => (
-                            <tr
-                              key={region.id}
-                              className={selectedRegion?.id === region.id ? 'selected-row' : ''}
-                              onClick={() => setSelectedRegion(region)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <td>
-                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8125rem' }}>
-                                  {region.district}
-                                </div>
-                                <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                                  {region.state}
-                                </div>
-                              </td>
-                              <td>
-                                <span style={{ color: getRiskColor(region.riskLevel), fontWeight: 600 }}>
-                                  {region.avgEC}
-                                </span>
-                              </td>
-                              <td><RiskBadge level={region.riskLevel} showIcon={false} /></td>
-                              <td style={{ color: TREND_COLORS[region.trend] }}>
-                                {TREND_ICONS[region.trend]} {region.trend}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+          {/* Leaflet Map Container */}
+          <div className="map-container-wrap" style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color, rgba(255,255,255,0.1))' }}>
+            <MapContainer
+              center={defaultCenter}
+              zoom={role === 'farmer' ? 14 : 11}
+              style={{ height: '540px', width: '100%' }}
+              zoomControl={true}
+            >
+              <TileLayer
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                maxZoom={19}
+              />
+              <MapController selectedCoords={flyCoords} allCoords={validCoords} />
 
-                {/* Selected Region Detail */}
-                {selectedRegion && (
-                  <div className="card selected-region-card fade-in">
-                    <div className="card-header">
-                      <span className="card-title">Selected District</span>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setSelectedRegion(null)}
-                        style={{ padding: '4px 10px' }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div className="selected-region-header">
-                      <div>
-                        <h3 style={{ marginBottom: 2 }}>{selectedRegion.district}</h3>
-                        <span className="chip">{selectedRegion.state}</span>
-                      </div>
-                      <RiskBadge level={selectedRegion.riskLevel} size="lg" />
-                    </div>
-                    <div className="selected-region-stats">
-                      {[
-                        { label: 'Risk Score', value: `${selectedRegion.riskScore}/100`, color: getRiskColor(selectedRegion.riskLevel) },
-                        { label: 'Avg EC', value: `${selectedRegion.avgEC} dS/m` },
-                        { label: 'Water Table', value: `${selectedRegion.waterTableDepth}m` },
-                        { label: 'Main Crop', value: selectedRegion.dominantCrop },
-                        { label: 'Affected Area', value: `${(selectedRegion.affectedArea / 1000).toFixed(1)}k ha` },
-                        { label: 'Farmers', value: `${selectedRegion.farmersAffected.toLocaleString()}` },
-                      ].map(({ label, value, color }) => (
-                        <div key={label} className="selected-stat">
-                          <span className="selected-stat-label">{label}</span>
-                          <span className="selected-stat-val" style={color ? { color } : {}}>{value}</span>
+              {/* Real Registered Farm Plumes */}
+              {showPlumes && filtered.map(field => {
+                if (!field.lat || !field.lng) return null;
+                const ec = field.groundwaterEC ?? field.metrics?.ec ?? 3.5;
+                const radiusMeters = Math.max(120, Math.round(Math.sqrt(field.area || 10) * 80));
+                const color = getRiskColor(field.riskLevel);
+                return (
+                  <Circle
+                    key={`plume-${field.id}`}
+                    center={[field.lat, field.lng]}
+                    radius={radiusMeters}
+                    pathOptions={{
+                      fillColor: color,
+                      fillOpacity: 0.18,
+                      color: color,
+                      weight: 1.5,
+                      dashArray: ec > 4.0 ? '4 4' : undefined
+                    }}
+                  />
+                );
+              })}
+
+              {/* Real Registered Farm Markers */}
+              {filtered.map(field => {
+                if (!field.lat || !field.lng) return null;
+                const isSelected = selectedField?.id === field.id;
+                return (
+                  <Marker
+                    key={field.id}
+                    position={[field.lat, field.lng]}
+                    icon={createFarmPin(field.riskLevel)}
+                    eventHandlers={{
+                      click: () => {
+                        setSelectedField(field);
+                        setActiveFarmId(field.id);
+                      }
+                    }}
+                  >
+                    <Popup>
+                      <div className="map-popup" style={{ minWidth: '220px', padding: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '8px' }}>
+                          <div>
+                            <strong style={{ fontSize: '0.95rem', display: 'block', color: '#0f172a' }}>{field.name}</strong>
+                            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Farmer: {field.farmerName || 'Farmer'}</span>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              color: '#fff',
+                              background: getRiskColor(field.riskLevel)
+                            }}
+                          >
+                            {field.riskLevel}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
+                        <div style={{ fontSize: '0.76rem', color: '#475569', marginBottom: '8px', lineHeight: 1.4 }}>
+                          <div><strong>Location:</strong> {field.location}</div>
+                          <div><strong>Crop:</strong> {field.cropType} · {field.area} Acres</div>
+                          <div><strong>EC:</strong> <strong>{field.groundwaterEC ?? field.metrics?.ec ?? 3.5} dS/m</strong></div>
+                          <div><strong>Water Table:</strong> {field.waterTableDepth ?? field.metrics?.waterTable ?? 2.5}m</div>
+                        </div>
+
+                        <button
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            background: '#008a50',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                          onClick={() => handleOpenDiagnostic(field)}
+                        >
+                          <span>Open Full Diagnostic</span>
+                          <ArrowRight size={12} />
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+          </div>
+        </div>
+
+        {/* Right Column: Real Registered Plots List */}
+        <div className="map-sidebar-col">
+          <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className="card-header" style={{ padding: '16px 18px', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>
+              <div>
+                <strong style={{ fontSize: '0.95rem', display: 'block' }}>
+                  {role === 'farmer' ? 'My Monitored Plot' : `Registered Village Plots (${filtered.length})`}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Click any plot to focus camera
+                </span>
               </div>
             </div>
+
+            <div className="map-plots-list" style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+              {filtered.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  No plots match the selected filter.
+                </div>
+              ) : (
+                filtered.map(field => {
+                  const isSelected = selectedField?.id === field.id;
+                  const ecVal = field.groundwaterEC ?? field.metrics?.ec ?? 3.5;
+                  return (
+                    <div
+                      key={field.id}
+                      className={`map-plot-item ${isSelected ? 'active-plot' : ''}`}
+                      onClick={() => handleSelectFieldInList(field)}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        marginBottom: '8px',
+                        background: isSelected ? 'rgba(0, 138, 80, 0.12)' : 'var(--bg-hover, rgba(255,255,255,0.03))',
+                        border: `1px solid ${isSelected ? 'var(--primary, #008a50)' : 'var(--border-color, rgba(255,255,255,0.08))'}`,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{field.name}</strong>
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            color: '#fff',
+                            background: getRiskColor(field.riskLevel)
+                          }}
+                        >
+                          {field.riskLevel}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                        <span>Farmer: <strong>{field.farmerName || 'Farmer'}</strong></span> · <span>{field.cropType}</span> ({field.area} Ac)
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                        <span>EC: <strong style={{ color: ecVal > 4 ? '#ef4444' : '#22c55e' }}>{ecVal} dS/m</strong></span>
+                        <span>Water Table: <strong>{field.waterTableDepth ?? field.metrics?.waterTable ?? 2.5}m</strong></span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
-          );
+        </div>
+      </div>
+    </div>
+  );
 }

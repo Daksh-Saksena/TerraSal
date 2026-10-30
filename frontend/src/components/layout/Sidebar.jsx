@@ -8,20 +8,30 @@ import { useApp } from '../../context/AppContext';
 import FarmSwitcher from '../farms/FarmSwitcher';
 import './Sidebar.css';
 
-const navItems = [
-  { path: '/', icon: LayoutDashboard, key: 'navDashboard', defaultLabel: 'Dashboard' },
+const panchayatNavItems = [
+  { path: '/', icon: LayoutDashboard, key: 'navDashboard', defaultLabel: 'Village Dashboard' },
   { path: '/village', icon: Users, key: 'navVillage', defaultLabel: 'Village Hub' },
-  { path: '/analyze', icon: FlaskConical, key: 'navAnalyzer', defaultLabel: 'Analyzer' },
-  { path: '/map', icon: Map, key: 'navMap', defaultLabel: 'Map View' },
-  { path: '/trends', icon: TrendingUp, key: 'navTrends', defaultLabel: 'Trends' },
-  { path: '/recommendations', icon: BookOpen, key: 'navRecommendations', defaultLabel: 'Advisory' },
+  { path: '/analyze', icon: FlaskConical, key: 'navAnalyzer', defaultLabel: 'Diagnostic Lab' },
+  { path: '/map', icon: Map, key: 'navMap', defaultLabel: 'Village Field Map' },
+  { path: '/trends', icon: TrendingUp, key: 'navTrends', defaultLabel: 'Village Trends' },
+  { path: '/recommendations', icon: BookOpen, key: 'navRecommendations', defaultLabel: 'Advisories' },
+  { path: '/settings', icon: Settings, key: 'navSettings', defaultLabel: 'Settings' },
+];
+
+const farmerNavItems = [
+  { path: '/', icon: LayoutDashboard, key: 'navDashboard', defaultLabel: 'My Farm Dashboard' },
+  { path: '/map', icon: Map, key: 'navMap', defaultLabel: 'My Field Map' },
+  { path: '/analyze', icon: FlaskConical, key: 'navAnalyzer', defaultLabel: 'Soil Salinity Diagnostic' },
+  { path: '/trends', icon: TrendingUp, key: 'navTrends', defaultLabel: 'My Field Trends' },
+  { path: '/recommendations', icon: BookOpen, key: 'navRecommendations', defaultLabel: 'Treatment & Gypsum' },
   { path: '/settings', icon: Settings, key: 'navSettings', defaultLabel: 'Settings' },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
-  const { state, toggleSidebar, t } = useApp();
+  const { state, role, toggleSidebar, t } = useApp();
   const collapsed = state.sidebarCollapsed;
+  const currentNavItems = role === 'farmer' ? farmerNavItems : panchayatNavItems;
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -33,14 +43,14 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="logo-text">
             <span className="logo-name">TerraSal</span>
-            <span className="logo-tagline">{t('appName')}</span>
+            <span className="logo-tagline">Soil Salinity Intelligence</span>
           </div>
         )}
       </div>
 
       {/* Nav Items */}
       <nav className="sidebar-nav">
-        {navItems.map(({ path, icon: Icon, key, defaultLabel }) => {
+        {currentNavItems.map(({ path, icon: Icon, key, defaultLabel }) => {
           const isActive = location.pathname === path;
           const label = t ? t(key) : defaultLabel;
           return (
@@ -53,7 +63,7 @@ export default function Sidebar() {
               <div className="nav-icon">
                 <Icon size={18} />
               </div>
-              {!collapsed && <span className="nav-label">{label}</span>}
+              {!collapsed && <span className="nav-label">{defaultLabel}</span>}
               {isActive && <div className="nav-active-bar" />}
             </Link>
           );

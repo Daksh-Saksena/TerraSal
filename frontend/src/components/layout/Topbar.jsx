@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, RefreshCw, ChevronDown, CheckCheck, Sun, Moon, Globe, Shield, User } from 'lucide-react';
+import { Bell, Search, RefreshCw, ChevronDown, CheckCheck, Sun, Moon, Globe, Shield, User, Volume2, VolumeX } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getRelativeTime } from '../../utils/formatters';
 import './Topbar.css';
@@ -8,7 +8,7 @@ export default function Topbar({ pageTitle }) {
     state, theme, toggleTheme, role, setRole,
     language, setLanguage, t, activeFarm,
     markNotificationRead, markAllRead, refetch,
-    openLoginModal
+    openLoginModal, soundEnabled, toggleSound
   } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
@@ -94,6 +94,16 @@ export default function Topbar({ pageTitle }) {
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+        <button
+          className={`icon-btn sound-toggle-btn ${soundEnabled ? 'sound-active' : 'sound-muted'}`}
+          onClick={toggleSound}
+          title={soundEnabled ? 'UI Sound Effects: ON (Click to mute)' : 'UI Sound Effects: Muted (Click to enable)'}
+          id="sound-toggle-btn"
+          aria-label="Toggle sound effects"
+          data-sound={soundEnabled ? 'toggleOff' : 'toggleOn'}
+        >
+          {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} style={{ color: 'var(--text-muted)' }} />}
         </button>
         <button
           className={`icon-btn ${refreshing ? 'spinning' : ''}`}

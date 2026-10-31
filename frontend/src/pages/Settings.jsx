@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Cpu, Bell, Database,
   User, Map, Plus, Trash2, Edit3, Wifi, WifiOff,
-  CheckCircle, AlertTriangle, Save
+  CheckCircle, AlertTriangle, Save, Volume2, VolumeX, Sparkles, Play
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Settings.css';
@@ -20,7 +20,14 @@ const apiSources = [
   { name: 'PM-KISAN Farmer Registry', description: 'Government farmer identification and location data', status: 'not-configured', key: '' },
 ];
 export default function Settings() {
-  const { state } = useApp();
+  const {
+    state,
+    soundEnabled,
+    soundVolume,
+    toggleSound,
+    setSoundVolume,
+    playSound
+  } = useApp();
   const mockFields = state.fields || [];
   const [activeSection, setActiveSection] = useState('fields');
   const [saved, setSaved] = useState(false);
@@ -33,10 +40,12 @@ export default function Settings() {
     smsAlerts: false,
   });
   const handleSave = () => {
+    playSound('success');
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
   const handleAlertToggle = (key) => {
+    playSound('toggle');
     setAlertSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
   return (
@@ -52,6 +61,7 @@ export default function Settings() {
             { key: 'sensors', icon: Cpu, label: 'Sensor Devices' },
             { key: 'datasources', icon: Database, label: 'Data Sources' },
             { key: 'notifications', icon: Bell, label: 'Notifications' },
+            { key: 'audio', icon: Volume2, label: 'Audio & Sound FX' },
             { key: 'account', icon: User, label: 'Account' },
           ].map(({ key, icon: Icon, label }) => (
             <button
@@ -311,6 +321,121 @@ export default function Settings() {
                         <span className="toggle-slider" />
                       </label>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {activeSection === 'audio' && (
+            <div className="settings-section fade-in">
+              <div className="settings-section-header">
+                <div>
+                  <h2>Audio & Sound Effects</h2>
+                  <p>Configure tactile UI audio feedback and interactive click sensations</p>
+                </div>
+              </div>
+              <div className="card">
+                <div className="card-header" style={{ marginBottom: 16 }}>
+                  <span className="card-title">UI Feedback Settings</span>
+                </div>
+                <div className="notif-toggle-row">
+                  <div className="notif-toggle-info">
+                    <div className="notif-toggle-label">Master UI Sound Effects</div>
+                    <div className="notif-toggle-desc">Synthesized micro-audio feedback on clicks, buttons, tabs, and alerts</div>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={soundEnabled}
+                      onChange={toggleSound}
+                    />
+                    <span className="toggle-slider" />
+                  </label>
+                </div>
+                <div className="notif-toggle-row" style={{ marginTop: 12 }}>
+                  <div className="notif-toggle-info">
+                    <div className="notif-toggle-label">Sound FX Volume ({Math.round(soundVolume * 100)}%)</div>
+                    <div className="notif-toggle-desc">Adjust the master volume level of UI sounds</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 160 }}>
+                    <VolumeX size={15} style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={soundVolume}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setSoundVolume(val);
+                        playSound('click', { volume: val });
+                      }}
+                      style={{
+                        flex: 1,
+                        accentColor: 'var(--color-primary)',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <Volume2 size={15} style={{ color: 'var(--color-primary)' }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="card" style={{ marginTop: 20 }}>
+                <div className="card-header" style={{ marginBottom: 16 }}>
+                  <div>
+                    <span className="card-title">Interactive Soundboard</span>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                      Click any sound below to preview the micro-interaction and tactile particle burst
+                    </p>
+                  </div>
+                  <span className="chip" style={{ background: 'var(--color-teal-dim)', color: 'var(--color-primary)' }}>
+                    <Sparkles size={12} style={{ marginRight: 4 }} /> Web Audio API
+                  </span>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: 12
+                }}>
+                  {[
+                    { type: 'pop', title: 'Bubble Pop', desc: 'Standard buttons & cards', icon: '🫧' },
+                    { type: 'click', title: 'Tactile Click', desc: 'Mechanical precision click', icon: '⚡' },
+                    { type: 'water', title: 'Water Droplet', desc: 'Soil & moisture bloop', icon: '💧' },
+                    { type: 'success', title: 'Success Chime', desc: 'Ascending chord shimmer', icon: '✨' },
+                    { type: 'tab', title: 'Tab Swoosh', desc: 'Airy navigation slide', icon: '🍃' },
+                    { type: 'toggle', title: 'Dual Switch', desc: 'Mode & filter toggles', icon: '🎚️' },
+                    { type: 'alert', title: 'Warning Ping', desc: 'Alert notifications', icon: '🔔' },
+                    { type: 'delete', title: 'Soft Pluck', desc: 'Remove & dismiss actions', icon: '🍂' },
+                  ].map(({ type, title, desc, icon }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className="sound-preview-btn card"
+                      data-sound={type}
+                      style={{
+                        padding: '14px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        border: '1px solid var(--border-card)',
+                        background: 'var(--bg-card)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.4rem' }}>{icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                          {title}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {desc}
+                        </div>
+                      </div>
+                      <Play size={13} style={{ color: 'var(--color-primary)', opacity: 0.7 }} />
+                    </button>
                   ))}
                 </div>
               </div>

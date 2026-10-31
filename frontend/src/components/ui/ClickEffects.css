@@ -1,0 +1,20 @@
+.click-effects-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999999;
+}
+
+/* Subtle micro-bounce when buttons and clickable elements are pressed */
+button:active,
+.btn:active,
+.nav-item:active,
+.icon-btn:active,
+.clickable:active {
+  transform: scale(0.96);
+  transition: transform 0.08s ease-out;
+}
+

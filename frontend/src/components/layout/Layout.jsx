@@ -4,6 +4,7 @@ import Topbar from './Topbar';
 import ErrorBanner from '../ui/ErrorBanner';
 import PinDropModal from '../farms/PinDropModal';
 import LoginModal from '../auth/LoginModal';
+import ClickEffects from '../ui/ClickEffects';
 import { useApp } from '../../context/AppContext';
 const pageTitles = {
   '/': 'Dashboard',
@@ -30,6 +31,7 @@ export default function Layout({ children }) {
       </div>
       <PinDropModal />
       <LoginModal />
+      <ClickEffects />
     </div>
   );
 }

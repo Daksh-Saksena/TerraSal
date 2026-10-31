@@ -1,6 +1,14 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { getApiUrl } from '../utils/api';
 import { getTranslation } from '../utils/i18n';
+import {
+  isSoundEnabled,
+  setSoundEnabled as setSoundEnabledUtil,
+  toggleSound as toggleSoundUtil,
+  getSoundVolume,
+  setSoundVolume as setSoundVolumeUtil,
+  playSound
+} from '../utils/soundEffects';
 export const AppContext = createContext(null);
 const savedRole = typeof window !== 'undefined' ? (localStorage.getItem('terrasal_role') || 'panchayat') : 'panchayat';
 const savedFarmerId = typeof window !== 'undefined' ? localStorage.getItem('terrasal_farmer_id') : null;
@@ -152,6 +160,33 @@ const reducer = (state, action) => {
 };
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [soundEnabled, setSoundState] = useState(() => isSoundEnabled());
+  const [soundVolume, setSoundVolumeState] = useState(() => getSoundVolume());
+
+  useEffect(() => {
+    const handleSoundChange = (e) => {
+      setSoundState(e.detail.enabled);
+      setSoundVolumeState(e.detail.volume);
+    };
+    window.addEventListener('terrasal-sound-change', handleSoundChange);
+    return () => window.removeEventListener('terrasal-sound-change', handleSoundChange);
+  }, []);
+
+  const toggleSound = () => {
+    const next = toggleSoundUtil();
+    setSoundState(next);
+    return next;
+  };
+
+  const setSoundVolume = (vol) => {
+    setSoundVolumeUtil(vol);
+    setSoundVolumeState(vol);
+  };
+
+  const setSoundEnabled = (enabled) => {
+    setSoundEnabledUtil(enabled);
+    setSoundState(enabled);
+  };
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme);
     localStorage.setItem('terrasal_theme', state.theme);
@@ -280,7 +315,13 @@ export const AppProvider = ({ children }) => {
       toggleSidebar,
       markNotificationRead,
       markAllRead,
-      refetch: loadData
+      refetch: loadData,
+      soundEnabled,
+      soundVolume,
+      toggleSound,
+      setSoundVolume,
+      setSoundEnabled,
+      playSound
     }}>
       {children}
     </AppContext.Provider>

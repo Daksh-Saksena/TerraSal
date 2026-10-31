@@ -33,7 +33,7 @@ const PRESETS = [
   { name: 'Low Risk Amritsar', inputs: { groundwaterEC: 1.4, waterTableDepth: 4.5, soilType: 'sandy', drainageQuality: 'good', rainfallLast30Days: 45, irrigationMethod: 'sprinkler', cropType: 'rice', terrain: 'gentle-slope' } },
 ];
 export default function Analyzer() {
-  const { state, role, activeFarm, openPinDropModal, setAnalyzerResult, t } = useApp();
+  const { state, role, activeFarm, openPinDropModal, setAnalyzerResult, playSound, t } = useApp();
   const [activeTool, setActiveTool] = useState('diagnostic');
   const [viewMode, setViewMode] = useState('kisan');
   const [inputs, setInputs] = useState(state.analyzerInputs ?? DEFAULT_INPUTS);
@@ -88,6 +88,7 @@ export default function Analyzer() {
         const analysisResult = await response.json();
         setResult(analysisResult);
         setAnalyzerResult(analysisResult, targetInputs);
+        if (playSound) playSound('success');
       }
     } catch (error) {
       console.error('Failed to run analysis:', error);
@@ -111,6 +112,7 @@ export default function Analyzer() {
       if (res.ok) {
         const data = await res.json();
         setSimResult(data);
+        if (playSound) playSound('success');
       }
     } catch (err) {
       console.error('Simulator error:', err);
@@ -134,6 +136,7 @@ export default function Analyzer() {
       if (res.ok) {
         const data = await res.json();
         setLabResult(data);
+        if (playSound) playSound('success');
       }
     } catch (err) {
       console.error('Lab calibrate error:', err);
